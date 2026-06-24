@@ -25,18 +25,19 @@
   </aside>
   <header class="topbar">
     <div class="topbar-search" style="visibility:hidden;"></div>
-    <div class="topbar-actions">
-      <div class="topbar-user">
-        <div class="topbar-avatar" id="topbar-avatar"></div>
-        <div class="topbar-user-info"><div class="topbar-user-name" id="topbar-name"></div></div>
-      </div>
-    </div>
+    <div class="topbar-actions"></div>
   </header>
 
   <main class="main-content">
-    <div style="margin-bottom:24px;">
-      <div class="page-title">Groupes utilisateurs</div>
-      <div class="page-subtitle">Rôles disponibles dans l'organisation</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <div>
+        <div class="page-title">Groupes utilisateurs</div>
+        <div class="page-subtitle">Gérer les rôles disponibles dans l'organisation</div>
+      </div>
+      <button class="btn btn-primary" id="btn-nouveau">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouveau groupe
+      </button>
     </div>
 
     <div class="card">
@@ -47,10 +48,11 @@
               <th>Code</th>
               <th>Libellé</th>
               <th>Membres</th>
+              <th style="width:80px;"></th>
             </tr>
           </thead>
           <tbody id="tbody-groupes">
-            <tr><td colspan="3"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="4"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -58,19 +60,55 @@
   </main>
 </div>
 
+<!-- Modal nouveau groupe -->
+<div class="modal-overlay" id="modal-groupe" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title">Nouveau groupe</span>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Libellé *</label>
+        <input type="text" class="form-input" id="f-libelle" placeholder="Ex: Trésorier"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Code *</label>
+        <input type="text" class="form-input" id="f-code" placeholder="Ex: GRP_TRESORIER" style="font-family:monospace;"/>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Généré automatiquement depuis le libellé. Modifiable.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-annuler">Annuler</button>
+      <button class="btn btn-primary" id="btn-sauvegarder">Créer le groupe</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-  import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
-  const user = getUser()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
-  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
-  document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0]||'')+(user.nom?.[0]||'')).toUpperCase()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  // Fusionner les permissions des deux menus qui pointent vers cette page
+  const _p1 = getPermission('/habilitations/programmes')
+  const _p2 = getPermission('/organisation/params/groupes')
+  const _p3 = getPermission('/utilisateurs/groupes')
+  const perm = {
+    peutLire:      _p1.peutLire      || _p2.peutLire      || _p3.peutLire,
+    peutEcrire:    _p1.peutEcrire    || _p2.peutEcrire    || _p3.peutEcrire,
+    peutSupprimer: _p1.peutSupprimer || _p2.peutSupprimer || _p3.peutSupprimer,
+  }
+  if (!perm.peutEcrire) {
+    document.getElementById('btn-nouveau').style.display = 'none'
+  }
 
   const tbody = document.getElementById('tbody-groupes')
 
@@ -78,20 +116,81 @@
     try {
       const items = await api.get('/utilisateurs/groupes')
       if (!items || !items.length) {
-        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>Aucun groupe</p></div></td></tr>`
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>Aucun groupe</p></div></td></tr>`
         return
       }
       tbody.innerHTML = items.map(g => `
         <tr>
-          <td style="font-family:monospace;font-size:12px;font-weight:600;">${g.codeGroupe||g.code||'—'}</td>
-          <td style="font-weight:600;">${g.libelleGroupe||g.libelle||'—'}</td>
-          <td><span class="badge badge-secondary">${g.nombreMembres ?? '—'} membre(s)</span></td>
+          <td style="font-family:monospace;font-size:12px;font-weight:600;">${g.codeGroupe||'—'}</td>
+          <td style="font-weight:600;">${g.libelleGroupe||'—'}</td>
+          <td><span class="badge badge-secondary">—</span></td>
+          <td>
+            ${g.codeGroupe === 'GRP_ADMIN_PLATEFORME' || !perm.peutSupprimer ? '' : `
+            <button class="btn btn-ghost" style="padding:4px 8px;color:#dc2626;" data-code="${g.codeGroupe}" title="Supprimer">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>`}
+          </td>
         </tr>
       `).join('')
+
+      tbody.querySelectorAll('[data-code]').forEach(btn => {
+        btn.addEventListener('click', () => supprimerGroupe(btn.dataset.code, btn.closest('tr').querySelector('td:nth-child(2)').textContent))
+      })
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="3" style="color:#b91c1c;padding:20px;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:20px;">Erreur : ${err.message}</td></tr>`
     }
   }
+
+  async function supprimerGroupe(code, libelle) {
+    if (!confirm(`Supprimer le groupe "${libelle}" ?\nLes membres de ce groupe perdront leur accès.`)) return
+    try {
+      await api.delete(`/utilisateurs/groupes/${code}`)
+      toast.success('Groupe supprimé.')
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    }
+  }
+
+  // Auto-générer le code depuis le libellé
+  document.getElementById('f-libelle').addEventListener('input', e => {
+    const code = 'GRP_' + e.target.value.toUpperCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^A-Z0-9]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
+    document.getElementById('f-code').value = code
+  })
+
+  document.getElementById('btn-nouveau').addEventListener('click', () => {
+    document.getElementById('f-libelle').value = ''
+    document.getElementById('f-code').value = ''
+    document.getElementById('modal-groupe').style.display = 'flex'
+  })
+  document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('modal-groupe').style.display = 'none'
+  })
+  document.getElementById('btn-annuler').addEventListener('click', () => {
+    document.getElementById('modal-groupe').style.display = 'none'
+  })
+
+  document.getElementById('btn-sauvegarder').addEventListener('click', async () => {
+    const libelle = document.getElementById('f-libelle').value.trim()
+    const code = document.getElementById('f-code').value.trim()
+    if (!libelle || !code) return toast.warning('Remplissez tous les champs.')
+    const btn = document.getElementById('btn-sauvegarder')
+    btn.disabled = true; btn.textContent = 'Création...'
+    try {
+      await api.post('/utilisateurs/groupes', { codeGroupe: code, libelleGroupe: libelle })
+      toast.success('Groupe créé !')
+      document.getElementById('modal-groupe').style.display = 'none'
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    } finally {
+      btn.disabled = false; btn.textContent = 'Créer le groupe'
+    }
+  })
 
   charger()
 </script>

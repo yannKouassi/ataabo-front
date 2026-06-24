@@ -87,8 +87,6 @@
 
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
-  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
-  document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0]||'')+(user.nom?.[0]||'')).toUpperCase()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   function statCard(label, value, color) {

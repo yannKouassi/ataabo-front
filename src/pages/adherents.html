@@ -97,6 +97,27 @@
   </main>
 </div>
 
+<!-- Modal donner accès -->
+<div class="modal-overlay" id="modal-acces" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-acces-titre">Donner accès plateforme</span>
+      <button class="modal-close" id="modal-acces-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;" id="modal-acces-desc"></div>
+      <div class="form-group">
+        <label class="form-label">Groupe / Rôle *</label>
+        <select class="form-input" id="f-acces-groupe"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-acces-annuler">Annuler</button>
+      <button class="btn btn-primary" id="btn-acces-sauvegarder">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal détail adhérent -->
 <div class="modal-overlay" id="modal-detail" style="display:none;">
   <div class="modal" style="max-width:520px;">
@@ -122,10 +143,7 @@
   const user = getUser()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
-
-  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
   const initiales = (user.prenom?.[0] || '') + (user.nom?.[0] || '')
-  document.getElementById('topbar-avatar').textContent = initiales.toUpperCase()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   const perm = getPermission('/adherents/liste')
@@ -173,11 +191,18 @@
           <td style="font-size:13px; color:var(--text-muted);">${a.email || '—'}</td>
           <td style="font-size:13px;">${a.dateAdhesion ? new Date(a.dateAdhesion).toLocaleDateString('fr-FR') : '—'}</td>
           <td>${badgeStatut(a.statut)}</td>
-          <td>
+          <td style="display:flex;gap:6px;align-items:center;">
             <button class="btn btn-ghost btn-sm" onclick="voirDetail(${a.adhesionId})">Voir</button>
+            <button class="btn btn-outline btn-sm btn-acces" data-num="${a.numAdherent}" data-nom="${a.prenom} ${a.nom}" data-has="${a.aAcces ? '1' : '0'}" style="font-size:11px;padding:3px 8px;${a.aAcces ? 'color:var(--primary);' : ''}">
+              ${a.aAcces ? '✓ Accès' : 'Donner accès'}
+            </button>
           </td>
         </tr>
       `).join('')
+
+      tbody.querySelectorAll('.btn-acces').forEach(btn => {
+        btn.addEventListener('click', () => ouvrirModalAcces(btn.dataset.num, btn.dataset.nom, btn.dataset.has === '1'))
+      })
 
       const debut = page * size + 1
       const fin = Math.min((page + 1) * size, data.totalElements || items.length)
@@ -203,6 +228,54 @@
   }
 
   window.changerPage = (n) => { page = n; charger() }
+
+  // ── Donner accès plateforme ────────────────────────────────────
+  let accesNumAdherent = null
+
+  async function ouvrirModalAcces(numAdherent, nom, aDejaAcces) {
+    accesNumAdherent = numAdherent
+    document.getElementById('modal-acces-titre').textContent = aDejaAcces ? 'Changer de groupe' : 'Donner accès plateforme'
+    document.getElementById('modal-acces-desc').textContent = aDejaAcces
+      ? `Modifier le groupe de ${nom}.`
+      : `Donner à ${nom} un accès à la plateforme en lui attribuant un groupe.`
+
+    const select = document.getElementById('f-acces-groupe')
+    select.innerHTML = `<option value="">Chargement...</option>`
+    document.getElementById('modal-acces').style.display = 'flex'
+
+    try {
+      const groupes = await api.get('/utilisateurs/groupes')
+      select.innerHTML = groupes
+        .filter(g => g.codeGroupe !== 'GRP_ADMIN_PLATEFORME')
+        .map(g => `<option value="${g.codeGroupe}">${g.libelleGroupe}</option>`)
+        .join('')
+    } catch(err) {
+      select.innerHTML = `<option value="">Erreur chargement</option>`
+    }
+  }
+
+  document.getElementById('modal-acces-close').addEventListener('click', () => {
+    document.getElementById('modal-acces').style.display = 'none'
+  })
+  document.getElementById('btn-acces-annuler').addEventListener('click', () => {
+    document.getElementById('modal-acces').style.display = 'none'
+  })
+  document.getElementById('btn-acces-sauvegarder').addEventListener('click', async () => {
+    const codeGroupe = document.getElementById('f-acces-groupe').value
+    if (!codeGroupe) return toast.warning('Sélectionnez un groupe.')
+    const btn = document.getElementById('btn-acces-sauvegarder')
+    btn.disabled = true; btn.textContent = 'En cours...'
+    try {
+      await api.put(`/adherents/${accesNumAdherent}/groupe`, { codeGroupe })
+      toast.success('Accès attribué !')
+      document.getElementById('modal-acces').style.display = 'none'
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    } finally {
+      btn.disabled = false; btn.textContent = 'Confirmer'
+    }
+  })
 
   window.voirDetail = async (id) => {
     document.getElementById('modal-detail').style.display = 'flex'

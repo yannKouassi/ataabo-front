@@ -128,8 +128,6 @@
   const user = getUser()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
-  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
-  document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0]||'')+(user.nom?.[0]||'')).toUpperCase()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   async function chargerProfil() {
@@ -138,6 +136,13 @@
       const initiales = ((p.prenom?.[0]||'')+(p.nom?.[0]||'')).toUpperCase()
       if (p.urlPhotoDemandeur) {
         document.getElementById('profil-photo').innerHTML = `<img src="${p.urlPhotoDemandeur}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;"/>`
+        // Synchroniser la photo dans localStorage pour la topbar
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+        if (storedUser.urlPhoto !== p.urlPhotoDemandeur) {
+          storedUser.urlPhoto = p.urlPhotoDemandeur
+          localStorage.setItem('user', JSON.stringify(storedUser))
+          buildSidebar()
+        }
       } else {
         document.getElementById('profil-photo').textContent = initiales
       }
@@ -191,11 +196,10 @@
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
       storedUser.nom = updated.nom || storedUser.nom
       storedUser.prenom = updated.prenom || storedUser.prenom
+      if (updated.urlPhotoDemandeur) storedUser.urlPhoto = updated.urlPhotoDemandeur
       localStorage.setItem('user', JSON.stringify(storedUser))
       // Rafraîchir la topbar immédiatement
       const initiales = ((updated.prenom?.[0]||'')+(updated.nom?.[0]||'')).toUpperCase()
-      document.getElementById('topbar-name').textContent = `${updated.prenom} ${updated.nom}`
-      document.getElementById('topbar-avatar').textContent = initiales
       toast.success('Profil mis à jour !')
       document.getElementById('modal-modifier').style.display = 'none'
       chargerProfil()

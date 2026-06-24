@@ -3,6 +3,7 @@
 // =============================================
 
 import { getContexte, logout } from './auth.js'
+import { api } from './api.js'
 
 const ICONS = {
   '/dashboard':           `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>`,
@@ -36,6 +37,10 @@ export function buildSidebar() {
     const prenom = user.prenom || user.prenPersonne || ''
     const email = user.email || user.emailPersonne || ''
     const initiales = ((prenom[0] || '') + (nom[0] || '')).toUpperCase()
+    const urlPhoto = user.urlPhoto || ''
+    const avatarContent = urlPhoto
+      ? `<img src="${urlPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`
+      : initiales
     actionsEl.innerHTML = `
       <button class="topbar-icon-btn" id="btn-notif" title="Notifications">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -44,12 +49,27 @@ export function buildSidebar() {
         </svg>
       </button>
       <div class="topbar-user" id="topbar-user" style="cursor:default;">
-        <div class="topbar-avatar" id="topbar-avatar">${initiales}</div>
+        <div class="topbar-avatar" id="topbar-avatar">${avatarContent}</div>
         <div class="topbar-user-info">
           <div class="topbar-user-name" id="topbar-name">${prenom} ${nom}</div>
           ${email ? `<div class="topbar-user-email" id="topbar-email">${email}</div>` : ''}
         </div>
       </div>`
+
+    // Récupérer la photo depuis le serveur si pas encore dans localStorage
+    if (!urlPhoto) {
+      api.get('/moi/profil').then(p => {
+        if (p?.urlPhotoDemandeur) {
+          const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+          storedUser.urlPhoto = p.urlPhotoDemandeur
+          localStorage.setItem('user', JSON.stringify(storedUser))
+          const avatarEl = document.getElementById('topbar-avatar')
+          if (avatarEl) {
+            avatarEl.innerHTML = `<img src="${p.urlPhotoDemandeur}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`
+          }
+        }
+      }).catch(() => {})
+    }
   }
 
   // Logo + nom organisation
@@ -167,7 +187,6 @@ const NAV_PAGES = {
     '/utilisateurs/liste':            '/src/pages/utilisateurs.html',
     '/utilisateurs/groupes':          '/src/pages/groupes-organisation.html',
     '/habilitations/droits':          '/src/pages/habilitations.html',
-    '/habilitations/programmes':      '/src/pages/habilitations.html',
     // Activités
     '/activites':                     '/src/pages/audit.html',
     // Audit & sauvegardes
