@@ -22,8 +22,14 @@ export function saveLogin(data) {
   localStorage.setItem('user', JSON.stringify({
     email: data.email,
     nom: data.nom,
-    prenom: data.prenom
+    prenom: data.prenom,
+    role: data.role || 'USER'
   }))
+}
+
+export function isAdminPlateforme() {
+  const user = getUser()
+  return user?.role === 'ADMIN'
 }
 
 export function saveContexte(ctx) {

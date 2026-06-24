@@ -105,14 +105,39 @@
 <div class="choose-logout" id="btn-logout">← Se déconnecter</div>
 
 <script type="module">
-  import { requireAuth, getUser, saveContexte, logout } from '/src/js/auth.js'
+  import { requireAuth, getUser, isAdminPlateforme, saveContexte, logout } from '/src/js/auth.js'
   import { api } from '/src/js/api.js'
 
   if (!requireAuth()) throw new Error('Non autorisé')
 
   const grid = document.getElementById('org-grid')
+  const user = getUser()
 
   async function charger() {
+    // Admin plateforme : afficher directement la carte "Administration système"
+    if (isAdminPlateforme()) {
+      grid.innerHTML = ''
+      const card = document.createElement('div')
+      card.className = 'org-card'
+      card.innerHTML = `
+        <div class="org-card-logo-placeholder" style="background:#4f46e5;">
+          <svg width="26" height="26" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </div>
+        <div>
+          <div class="org-card-name">Administration système</div>
+          <div class="org-card-type">Ataabo — Vue globale de la plateforme</div>
+        </div>
+        <span class="org-card-role">Administrateur Plateforme</span>
+      `
+      card.addEventListener('click', () => choisirPlateforme())
+      grid.appendChild(card)
+      return
+    }
+
+    // Utilisateur normal : liste des organisations
     try {
       const orgs = await api.get('/mes-organisations')
 
@@ -150,6 +175,16 @@
       })
     } catch (err) {
       grid.innerHTML = `<div class="error-state" style="grid-column:1/-1">Erreur : ${err.message}</div>`
+    }
+  }
+
+  async function choisirPlateforme() {
+    try {
+      const ctx = await api.get('/contexte/plateforme')
+      saveContexte(ctx)
+      window.location.href = '/src/pages/dashboard-systeme.html'
+    } catch (err) {
+      alert('Impossible de charger le contexte administrateur : ' + err.message)
     }
   }
 

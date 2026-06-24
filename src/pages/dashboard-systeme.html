@@ -78,6 +78,13 @@
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
   const user = getUser()
+
+  // Seul l'admin plateforme peut voir cette page
+  if (ctx.orgId !== 'PLATEFORME') {
+    window.location.replace('/dashboard.html')
+    throw new Error()
+  }
+
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
   document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`

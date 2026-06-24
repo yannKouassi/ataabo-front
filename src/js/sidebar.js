@@ -28,6 +28,30 @@ export function buildSidebar() {
   const ctx = getContexte()
   if (!ctx) return
 
+  // ── Topbar : notification + user ──────────────────────────────
+  const actionsEl = document.getElementById('topbar-actions') || document.querySelector('.topbar-actions')
+  if (actionsEl) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const nom = user.nom || user.nomPersonne || ''
+    const prenom = user.prenom || user.prenPersonne || ''
+    const email = user.email || user.emailPersonne || ''
+    const initiales = ((prenom[0] || '') + (nom[0] || '')).toUpperCase()
+    actionsEl.innerHTML = `
+      <button class="topbar-icon-btn" id="btn-notif" title="Notifications">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+      <div class="topbar-user" id="topbar-user" style="cursor:default;">
+        <div class="topbar-avatar" id="topbar-avatar">${initiales}</div>
+        <div class="topbar-user-info">
+          <div class="topbar-user-name" id="topbar-name">${prenom} ${nom}</div>
+          ${email ? `<div class="topbar-user-email" id="topbar-email">${email}</div>` : ''}
+        </div>
+      </div>`
+  }
+
   // Logo + nom organisation
   const logoEl = document.getElementById('sidebar-org-logo')
   const nameEl = document.getElementById('sidebar-org-name')
@@ -45,12 +69,17 @@ export function buildSidebar() {
   if (!nav) return
   nav.innerHTML = ''
 
-  const currentUrl = window.location.pathname
+  // Reverse-mapping page HTML → URL logique (pour détecter le menu actif)
+  const currentPage = window.location.pathname
+  const activeLogical = Object.entries(NAV_PAGES)
+      .find(([, page]) => currentPage.endsWith(page.replace(/^\//, '')))?.[0]
+      || sessionStorage.getItem('lastNavUrl')
+      || ''
 
   ctx.menus.forEach(menu => {
     if (menu.sousMenus && menu.sousMenus.length > 0) {
       // Menu avec sous-menus
-      const hasActive = menu.sousMenus.some(s => currentUrl.includes(s.url))
+      const hasActive = menu.sousMenus.some(s => activeLogical.startsWith(s.url))
 
       const item = document.createElement('div')
       item.className = `nav-item${hasActive ? ' open' : ''}`
@@ -67,7 +96,7 @@ export function buildSidebar() {
 
       menu.sousMenus.forEach(sub => {
         const subItem = document.createElement('div')
-        const isActive = currentUrl.includes(sub.url)
+        const isActive = activeLogical.startsWith(sub.url)
         subItem.className = `nav-subitem${isActive ? ' active' : ''}`
         subItem.textContent = sub.libelle
         subItem.dataset.url = sub.url
@@ -84,7 +113,7 @@ export function buildSidebar() {
       nav.appendChild(submenu)
     } else {
       // Menu direct sans sous-menus
-      const isActive = currentUrl.includes(menu.url)
+      const isActive = activeLogical.startsWith(menu.url)
       const item = document.createElement('div')
       item.className = `nav-item${isActive ? ' active' : ''}`
       item.innerHTML = `${getIcon(menu.url)}<span>${menu.libelle}</span>`
@@ -94,14 +123,12 @@ export function buildSidebar() {
   })
 }
 
-function navigate(url) {
-  // Mapping URL → page HTML
-  const pages = {
+const NAV_PAGES = {
     // Dashboard
     '/dashboard':                     '/dashboard.html',
     '/dashboard/organisation':        '/dashboard.html',
     '/dashboard/systeme':             '/src/pages/dashboard-systeme.html',
-    '/dashboard/opportunites':        '/src/pages/dashboard-systeme.html',
+    '/dashboard/opportunites':        '/src/pages/opportunites.html',
     // Adhérents
     '/adherents/liste':               '/src/pages/adherents.html',
     '/adherents/demandes':            '/src/pages/demandes-adhesion.html',
@@ -141,10 +168,15 @@ function navigate(url) {
     '/utilisateurs/groupes':          '/src/pages/groupes-organisation.html',
     '/habilitations/droits':          '/src/pages/habilitations.html',
     '/habilitations/programmes':      '/src/pages/habilitations.html',
+    // Activités
+    '/activites':                     '/src/pages/audit.html',
     // Audit & sauvegardes
     '/audit':                         '/src/pages/audit.html',
     '/sauvegardes':                   '/src/pages/sauvegardes.html',
-  }
-  const page = pages[url]
+}
+
+function navigate(url) {
+  sessionStorage.setItem('lastNavUrl', url)
+  const page = NAV_PAGES[url]
   if (page) window.location.href = page
 }

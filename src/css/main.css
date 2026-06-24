@@ -140,8 +140,8 @@ img { max-width: 100%; }
 }
 
 .nav-item.active {
-  background: var(--primary-light);
-  color: var(--primary);
+  background: var(--primary);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -150,7 +150,9 @@ img { max-width: 100%; }
   opacity: .7;
 }
 
-.nav-item.active svg { opacity: 1; }
+.nav-item.active svg { opacity: 1; color: #fff; }
+
+.nav-item.open { color: var(--primary); font-weight: 500; }
 
 .nav-item-badge {
   margin-left: auto;

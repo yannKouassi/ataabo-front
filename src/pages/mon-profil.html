@@ -134,7 +134,7 @@
 
   async function chargerProfil() {
     try {
-      const p = await api.get('/mon-profil')
+      const p = await api.get('/moi/profil')
       const initiales = ((p.prenom?.[0]||'')+(p.nom?.[0]||'')).toUpperCase()
       if (p.urlPhotoDemandeur) {
         document.getElementById('profil-photo').innerHTML = `<img src="${p.urlPhotoDemandeur}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;"/>`
@@ -186,7 +186,16 @@
       formData.append('dateNaissance', document.getElementById('f-naissance').value)
       const photo = document.getElementById('f-photo').files[0]
       if (photo) formData.append('photo', photo)
-      await api.upload('/mon-profil', formData)
+      const updated = await api.upload('/moi/profil', formData)
+      // Mettre à jour localStorage pour que la topbar reflète les changements
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      storedUser.nom = updated.nom || storedUser.nom
+      storedUser.prenom = updated.prenom || storedUser.prenom
+      localStorage.setItem('user', JSON.stringify(storedUser))
+      // Rafraîchir la topbar immédiatement
+      const initiales = ((updated.prenom?.[0]||'')+(updated.nom?.[0]||'')).toUpperCase()
+      document.getElementById('topbar-name').textContent = `${updated.prenom} ${updated.nom}`
+      document.getElementById('topbar-avatar').textContent = initiales
       toast.success('Profil mis à jour !')
       document.getElementById('modal-modifier').style.display = 'none'
       chargerProfil()

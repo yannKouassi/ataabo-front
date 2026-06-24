@@ -214,7 +214,7 @@
 
   async function charger() {
     try {
-      const org = await api.get('/mon-organisation')
+      const org = await api.get(`/organisations/${ctx.orgId}/infos`)
       document.getElementById('f-nom').value = org.nomOrganisation || ''
       document.getElementById('f-type').value = org.typeOrganisation || 'ASSOCIATION'
       document.getElementById('f-email').value = org.emailContact || ''
@@ -252,7 +252,7 @@
 
   document.getElementById('btn-sauvegarder-infos').addEventListener('click', async () => {
     try {
-      await api.put('/mon-organisation', {
+      await api.put(`/organisations/${ctx.orgId}/infos`, {
         nomOrganisation: document.getElementById('f-nom').value,
         typeOrganisation: document.getElementById('f-type').value,
         emailContact: document.getElementById('f-email').value,
@@ -271,11 +271,8 @@
     const btn = document.getElementById('btn-sauvegarder-logo')
     btn.disabled = true; btn.textContent = 'Application...'
     try {
-      const formData = new FormData()
-      formData.append('couleurPrimaire', document.getElementById('f-couleur-hex').value || document.getElementById('f-couleur').value)
-      const logo = document.getElementById('f-logo').files[0]
-      if (logo) formData.append('logo', logo)
-      const res = await api.upload('/mon-organisation/apparence', formData)
+      const couleur = document.getElementById('f-couleur-hex').value || document.getElementById('f-couleur').value
+      const res = await api.post(`/organisations/${ctx.orgId}/apparence`, { couleurPrimaire: couleur })
       const nouvelleCouleur = res.couleurPrimaire
       if (nouvelleCouleur) applyOrgColor(nouvelleCouleur)
       toast.success('Apparence mise à jour !')
@@ -286,7 +283,7 @@
 
   document.getElementById('btn-sauvegarder-cotisation').addEventListener('click', async () => {
     try {
-      await api.put('/mon-organisation/cotisation', {
+      await api.put(`/organisations/${ctx.orgId}/cotisation`, {
         montantCotisation: parseFloat(document.getElementById('f-cotisation-montant').value),
         frequenceCotisation: document.getElementById('f-cotisation-frequence').value,
       })

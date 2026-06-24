@@ -168,6 +168,14 @@
   document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0]||'')+(user.nom?.[0]||'')).toUpperCase()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
+  // L'admin plateforme n'a pas d'organisation — cette page n'est pas applicable
+  if (ctx.orgId === 'PLATEFORME') {
+    document.querySelector('.page-content, main, .content-area, [data-page]') ||
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div style="padding:60px;text-align:center;color:var(--text-muted);font-size:15px;">Cette section est réservée aux administrateurs d\'organisation.</div>')
+    document.querySelectorAll('.card, table, .filters-bar').forEach(el => el.style.display = 'none')
+  }
+
   const perm = getPermission('/paiements/cotisations')
   if (!perm.peutEcrire) document.getElementById('btn-nouvelle').style.display = 'none'
 
@@ -219,7 +227,7 @@
 
   async function chargerStats() {
     try {
-      const s = await api.get('/cotisations/stats')
+      const s = await api.get(`/cotisations/stats?orgId=${ctx.orgId}`)
       document.getElementById('stat-total').textContent = formaterMontant(s.totalMois, ctx.devise)
       document.getElementById('stat-count').textContent = s.nombreMois ?? '—'
       document.getElementById('stat-retard').textContent = s.enRetard ?? '—'
