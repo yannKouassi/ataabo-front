@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Demandes d'adhésion</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Rechercher..."/>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar"></div>
+        <div class="topbar-user-info">
+          <div class="topbar-user-name" id="topbar-name"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="page-title">Demandes d'adhésion</div>
+        <div class="page-subtitle">Gérer les demandes en attente de validation</div>
+      </div>
+      <button class="btn btn-outline btn-print" onclick="window.print()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer
+      </button>
+    </div>
+
+    <!-- Filtres statut -->
+    <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+      <button class="btn btn-secondary filtre-btn active" data-statut="">Toutes</button>
+      <button class="btn btn-ghost filtre-btn" data-statut="EN_ATTENTE">En attente</button>
+      <button class="btn btn-ghost filtre-btn" data-statut="APPROUVEE">Approuvées</button>
+      <button class="btn btn-ghost filtre-btn" data-statut="REJETEE">Rejetées</button>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Demandeur</th>
+              <th>Email</th>
+              <th>Date demande</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-demandes">
+            <tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-top:1px solid var(--border);">
+        <span class="text-muted" id="pagination-info" style="font-size:13px;"></span>
+        <div style="display:flex; gap:8px;" id="pagination-btns"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<!-- Modal détail -->
+<div class="modal-overlay" id="modal-detail" style="display:none;">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Détail de la demande</span>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer" style="display:none;">
+      <button class="btn btn-secondary" id="btn-rejeter">Rejeter</button>
+      <button class="btn btn-primary" id="btn-approuver">Approuver</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique } from '/src/js/historique.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  const user = getUser()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
+  document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0] || '') + (user.nom?.[0] || '')).toUpperCase()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  const perm = getPermission('/adherents/demandes')
+
+  let page = 0, totalPages = 1, filtreStatut = '', demandeActive = null
+
+  async function charger() {
+    const params = new URLSearchParams({ page, size: 15 })
+    if (filtreStatut) params.set('statut', filtreStatut)
+    const q = document.getElementById('search-input').value
+    if (q) params.set('q', q)
+
+    const tbody = document.getElementById('tbody-demandes')
+    tbody.innerHTML = `<tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
+
+    try {
+      const data = await api.get(`/adhesions/organisation/${ctx.orgId}?${params}`)
+      totalPages = data.totalPages || 1
+      const items = data.content || []
+
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune demande</p></div></td></tr>`
+        document.getElementById('pagination-info').textContent = ''
+        document.getElementById('pagination-btns').innerHTML = ''
+        return
+      }
+
+      tbody.innerHTML = items.map(d => `
+        <tr>
+          <td>
+            <div style="font-weight:600;">${d.prenomDemandeur || ''} ${d.nomDemandeur || ''}</div>
+          </td>
+          <td style="font-size:13px; color:var(--text-muted);">${d.emailDemandeur || '—'}</td>
+          <td style="font-size:13px;">${d.dateCreation ? new Date(d.dateCreation).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>${badge(d.statut)}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="voirDetail(${d.adhesionId}, '${d.statut}')">Voir</button>
+          </td>
+        </tr>
+      `).join('')
+
+      document.getElementById('pagination-info').textContent = `Page ${page + 1} / ${totalPages}`
+      paginationBtns()
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="5" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+    }
+  }
+
+  function badge(s) {
+    const m = { EN_ATTENTE: 'badge-warning', APPROUVEE: 'badge-success', REJETEE: 'badge-danger' }
+    return `<span class="badge ${m[s] || 'badge-secondary'}">${s || '—'}</span>`
+  }
+
+  function paginationBtns() {
+    document.getElementById('pagination-btns').innerHTML = `
+      <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
+      <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
+  }
+  window.changerPage = n => { page = n; charger() }
+
+  window.voirDetail = async (id, statut) => {
+    demandeActive = { id, statut }
+    document.getElementById('modal-detail').style.display = 'flex'
+    document.getElementById('modal-body').innerHTML = `<div class="page-loader"><div class="spinner"></div></div>`
+    document.getElementById('modal-footer').style.display = 'none'
+
+    try {
+      const d = await api.get(`/adhesions/${id}`)
+      document.getElementById('modal-body').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+          ${champ('Nom', `${d.prenomDemandeur} ${d.nomDemandeur}`)}
+          ${champ('Email', d.emailDemandeur)}
+          ${champ('Date de naissance', d.dateNaissance ? new Date(d.dateNaissance).toLocaleDateString('fr-FR') : '—')}
+          ${champ('Sexe', d.libSexe)}
+          ${champ('Situation', d.situationMatrimoniale)}
+          ${champ('Statut', d.statut)}
+        </div>
+        ${d.urlPhotoDemandeur ? `<img src="${d.urlPhotoDemandeur}" style="width:90px;height:90px;border-radius:12px;object-fit:cover;margin-bottom:12px;">` : ''}
+        ${d.urlDocumentCni ? `<div style="margin-top:8px;"><a href="${d.urlDocumentCni}" target="_blank" class="btn btn-ghost btn-sm">Voir CNI</a></div>` : ''}
+        ${d.commentaireAi ? `<div style="background:var(--bg);border-radius:8px;padding:14px;margin-top:14px;font-size:13px;"><strong>Analyse IA :</strong><br/>${d.commentaireAi}</div>` : ''}
+      `
+      if (statut === 'EN_ATTENTE' && perm.peutEcrire) {
+        document.getElementById('modal-footer').style.display = 'flex'
+        document.getElementById('btn-approuver').onclick = () => {
+          const nom = demandeActive?.nomDemandeur || 'ce membre'
+          if (confirm(`Approuver la demande de ${nom} ?\n\nCette action créera son compte membre et lui enverra un email de bienvenue.`)) decider('APPROUVER')
+        }
+        document.getElementById('btn-rejeter').onclick = () => {
+          const nom = demandeActive?.nomDemandeur || 'ce membre'
+          if (confirm(`Rejeter la demande de ${nom} ?\n\nLe candidat sera notifié par email.`)) decider('REJETER')
+        }
+      }
+    } catch(err) {
+      document.getElementById('modal-body').innerHTML = `<p style="color:#b91c1c;">Erreur : ${err.message}</p>`
+    }
+  }
+
+  async function decider(action) {
+    const endpoint = action === 'APPROUVER' ? 'approuver' : 'rejeter'
+    try {
+      await api.put(`/adhesions/${demandeActive.id}/${endpoint}`, {})
+      toast.success(action === 'APPROUVER' ? 'Demande approuvée !' : 'Demande rejetée.')
+      document.getElementById('modal-detail').style.display = 'none'
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    }
+  }
+
+  function champ(l, v) {
+    return `<div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">${l}</div>
+      <div style="font-size:13.5px;font-weight:600;">${v || '—'}</div>
+    </div>`
+  }
+
+  // Filtres boutons
+  document.querySelectorAll('.filtre-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filtre-btn').forEach(b => { b.className = 'btn btn-ghost filtre-btn' })
+      btn.className = 'btn btn-secondary filtre-btn active'
+      filtreStatut = btn.dataset.statut
+      page = 0; charger()
+    })
+  })
+
+  document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('modal-detail').style.display = 'none'
+  })
+
+  let t; document.getElementById('search-input').addEventListener('input', () => {
+    clearTimeout(t); t = setTimeout(() => { page=0; charger() }, 400)
+  })
+
+  charger()
+  buildHistorique('historique-container')
+</script>
+</body>
+</html>

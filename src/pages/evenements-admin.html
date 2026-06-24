@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Événements</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Rechercher un événement..."/>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar"></div>
+        <div class="topbar-user-info"><div class="topbar-user-name" id="topbar-name"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="page-title">Événements</div>
+        <div class="page-subtitle">Gérer les événements de l'organisation</div>
+      </div>
+      <button class="btn btn-primary" id="btn-nouvel-evt">+ Nouvel événement</button>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Événement</th>
+              <th>Type</th>
+              <th>Date début</th>
+              <th>Date fin</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-evenements">
+            <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-top:1px solid var(--border);">
+        <span style="font-size:13px; color:var(--text-muted);" id="pagination-info"></span>
+        <div style="display:flex; gap:8px;" id="pagination-btns"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<!-- Modal événement -->
+<div class="modal-overlay" id="modal-evt" style="display:none;">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-evt-titre">Nouvel événement</span>
+      <button class="modal-close" id="modal-evt-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="err-evt" style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;"></div>
+      <div class="form-group">
+        <label class="form-label">Titre *</label>
+        <input type="text" class="form-input" id="evt-titre" placeholder="Titre de l'événement"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" id="evt-type">
+          <option value="">Choisir un type</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="evt-description" rows="3" placeholder="Description de l'événement"></textarea>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div class="form-group">
+          <label class="form-label">Date début *</label>
+          <input type="datetime-local" class="form-input" id="evt-debut"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date fin</label>
+          <input type="datetime-local" class="form-input" id="evt-fin"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lieu</label>
+        <input type="text" class="form-input" id="evt-lieu" placeholder="Lieu de l'événement"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-evt-cancel">Annuler</button>
+      <button class="btn btn-primary" id="btn-sauvegarder-evt">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique } from '/src/js/historique.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  const user = getUser()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
+  document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0]||'')+(user.nom?.[0]||'')).toUpperCase()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  const perm = getPermission('/evenements/admin')
+  if (!perm.peutEcrire) document.getElementById('btn-nouvel-evt').style.display = 'none'
+
+  let page = 0, totalPages = 1, evtActif = null
+
+  async function chargerTypes() {
+    try {
+      const types = await api.get('/referentiel/types-evenements')
+      const sel = document.getElementById('evt-type')
+      types.forEach(t => {
+        const opt = document.createElement('option')
+        opt.value = t.code || t.id
+        opt.textContent = t.libelle || t.lib
+        sel.appendChild(opt)
+      })
+    } catch { /* optionnel */ }
+  }
+
+  async function charger() {
+    const q = document.getElementById('search-input').value
+    const params = new URLSearchParams({ page, size: 15 })
+    if (q) params.set('q', q)
+    const tbody = document.getElementById('tbody-evenements')
+    tbody.innerHTML = `<tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
+    try {
+      const data = await api.get(`/evenements/organisation/${ctx.orgId}?${params}`)
+      const items = Array.isArray(data) ? data : (data.content || [])
+      totalPages = data.totalPages || 1
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun événement</p></div></td></tr>`
+        document.getElementById('pagination-info').textContent = ''
+        document.getElementById('pagination-btns').innerHTML = ''
+        return
+      }
+      tbody.innerHTML = items.map(e => `
+        <tr>
+          <td style="font-weight:600;">${e.titre || e.libelle || '—'}</td>
+          <td><span class="badge badge-secondary">${e.libelleType || e.typeEvenement || '—'}</span></td>
+          <td style="font-size:13px;">${e.dateDebut ? new Date(e.dateDebut).toLocaleDateString('fr-FR') : '—'}</td>
+          <td style="font-size:13px;">${e.dateFin ? new Date(e.dateFin).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>${badgeStatut(e.statut)}</td>
+          <td style="display:flex; gap:6px;">
+            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" onclick="editer(${JSON.stringify(e).replace(/"/g,'&quot;')})">Modifier</button>` : ''}
+            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimer(${e.id})">Supprimer</button>` : ''}
+          </td>
+        </tr>
+      `).join('')
+      document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages}`
+      document.getElementById('pagination-btns').innerHTML = `
+        <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
+        <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+    }
+  }
+
+  function badgeStatut(s) {
+    const m = { PLANIFIE: 'badge-info', EN_COURS: 'badge-warning', TERMINE: 'badge-success', ANNULE: 'badge-danger' }
+    return `<span class="badge ${m[s]||'badge-secondary'}">${s||'—'}</span>`
+  }
+
+  window.changerPage = n => { page = n; charger() }
+
+  function ouvrirModal(evt = null) {
+    evtActif = evt
+    document.getElementById('modal-evt-titre').textContent = evt ? 'Modifier l\'événement' : 'Nouvel événement'
+    document.getElementById('evt-titre').value = evt?.titre || evt?.libelle || ''
+    document.getElementById('evt-type').value = evt?.typeEvenementCode || ''
+    document.getElementById('evt-description').value = evt?.description || ''
+    document.getElementById('evt-debut').value = evt?.dateDebut ? evt.dateDebut.slice(0,16) : ''
+    document.getElementById('evt-fin').value = evt?.dateFin ? evt.dateFin.slice(0,16) : ''
+    document.getElementById('evt-lieu').value = evt?.lieu || ''
+    document.getElementById('err-evt').style.display = 'none'
+    document.getElementById('modal-evt').style.display = 'flex'
+  }
+
+  window.editer = (e) => ouvrirModal(e)
+
+  window.supprimer = async (id) => {
+    if (!confirm('Supprimer cet événement ?')) return
+    try {
+      await api.delete(`/evenements/${id}`)
+      toast.success('Événement supprimé.')
+      charger()
+    } catch(err) { toast.error(err.message) }
+  }
+
+  document.getElementById('btn-nouvel-evt').addEventListener('click', () => ouvrirModal())
+  document.getElementById('modal-evt-close').addEventListener('click', () => { document.getElementById('modal-evt').style.display = 'none' })
+  document.getElementById('modal-evt-cancel').addEventListener('click', () => { document.getElementById('modal-evt').style.display = 'none' })
+
+  document.getElementById('btn-sauvegarder-evt').addEventListener('click', async () => {
+    const errEl = document.getElementById('err-evt')
+    errEl.style.display = 'none'
+    const body = {
+      orgId: ctx.orgId,
+      titre: document.getElementById('evt-titre').value,
+      typeEvenementCode: document.getElementById('evt-type').value,
+      description: document.getElementById('evt-description').value,
+      dateDebut: document.getElementById('evt-debut').value,
+      dateFin: document.getElementById('evt-fin').value,
+      lieu: document.getElementById('evt-lieu').value,
+    }
+    try {
+      if (evtActif) {
+        await api.put(`/evenements/${evtActif.id}`, body)
+        toast.success('Événement modifié.')
+      } else {
+        await api.post('/evenements', body)
+        toast.success('Événement créé.')
+      }
+      document.getElementById('modal-evt').style.display = 'none'
+      charger()
+    } catch(err) {
+      errEl.textContent = err.message
+      errEl.style.display = 'block'
+    }
+  })
+
+  let t; document.getElementById('search-input').addEventListener('input', () => {
+    clearTimeout(t); t = setTimeout(() => { page=0; charger() }, 400)
+  })
+
+  chargerTypes(); charger()
+  buildHistorique('historique-container')
+</script>
+</body>
+</html>

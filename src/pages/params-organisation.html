@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Paramètres organisation</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-search" style="visibility:hidden;"></div>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar"></div>
+        <div class="topbar-user-info"><div class="topbar-user-name" id="topbar-name"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div style="margin-bottom:24px;">
+      <div class="page-title">Paramètres de l'organisation</div>
+      <div class="page-subtitle">Configuration générale et personnalisation</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:900px;">
+
+      <!-- Informations générales -->
+      <div class="card" style="padding:28px; grid-column:1/-1;">
+        <div style="font-weight:700; font-size:15px; margin-bottom:20px;">Informations générales</div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Nom de l'organisation *</label>
+            <input type="text" class="form-input" id="f-nom"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type d'organisation</label>
+            <select class="form-input" id="f-type">
+              <option value="ASSOCIATION">Association</option>
+              <option value="MUTUELLE">Mutuelle</option>
+              <option value="ONG">ONG</option>
+              <option value="COOPERATIVE">Coopérative</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email de contact</label>
+            <input type="email" class="form-input" id="f-email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Téléphone</label>
+            <input type="tel" class="form-input" id="f-tel"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Siège social</label>
+            <input type="text" class="form-input" id="f-siege" placeholder="Ex: Cocody, Abidjan"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Adresse postale</label>
+            <input type="text" class="form-input" id="f-adresse" placeholder="Ex: BP 1234 Abidjan"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" id="f-description" rows="3" style="resize:vertical;" placeholder="Décrivez brièvement votre organisation..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">N° agrément</label>
+            <input type="text" class="form-input" id="f-agrement"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Devise</label>
+            <select class="form-input" id="f-devise">
+              <option value="FCFA">FCFA</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="MGA">MGA</option>
+              <option value="NGN">NGN</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top:8px;" id="btn-sauvegarder-infos">Sauvegarder</button>
+      </div>
+
+      <!-- Logo et couleur -->
+      <div class="card" style="padding:28px;">
+        <div style="font-weight:700; font-size:15px; margin-bottom:20px;">Logo & Couleur</div>
+
+        <div style="text-align:center; margin-bottom:20px;">
+          <div id="logo-preview" style="width:80px;height:80px;border-radius:16px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;color:var(--primary);margin:0 auto 12px;overflow:hidden;"></div>
+          <div style="font-size:12px; color:var(--text-muted);">Logo actuel</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nouveau logo</label>
+          <input type="file" class="form-input" id="f-logo" accept="image/*"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Couleur principale</label>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="color" id="f-couleur" style="width:48px;height:36px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;"/>
+            <input type="text" class="form-input" id="f-couleur-hex" placeholder="#2E7D32" style="flex:1; font-family:monospace;"/>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;" id="palette">
+            <div class="couleur-chip" data-c="#2E7D32" style="background:#2E7D32;"></div>
+            <div class="couleur-chip" data-c="#1565C0" style="background:#1565C0;"></div>
+            <div class="couleur-chip" data-c="#6A1B9A" style="background:#6A1B9A;"></div>
+            <div class="couleur-chip" data-c="#D84315" style="background:#D84315;"></div>
+            <div class="couleur-chip" data-c="#00695C" style="background:#00695C;"></div>
+            <div class="couleur-chip" data-c="#283593" style="background:#283593;"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" id="btn-sauvegarder-logo">Appliquer</button>
+      </div>
+
+      <!-- Montant cotisation -->
+      <div class="card" style="padding:28px;">
+        <div style="font-weight:700; font-size:15px; margin-bottom:20px;">Cotisation</div>
+
+        <div class="form-group">
+          <label class="form-label">Montant mensuel</label>
+          <input type="number" class="form-input" id="f-cotisation-montant" placeholder="0"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fréquence</label>
+          <select class="form-input" id="f-cotisation-frequence">
+            <option value="MENSUELLE">Mensuelle</option>
+            <option value="TRIMESTRIELLE">Trimestrielle</option>
+            <option value="ANNUELLE">Annuelle</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" id="btn-sauvegarder-cotisation">Sauvegarder</button>
+      </div>
+    </div>
+    <!-- Localisation -->
+    <div class="card" style="margin-top:20px; padding:28px; max-width:900px;">
+      <div style="font-weight:700; font-size:15px; margin-bottom:6px;">Localisation</div>
+      <div style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Cliquez sur la carte pour positionner votre organisation. Vous pouvez déplacer le marqueur pour ajuster.</div>
+      <div id="params-map" style="height:320px; border-radius:8px; border:1px solid var(--border); overflow:hidden; margin-bottom:12px;"></div>
+      <div style="display:flex; gap:16px; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:13px;">
+        <svg width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="params-coords-display" style="color:var(--text-muted); font-style:italic;">Aucune localisation enregistrée</span>
+      </div>
+      <input type="hidden" id="f-lat"/>
+      <input type="hidden" id="f-lng"/>
+      <button class="btn btn-primary" style="margin-top:14px;" id="btn-sauvegarder-localisation">Sauvegarder la localisation</button>
+    </div>
+
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, saveContexte, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique } from '/src/js/historique.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  const user = getUser()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('topbar-name').textContent = `${user.prenom} ${user.nom}`
+  document.getElementById('topbar-avatar').textContent = ((user.prenom?.[0]||'')+(user.nom?.[0]||'')).toUpperCase()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  const perm = getPermission('/organisation/params/infos')
+  if (!perm.peutEcrire) {
+    ['btn-sauvegarder-infos', 'btn-sauvegarder-logo', 'btn-sauvegarder-cotisation'].forEach(id => {
+      const el = document.getElementById(id)
+      if (el) el.style.display = 'none'
+    })
+  }
+
+  // Styles chips couleur
+  document.querySelectorAll('.couleur-chip').forEach(c => {
+    Object.assign(c.style, { width:'28px', height:'28px', borderRadius:'50%', cursor:'pointer', border:'2px solid transparent' })
+    c.addEventListener('click', () => {
+      document.getElementById('f-couleur').value = c.dataset.c
+      document.getElementById('f-couleur-hex').value = c.dataset.c
+    })
+  })
+
+  document.getElementById('f-couleur').addEventListener('input', e => {
+    document.getElementById('f-couleur-hex').value = e.target.value
+  })
+  document.getElementById('f-couleur-hex').addEventListener('input', e => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) document.getElementById('f-couleur').value = e.target.value
+  })
+
+  async function charger() {
+    try {
+      const org = await api.get('/mon-organisation')
+      document.getElementById('f-nom').value = org.nomOrganisation || ''
+      document.getElementById('f-type').value = org.typeOrganisation || 'ASSOCIATION'
+      document.getElementById('f-email').value = org.emailContact || ''
+      document.getElementById('f-tel').value = org.telephone || ''
+      document.getElementById('f-adresse').value = org.adresse || ''
+      document.getElementById('f-agrement').value = org.numeroAgrement || ''
+      document.getElementById('f-devise').value = org.devise || 'FCFA'
+      document.getElementById('f-cotisation-montant').value = org.montantCotisation || ''
+      document.getElementById('f-cotisation-frequence').value = org.frequenceCotisation || 'MENSUELLE'
+
+      const couleur = org.couleurPrimaire || '#2E7D32'
+      document.getElementById('f-couleur').value = couleur
+      document.getElementById('f-couleur-hex').value = couleur
+
+      // Siège social, adresse postale, description
+      document.getElementById('f-siege').value = org.siegeSocial || ''
+      document.getElementById('f-adresse').value = org.adrPostale || ''
+      document.getElementById('f-description').value = org.description || ''
+
+      // Carte localisation
+      const lat = org.latitudeAssoc || null
+      const lng = org.longitudeAssoc || null
+      initParamsMap(lat, lng, org.codePays)
+
+      const logoEl = document.getElementById('logo-preview')
+      if (org.urlLogo) {
+        logoEl.innerHTML = `<img src="${org.urlLogo}" style="width:80px;height:80px;object-fit:cover;"/>`
+      } else {
+        logoEl.textContent = (org.nomOrganisation?.[0] || 'A').toUpperCase()
+      }
+    } catch(err) {
+      toast.error('Erreur chargement : ' + err.message)
+    }
+  }
+
+  document.getElementById('btn-sauvegarder-infos').addEventListener('click', async () => {
+    try {
+      await api.put('/mon-organisation', {
+        nomOrganisation: document.getElementById('f-nom').value,
+        typeOrganisation: document.getElementById('f-type').value,
+        emailContact: document.getElementById('f-email').value,
+        telephone: document.getElementById('f-tel').value,
+        siegeSocial: document.getElementById('f-siege').value,
+        adresse: document.getElementById('f-adresse').value,
+        numeroAgrement: document.getElementById('f-agrement').value,
+        devise: document.getElementById('f-devise').value,
+        description: document.getElementById('f-description').value,
+      })
+      toast.success('Informations mises à jour !')
+    } catch(err) { toast.error(err.message) }
+  })
+
+  document.getElementById('btn-sauvegarder-logo').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sauvegarder-logo')
+    btn.disabled = true; btn.textContent = 'Application...'
+    try {
+      const formData = new FormData()
+      formData.append('couleurPrimaire', document.getElementById('f-couleur-hex').value || document.getElementById('f-couleur').value)
+      const logo = document.getElementById('f-logo').files[0]
+      if (logo) formData.append('logo', logo)
+      const res = await api.upload('/mon-organisation/apparence', formData)
+      const nouvelleCouleur = res.couleurPrimaire
+      if (nouvelleCouleur) applyOrgColor(nouvelleCouleur)
+      toast.success('Apparence mise à jour !')
+      charger()
+    } catch(err) { toast.error(err.message) }
+    finally { btn.disabled = false; btn.textContent = 'Appliquer' }
+  })
+
+  document.getElementById('btn-sauvegarder-cotisation').addEventListener('click', async () => {
+    try {
+      await api.put('/mon-organisation/cotisation', {
+        montantCotisation: parseFloat(document.getElementById('f-cotisation-montant').value),
+        frequenceCotisation: document.getElementById('f-cotisation-frequence').value,
+      })
+      toast.success('Paramètres de cotisation sauvegardés !')
+    } catch(err) { toast.error(err.message) }
+  })
+
+  // ─── CARTE LEAFLET ────────────────────────────────────
+  const PAYS_CENTRES = {
+    CIV: { lat: 5.3600,   lng: -4.0083, zoom: 7 },
+    BEN: { lat: 6.3654,   lng: 2.4183,  zoom: 7 },
+    MLI: { lat: 12.6500,  lng: -8.0000, zoom: 6 },
+    NGA: { lat: 6.4541,   lng: 3.3947,  zoom: 6 },
+    MDG: { lat: -18.9137, lng: 47.5361, zoom: 6 },
+  }
+
+  let paramsMap = null
+  let paramsMarker = null
+
+  function initParamsMap(lat, lng, codePays) {
+    const centre = PAYS_CENTRES[codePays] || { lat: 7.5, lng: 1.0, zoom: 4 }
+    const viewLat = lat || centre.lat
+    const viewLng = lng || centre.lng
+    const zoom = lat ? 14 : centre.zoom
+
+    if (!paramsMap) {
+      paramsMap = L.map('params-map').setView([viewLat, viewLng], zoom)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap', maxZoom: 19
+      }).addTo(paramsMap)
+      paramsMap.on('click', (e) => placerMarqueurParams(e.latlng.lat, e.latlng.lng))
+    } else {
+      paramsMap.setView([viewLat, viewLng], zoom)
+    }
+
+    if (lat && lng) placerMarqueurParams(lat, lng)
+    setTimeout(() => paramsMap.invalidateSize(), 200)
+  }
+
+  function placerMarqueurParams(lat, lng) {
+    if (paramsMarker) paramsMap.removeLayer(paramsMarker)
+    paramsMarker = L.marker([lat, lng], { draggable: true }).addTo(paramsMap)
+    paramsMarker.on('dragend', (e) => {
+      const pos = e.target.getLatLng()
+      mettreAJourCoordsParams(pos.lat, pos.lng)
+    })
+    mettreAJourCoordsParams(lat, lng)
+  }
+
+  function mettreAJourCoordsParams(lat, lng) {
+    const latR = Math.round(lat * 1e6) / 1e6
+    const lngR = Math.round(lng * 1e6) / 1e6
+    document.getElementById('f-lat').value = latR
+    document.getElementById('f-lng').value = lngR
+    const el = document.getElementById('params-coords-display')
+    el.textContent = `${latR}, ${lngR}`
+    el.style.fontStyle = 'normal'
+    el.style.color = 'var(--primary)'
+  }
+
+  document.getElementById('btn-sauvegarder-localisation').addEventListener('click', async () => {
+    const lat = parseFloat(document.getElementById('f-lat').value)
+    const lng = parseFloat(document.getElementById('f-lng').value)
+    if (!lat || !lng) return toast.error('Cliquez d\'abord sur la carte pour choisir une localisation.')
+    try {
+      await api.put('/mon-organisation', { latitudeAssoc: lat, longitudeAssoc: lng })
+      toast.success('Localisation mise à jour !')
+    } catch(err) { toast.error(err.message) }
+  })
+
+  charger()
+  buildHistorique('historique-container')
+</script>
+</body>
+</html>

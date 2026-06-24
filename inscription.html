@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Inscription</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); padding: 24px; }
+
+    .reg-wrapper {
+      background: var(--surface);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.1);
+      width: 100%;
+      max-width: 520px;
+      padding: 40px;
+    }
+
+    .reg-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
+    .reg-brand-logo { font-size: 20px; font-weight: 800; color: var(--primary); }
+
+    .reg-title { font-size: 20px; font-weight: 700; }
+    .reg-subtitle { font-size: 13.5px; color: var(--text-muted); margin-bottom: 28px; margin-top: 2px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .reg-error {
+      background: #fee2e2; color: #b91c1c;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px; font-size: 13px;
+      margin-bottom: 16px; display: none;
+    }
+    .reg-error.show { display: block; }
+
+    .reg-success {
+      background: #dcfce7; color: #15803d;
+      border-radius: var(--radius-sm);
+      padding: 14px; font-size: 13.5px;
+      text-align: center; display: none;
+    }
+    .reg-success.show { display: block; }
+
+    .btn-register {
+      width: 100%; padding: 11px;
+      background: var(--primary); color: white;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-register:hover { background: var(--primary-dark); }
+    .btn-register:disabled { opacity: .6; cursor: not-allowed; }
+
+    .reg-login { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+    .reg-login a { color: var(--primary); font-weight: 600; }
+
+    select.form-input { appearance: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="reg-wrapper">
+  <div class="reg-brand">
+    <span class="reg-brand-logo">Ataabo</span>
+  </div>
+
+  <div class="reg-title">Créer un compte</div>
+  <div class="reg-subtitle">Rejoignez la plateforme de gestion communautaire</div>
+
+  <div class="reg-error" id="reg-error"></div>
+  <div class="reg-success" id="reg-success">
+    ✅ Compte créé avec succès ! Vérifiez votre email pour activer votre compte.
+  </div>
+
+  <form id="reg-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nom *</label>
+        <input type="text" class="form-input" id="nom" placeholder="Kouassi" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prénom *</label>
+        <input type="text" class="form-input" id="prenom" placeholder="Yannick" required/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email *</label>
+      <input type="email" class="form-input" id="email" placeholder="vous@exemple.com" required/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Date de naissance *</label>
+      <input type="date" class="form-input" id="dateNaissance" required/>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sexe *</label>
+        <select class="form-input" id="libSexe" required>
+          <option value="">Choisir</option>
+          <option value="1">Masculin</option>
+          <option value="2">Féminin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Situation matrimoniale *</label>
+        <select class="form-input" id="situationMatrimoniale" required>
+          <option value="">Choisir</option>
+          <option value="1">Célibataire</option>
+          <option value="2">Marié(e)</option>
+          <option value="3">Divorcé(e)</option>
+          <option value="4">Veuf/Veuve</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Mot de passe *</label>
+        <input type="password" class="form-input" id="password" placeholder="6 à 10 caractères" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmer *</label>
+        <input type="password" class="form-input" id="confirmPassword" placeholder="••••••" required/>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-register" id="btn-reg">Créer mon compte</button>
+  </form>
+
+  <div class="reg-login">
+    Déjà un compte ? <a href="/login.html">Se connecter</a>
+  </div>
+</div>
+
+<script type="module">
+  import { api } from '/src/js/api.js'
+
+  const form = document.getElementById('reg-form')
+  const errorEl = document.getElementById('reg-error')
+  const successEl = document.getElementById('reg-success')
+  const btn = document.getElementById('btn-reg')
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errorEl.classList.remove('show')
+    btn.disabled = true
+    btn.textContent = 'Création...'
+
+    const data = {
+      nom: document.getElementById('nom').value,
+      prenom: document.getElementById('prenom').value,
+      email: document.getElementById('email').value,
+      dateNaissance: document.getElementById('dateNaissance').value,
+      libSexe: parseInt(document.getElementById('libSexe').value),
+      situationMatrimoniale: parseInt(document.getElementById('situationMatrimoniale').value),
+      password: document.getElementById('password').value,
+      confirmPassword: document.getElementById('confirmPassword').value,
+    }
+
+    try {
+      await api.post('/inscription', data)
+      form.style.display = 'none'
+      successEl.classList.add('show')
+    } catch (err) {
+      errorEl.textContent = err.message
+      errorEl.classList.add('show')
+      btn.disabled = false
+      btn.textContent = 'Créer mon compte'
+    }
+  })
+</script>
+</body>
+</html>

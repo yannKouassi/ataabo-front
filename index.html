@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Ataabo</title>
+</head>
+<body>
+<script>
+  const token = localStorage.getItem('accessToken')
+  const contexte = localStorage.getItem('contexte')
+  if (token && contexte) {
+    window.location.replace('/dashboard.html')
+  } else {
+    window.location.replace('/accueil.html')
+  }
+</script>
+</body>
+</html>

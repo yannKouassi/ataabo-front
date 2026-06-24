@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Choisir une organisation</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+
+    .choose-header { text-align: center; margin-bottom: 40px; }
+    .choose-header .logo { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .choose-header h1 { font-size: 20px; font-weight: 700; }
+    .choose-header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+    .org-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .org-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .org-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-light);
+      transform: translateY(-2px);
+    }
+
+    .org-card-logo {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .org-card-logo-placeholder {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    .org-card-name { font-size: 15px; font-weight: 700; }
+    .org-card-type { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .org-card-role {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary-light);
+      color: var(--primary);
+      align-self: flex-start;
+    }
+
+    .org-card-num {
+      font-size: 11px;
+      color: var(--text-light);
+      font-family: monospace;
+    }
+
+    .choose-logout {
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .choose-logout:hover { color: var(--text); }
+
+    .loading-state { text-align: center; color: var(--text-muted); padding: 60px; }
+    .error-state { text-align: center; color: #b91c1c; padding: 40px; }
+  </style>
+</head>
+<body>
+
+<div class="choose-header">
+  <div class="logo">Ataabo</div>
+  <h1>Choisir une organisation</h1>
+  <p>Sélectionnez l'organisation dans laquelle vous souhaitez intervenir</p>
+</div>
+
+<div class="org-grid" id="org-grid">
+  <div class="loading-state">
+    <div class="spinner" style="margin: 0 auto 12px;"></div>
+    Chargement de vos organisations...
+  </div>
+</div>
+
+<div class="choose-logout" id="btn-logout">← Se déconnecter</div>
+
+<script type="module">
+  import { requireAuth, getUser, saveContexte, logout } from '/src/js/auth.js'
+  import { api } from '/src/js/api.js'
+
+  if (!requireAuth()) throw new Error('Non autorisé')
+
+  const grid = document.getElementById('org-grid')
+
+  async function charger() {
+    try {
+      const orgs = await api.get('/mes-organisations')
+
+      if (!orgs || orgs.length === 0) {
+        grid.innerHTML = `
+          <div class="error-state" style="grid-column:1/-1">
+            <p style="font-size:15px; font-weight:600; color:var(--text)">Aucune organisation</p>
+            <p style="margin-top:6px">Vous n'êtes membre d'aucune organisation active pour l'instant.</p>
+          </div>`
+        return
+      }
+
+      grid.innerHTML = ''
+      orgs.forEach(org => {
+        const card = document.createElement('div')
+        card.className = 'org-card'
+
+        const couleur = org.couleurPrimaire || '#2563eb'
+        const logo = org.urlLogo
+          ? `<img src="${org.urlLogo}" class="org-card-logo" alt="logo"/>`
+          : `<div class="org-card-logo-placeholder" style="background:${couleur}">${(org.nomOrganisation?.[0] || 'A').toUpperCase()}</div>`
+
+        card.innerHTML = `
+          ${logo}
+          <div>
+            <div class="org-card-name">${org.nomOrganisation}</div>
+            <div class="org-card-type">${org.typeOrganisation || ''} · ${org.codePays || ''}</div>
+          </div>
+          <span class="org-card-role">${org.libelleGroupe || 'Membre'}</span>
+          <div class="org-card-num">${org.numAdherent || ''}</div>
+        `
+
+        card.addEventListener('click', () => choisir(org.orgId, couleur))
+        grid.appendChild(card)
+      })
+    } catch (err) {
+      grid.innerHTML = `<div class="error-state" style="grid-column:1/-1">Erreur : ${err.message}</div>`
+    }
+  }
+
+  async function choisir(orgId, couleur) {
+    try {
+      const ctx = await api.get(`/contexte/${orgId}`)
+      saveContexte(ctx)
+      window.location.href = '/dashboard.html'
+    } catch (err) {
+      alert('Impossible de charger le contexte : ' + err.message)
+    }
+  }
+
+  document.getElementById('btn-logout').addEventListener('click', () => logout())
+
+  charger()
+</script>
+</body>
+</html>
