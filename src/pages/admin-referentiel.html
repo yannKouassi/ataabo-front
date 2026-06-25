@@ -50,10 +50,11 @@
             <tr>
               <th>Code</th>
               <th>Libellé</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-ref">
-            <tr><td colspan="2"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="3"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -123,28 +124,61 @@
   const perm = getPermission(urlPerm[type] || '/admin/type-organisation')
   if (!perm.peutEcrire) document.getElementById('btn-ajouter').style.display = 'none'
 
+  let modeEdition = false
+  let codeEnEdition = null
+
   async function charger() {
     const tbody = document.getElementById('tbody-ref')
-    tbody.innerHTML = `<tr><td colspan="2"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
+    tbody.innerHTML = `<tr><td colspan="3"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
     try {
       const items = await api.get(cfg.endpoint)
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><p>Aucune valeur</p></div></td></tr>`
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>Aucune valeur</p></div></td></tr>`
         return
       }
       tbody.innerHTML = items.map(i => `
         <tr>
           <td style="font-family:monospace;font-weight:600;font-size:13px;">${i[cfg.codeKey]||'—'}</td>
           <td>${i[cfg.libKey]||'—'}</td>
+          <td style="display:flex;gap:6px;justify-content:flex-end;">
+            ${perm.peutEcrire && cfg.endpoint !== '/referentiel/types-evenements' ? `<button class="btn btn-ghost btn-sm" onclick="modifier('${i[cfg.codeKey]}','${(i[cfg.libKey]||'').replace(/'/g,"\\'")}')">Modifier</button>` : ''}
+            ${perm.peutSupprimer && cfg.endpoint !== '/referentiel/types-evenements' ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimer('${i[cfg.codeKey]}','${(i[cfg.libKey]||'').replace(/'/g,"\\'")}')">Supprimer</button>` : ''}
+          </td>
         </tr>
       `).join('')
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="2" style="color:#b91c1c;padding:20px;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="3" style="color:#b91c1c;padding:20px;">Erreur : ${err.message}</td></tr>`
+    }
+  }
+
+  window.modifier = (code, libelle) => {
+    modeEdition = true
+    codeEnEdition = code
+    document.getElementById('modal-ref-titre').textContent = 'Modifier'
+    document.getElementById('ref-code').value = code
+    document.getElementById('ref-code').disabled = true
+    document.getElementById('ref-libelle').value = libelle
+    document.getElementById('err-ref').style.display = 'none'
+    document.getElementById('modal-ref').style.display = 'flex'
+  }
+
+  window.supprimer = async (code, libelle) => {
+    if (!confirm(`Supprimer "${libelle}" (${code}) ?\nCette action est irréversible.`)) return
+    try {
+      await api.delete(`${cfg.endpoint}/${code}`)
+      toast.success('Valeur supprimée.')
+      charger()
+    } catch(err) {
+      toast.error(err.message)
     }
   }
 
   document.getElementById('btn-ajouter').addEventListener('click', () => {
+    modeEdition = false
+    codeEnEdition = null
+    document.getElementById('modal-ref-titre').textContent = 'Nouvelle valeur'
     document.getElementById('ref-code').value = ''
+    document.getElementById('ref-code').disabled = false
     document.getElementById('ref-libelle').value = ''
     document.getElementById('err-ref').style.display = 'none'
     document.getElementById('modal-ref').style.display = 'flex'
@@ -155,12 +189,23 @@
   document.getElementById('btn-sauvegarder-ref').addEventListener('click', async () => {
     const errEl = document.getElementById('err-ref')
     errEl.style.display = 'none'
-    const body = {}
-    body[cfg.codeKey] = document.getElementById('ref-code').value
-    body[cfg.libKey] = document.getElementById('ref-libelle').value
+    const libelle = document.getElementById('ref-libelle').value.trim()
+    if (!libelle) { errEl.textContent = 'Le libellé est obligatoire.'; errEl.style.display = 'block'; return }
     try {
-      await api.post(cfg.endpoint, body)
-      toast.success('Valeur ajoutée.')
+      if (modeEdition) {
+        const body = {}
+        body[cfg.libKey] = libelle
+        await api.put(`${cfg.endpoint}/${codeEnEdition}`, body)
+        toast.success('Valeur modifiée.')
+      } else {
+        const body = {}
+        const code = document.getElementById('ref-code').value.trim()
+        if (!code) { errEl.textContent = 'Le code est obligatoire.'; errEl.style.display = 'block'; return }
+        body[cfg.codeKey] = code
+        body[cfg.libKey] = libelle
+        await api.post(cfg.endpoint, body)
+        toast.success('Valeur ajoutée.')
+      }
       document.getElementById('modal-ref').style.display = 'none'
       charger()
     } catch(err) {

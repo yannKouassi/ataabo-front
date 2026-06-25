@@ -116,7 +116,8 @@
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
-  const perm = getPermission('/adherents/demandes')
+  const navUrl = sessionStorage.getItem('lastNavUrl') || '/adherents/demandes'
+  const perm = getPermission(navUrl)
 
   let page = 0, totalPages = 1, filtreStatut = '', demandeActive = null
 
@@ -130,9 +131,9 @@
     tbody.innerHTML = `<tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
 
     try {
-      const data = await api.get(`/adhesions/organisation/${ctx.orgId}?${params}`)
+      const data = await api.get(`/adhesions/organisation/${ctx.orgId}`)
+      const items = Array.isArray(data) ? data : (data.content || [])
       totalPages = data.totalPages || 1
-      const items = data.content || []
 
       if (!items.length) {
         tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune demande</p></div></td></tr>`
@@ -144,13 +145,13 @@
       tbody.innerHTML = items.map(d => `
         <tr>
           <td>
-            <div style="font-weight:600;">${d.prenomDemandeur || ''} ${d.nomDemandeur || ''}</div>
+            <div style="font-weight:600;">${d.demandeur?.prenPersonne || ''} ${d.demandeur?.nomPersonne || ''}</div>
           </td>
-          <td style="font-size:13px; color:var(--text-muted);">${d.emailDemandeur || '—'}</td>
-          <td style="font-size:13px;">${d.dateCreation ? new Date(d.dateCreation).toLocaleDateString('fr-FR') : '—'}</td>
+          <td style="font-size:13px; color:var(--text-muted);">${d.demandeur?.emailPersonne || '—'}</td>
+          <td style="font-size:13px;">${d.dateDemandeAdhesion ? new Date(d.dateDemandeAdhesion).toLocaleDateString('fr-FR') : '—'}</td>
           <td>${badge(d.statut)}</td>
           <td>
-            <button class="btn btn-ghost btn-sm" onclick="voirDetail(${d.adhesionId}, '${d.statut}')">Voir</button>
+            <button class="btn btn-ghost btn-sm" onclick="voirDetail('${d.idAdhesion}', '${d.statut}')">Voir</button>
           </td>
         </tr>
       `).join('')
@@ -183,27 +184,36 @@
     try {
       const d = await api.get(`/adhesions/${id}`)
       document.getElementById('modal-body').innerHTML = `
+        ${d.urlPhotoDemandeur ? `<div style="text-align:center;margin-bottom:16px;"><img src="${d.urlPhotoDemandeur}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--border);"></div>` : ''}
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-          ${champ('Nom', `${d.prenomDemandeur} ${d.nomDemandeur}`)}
+          ${champ('Nom complet', `${d.prenomDemandeur || ''} ${d.nomDemandeur || ''}`)}
           ${champ('Email', d.emailDemandeur)}
-          ${champ('Date de naissance', d.dateNaissance ? new Date(d.dateNaissance).toLocaleDateString('fr-FR') : '—')}
-          ${champ('Sexe', d.libSexe)}
-          ${champ('Situation', d.situationMatrimoniale)}
+          ${champ('Date demande', d.dateDemandeAdhesion ? new Date(d.dateDemandeAdhesion).toLocaleDateString('fr-FR') : '—')}
           ${champ('Statut', d.statut)}
         </div>
-        ${d.urlPhotoDemandeur ? `<img src="${d.urlPhotoDemandeur}" style="width:90px;height:90px;border-radius:12px;object-fit:cover;margin-bottom:12px;">` : ''}
-        ${d.urlDocumentCni ? `<div style="margin-top:8px;"><a href="${d.urlDocumentCni}" target="_blank" class="btn btn-ghost btn-sm">Voir CNI</a></div>` : ''}
-        ${d.commentaireAi ? `<div style="background:var(--bg);border-radius:8px;padding:14px;margin-top:14px;font-size:13px;"><strong>Analyse IA :</strong><br/>${d.commentaireAi}</div>` : ''}
+        ${d.urlCni ? `<div style="margin-top:8px;"><a href="${d.urlCni}" target="_blank" class="btn btn-ghost btn-sm">Voir pièce d'identité</a></div>` : ''}
       `
       if (statut === 'EN_ATTENTE' && perm.peutEcrire) {
         document.getElementById('modal-footer').style.display = 'flex'
         document.getElementById('btn-approuver').onclick = () => {
-          const nom = demandeActive?.nomDemandeur || 'ce membre'
-          if (confirm(`Approuver la demande de ${nom} ?\n\nCette action créera son compte membre et lui enverra un email de bienvenue.`)) decider('APPROUVER')
+          const btn = document.getElementById('btn-approuver')
+          if (btn.disabled) return
+          const nom = `${d.prenomDemandeur || ''} ${d.nomDemandeur || ''}`.trim() || 'ce membre'
+          if (confirm(`Approuver la demande de ${nom} ?\n\nCette action créera son compte membre et lui enverra un email de bienvenue.`)) {
+            btn.disabled = true
+            document.getElementById('btn-rejeter').disabled = true
+            decider('APPROUVER')
+          }
         }
         document.getElementById('btn-rejeter').onclick = () => {
-          const nom = demandeActive?.nomDemandeur || 'ce membre'
-          if (confirm(`Rejeter la demande de ${nom} ?\n\nLe candidat sera notifié par email.`)) decider('REJETER')
+          const btn = document.getElementById('btn-rejeter')
+          if (btn.disabled) return
+          const nom = `${d.prenomDemandeur || ''} ${d.nomDemandeur || ''}`.trim() || 'ce membre'
+          if (confirm(`Rejeter la demande de ${nom} ?\n\nLe candidat sera notifié par email.`)) {
+            btn.disabled = true
+            document.getElementById('btn-approuver').disabled = true
+            decider('REJETER')
+          }
         }
       }
     } catch(err) {
@@ -213,6 +223,12 @@
 
   async function decider(action) {
     const endpoint = action === 'APPROUVER' ? 'approuver' : 'rejeter'
+    const btnApprouver = document.getElementById('btn-approuver')
+    const btnRejeter = document.getElementById('btn-rejeter')
+    btnApprouver.disabled = true
+    btnRejeter.disabled = true
+    btnApprouver.textContent = action === 'APPROUVER' ? 'En cours...' : 'Approuver'
+    btnRejeter.textContent = action === 'REJETER' ? 'En cours...' : 'Rejeter'
     try {
       await api.put(`/adhesions/${demandeActive.id}/${endpoint}`, {})
       toast.success(action === 'APPROUVER' ? 'Demande approuvée !' : 'Demande rejetée.')
@@ -220,6 +236,10 @@
       charger()
     } catch(err) {
       toast.error(err.message)
+      btnApprouver.disabled = false
+      btnRejeter.disabled = false
+      btnApprouver.textContent = 'Approuver'
+      btnRejeter.textContent = 'Rejeter'
     }
   }
 

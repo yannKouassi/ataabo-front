@@ -158,7 +158,7 @@ const NAV_PAGES = {
     '/paiements/cotisations':         '/src/pages/cotisations.html',
     '/paiements/recouvrement':        '/src/pages/recouvrement.html',
     '/paiements/adhesion-plateforme': '/src/pages/cotisations.html',
-    '/paiements/adhesion-organisation':'/src/pages/cotisations.html',
+    '/paiements/adhesion-organisation':'/src/pages/demandes-adhesion.html',
     // Dons
     '/dons/emission':                 '/src/pages/dons-emission.html',
     '/dons/reception':                '/src/pages/dons-reception.html',
@@ -189,6 +189,9 @@ const NAV_PAGES = {
     '/habilitations/droits':          '/src/pages/habilitations.html',
     // Activités
     '/activites':                     '/src/pages/audit.html',
+    // Admin plateforme
+    '/admin/organisations-en-attente': '/src/pages/admin-organisations-attente.html',
+    '/admin/organisations':            '/src/pages/admin-organisations-attente.html',
     // Audit & sauvegardes
     '/audit':                         '/src/pages/audit.html',
     '/sauvegardes':                   '/src/pages/sauvegardes.html',

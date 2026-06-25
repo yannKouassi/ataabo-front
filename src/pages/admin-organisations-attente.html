@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Adhésion à la plateforme</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Ataabo</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar-search" style="visibility:hidden;"></div>
+    <div class="topbar-actions"></div>
+  </header>
+
+  <main class="main-content">
+    <div style="margin-bottom:24px;">
+      <div class="page-title">Adhésion à la plateforme</div>
+      <div class="page-subtitle">Dossiers validés par l'IA — en attente de votre approbation</div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Organisation</th>
+              <th>Type</th>
+              <th>Pays</th>
+              <th>N° Agrément</th>
+              <th>Fondateur</th>
+              <th>Diagnostic IA</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-orgs">
+            <tr><td colspan="8"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal détail organisation -->
+<div class="modal-overlay" id="modal-detail" style="display:none;">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-titre">Dossier organisation</span>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- Modal rejet -->
+<div class="modal-overlay" id="modal-rejet" style="display:none;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title">Motif de rejet</span>
+      <button class="modal-close" id="modal-rejet-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Motif *</label>
+        <textarea class="form-input" id="f-motif" rows="4" placeholder="Expliquez pourquoi ce dossier est rejeté..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-rejet-annuler">Annuler</button>
+      <button class="btn btn-danger" id="btn-rejet-confirmer" style="background:#dc2626;color:#fff;border:none;">Rejeter le dossier</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, logout, applyOrgColor } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  let orgARejeterId = null
+
+  async function charger() {
+    const tbody = document.getElementById('tbody-orgs')
+    try {
+      const orgs = await api.get('/organisations/en-attente')
+      if (!orgs || !orgs.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Aucun dossier en attente</p></div></td></tr>`
+        return
+      }
+      tbody.innerHTML = orgs.map(o => `
+        <tr>
+          <td style="font-weight:600;">${o.libAssociation || '—'}</td>
+          <td><span class="badge badge-secondary">${o.typeOrganisation || '—'}</span></td>
+          <td>${o.pays || '—'}</td>
+          <td style="font-family:monospace;font-size:12px;">${o.numAgr || '—'}</td>
+          <td style="font-size:13px;">${o.createurPrenom ? (o.createurPrenom + ' ' + o.createurNom) : '—'}</td>
+          <td>${badgeDiagnostic(o)}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${o.dateCreation ? new Date(o.dateCreation).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" data-id="${o.id}" data-action="voir">Voir dossier</button>
+          </td>
+        </tr>
+      `).join('')
+
+      tbody.querySelectorAll('[data-action="voir"]').forEach(btn => {
+        btn.addEventListener('click', () => voirDossier(btn.dataset.id, orgs.find(o => o.id === btn.dataset.id)))
+      })
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="color:#b91c1c;padding:20px;">${err.message}</td></tr>`
+    }
+  }
+
+  function badgeDiagnostic(o) {
+    const docs = o.documents || []
+    const agrement = docs.find(d => d.categorieDocument === 'AGREMENT')
+    const diag = agrement?.diagnosticIA || null
+    if (!diag) return `<span class="badge badge-secondary">Sans document</span>`
+    if (diag === 'CONFORME') return `<span class="badge badge-success">✓ Conforme IA</span>`
+    if (diag === 'SCAN_ILLISIBLE') return `<span class="badge badge-warning">Illisible</span>`
+    return `<span class="badge badge-warning">${diag}</span>`
+  }
+
+  function voirDossier(id, o) {
+    document.getElementById('modal-titre').textContent = o.libAssociation || 'Dossier'
+    document.getElementById('modal-body').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:0;">
+        ${ligne('Organisation', o.libAssociation)}
+        ${ligne('Type', o.typeOrganisation)}
+        ${ligne('Pays', o.pays)}
+        ${ligne('N° Agrément', o.numAgr)}
+        ${ligne('Email organisation', o.emailAssociation)}
+        ${ligne('Téléphone', o.telAssociation)}
+        ${ligne('Fondateur', o.createurPrenom ? (o.createurPrenom + ' ' + o.createurNom) : '—')}
+        ${ligne('Email fondateur', o.createurEmail)}
+        ${ligne('Date soumission', o.dateCreation ? new Date(o.dateCreation).toLocaleDateString('fr-FR') : '—')}
+      </div>
+      ${o.documentUrl ? `
+        <div style="margin-top:16px;padding:12px;background:var(--bg-subtle,#f9fafb);border-radius:8px;border:1px solid var(--border);">
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Document agrément</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;">${o.documentNom || 'Document'}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="badge badge-success">✓ Conforme IA</span>
+              <a href="${o.documentUrl}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;">Ouvrir ↗</a>
+            </div>
+          </div>
+        </div>` : `
+        <div style="margin-top:16px;padding:12px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e;">
+          Aucun document d'agrément fourni.
+        </div>`}
+    `
+
+    document.getElementById('modal-footer').innerHTML = `
+      <button class="btn btn-ghost" id="btn-fermer-detail">Fermer</button>
+      <button class="btn btn-ghost" style="color:#dc2626;" id="btn-rejeter-org" data-id="${id}">Rejeter</button>
+      <button class="btn btn-primary" id="btn-approuver-org" data-id="${id}">✓ Approuver</button>
+    `
+
+    document.getElementById('modal-detail').style.display = 'flex'
+    document.getElementById('btn-fermer-detail').addEventListener('click', () => document.getElementById('modal-detail').style.display = 'none')
+
+    document.getElementById('btn-approuver-org').addEventListener('click', async () => {
+      if (!confirm(`Approuver l'organisation "${o.libAssociation}" ?`)) return
+      try {
+        await api.put(`/organisations/${id}/approuver`)
+        toast.success('Organisation approuvée ! Le fondateur peut maintenant accéder à la plateforme.')
+        document.getElementById('modal-detail').style.display = 'none'
+        charger()
+      } catch(err) {
+        toast.error(err.message)
+      }
+    })
+
+    document.getElementById('btn-rejeter-org').addEventListener('click', () => {
+      orgARejeterId = id
+      document.getElementById('f-motif').value = ''
+      document.getElementById('modal-detail').style.display = 'none'
+      document.getElementById('modal-rejet').style.display = 'flex'
+    })
+  }
+
+  function ligne(label, val) {
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;color:var(--text-muted);">${label}</span>
+      <span style="font-size:13.5px;font-weight:600;">${val || '—'}</span>
+    </div>`
+  }
+
+  document.getElementById('modal-close').addEventListener('click', () => document.getElementById('modal-detail').style.display = 'none')
+  document.getElementById('modal-rejet-close').addEventListener('click', () => document.getElementById('modal-rejet').style.display = 'none')
+  document.getElementById('btn-rejet-annuler').addEventListener('click', () => document.getElementById('modal-rejet').style.display = 'none')
+
+  document.getElementById('btn-rejet-confirmer').addEventListener('click', async () => {
+    const motif = document.getElementById('f-motif').value.trim()
+    if (!motif) return toast.warning('Saisissez un motif de rejet.')
+    try {
+      await api.put(`/organisations/${orgARejeterId}/rejeter`, { motif })
+      toast.success('Dossier rejeté.')
+      document.getElementById('modal-rejet').style.display = 'none'
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    }
+  })
+
+  charger()
+</script>
+</body>
+</html>

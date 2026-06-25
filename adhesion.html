@@ -276,24 +276,28 @@
       <p>Votre organisation est en cours de validation. Voici les prochaines étapes :</p>
       <div class="progress-steps" style="max-width:440px; margin:24px auto 0;">
         <div class="progress-item p-done">
-          <span>✅</span> Compte créé et email confirmé
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Compte créé et email confirmé
         </div>
         <div class="progress-item p-done">
-          <span>✅</span> Organisation enregistrée et email confirmé
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Organisation enregistrée et email confirmé
         </div>
         <div class="progress-item p-pending">
-          <span>⏳</span> Analyse du dossier par Lia (IA)
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Analyse du dossier par l'IA
         </div>
         <div class="progress-item p-wait">
-          <span>🔲</span> Validation par l'administrateur de la plateforme
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Validation par l'administrateur de la plateforme
         </div>
         <div class="progress-item p-wait">
-          <span>🔲</span> Activation de votre organisation
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Activation de votre organisation
         </div>
       </div>
       <div style="margin-top:28px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="window.location.href='/login.html'">Se connecter</button>
-        <button class="btn btn-outline" onclick="window.location.href='/accueil.html'">Retour à l'accueil</button>
+        <button class="btn btn-primary" onclick="window.location.href='/accueil.html'">Retour à l'accueil</button>
       </div>
     </div>
   </div>
@@ -336,16 +340,7 @@
         <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" id="adh-prenom" placeholder="Yannick"/></div>
       </div>
       <div class="form-group"><label class="form-label">Email *</label><input type="email" class="form-input" id="adh-email" placeholder="vous@exemple.com"/></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Date de naissance *</label><input type="date" class="form-input" id="adh-naissance"/></div>
-        <div class="form-group"><label class="form-label">Sexe *</label><select class="form-input" id="adh-sexe"><option value="">Chargement...</option></select></div>
-      </div>
-      <div class="form-group"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="adh-situation"><option value="">Chargement...</option></select></div>
-      <div class="form-section-title">Mot de passe</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" class="form-input" id="adh-password" placeholder="6 à 10 caractères"/></div>
-        <div class="form-group"><label class="form-label">Confirmer *</label><input type="password" class="form-input" id="adh-confirm" placeholder="••••••"/></div>
-      </div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="adh-tel" placeholder="+225 07 00 00 00 00"/></div>
       <div class="form-section-title">Documents</div>
       <div class="form-row">
         <div class="form-group">
@@ -399,6 +394,7 @@
   let orgCreeId = null, orgCreeEmail = ''
   let selectedOrg = null
   let toutesOrgs = []
+  let docFile = null
 
   // ─── RÉFÉRENTIELS ─────────────────────────────────────
   async function chargerReferentiels() {
@@ -602,7 +598,50 @@
       renderSteps(STEPS_CREER, 2)
       show('sec-fond-otp')
     } catch(e) {
-      showErr('err-fond', e.message || 'Erreur lors de l\'inscription.')
+      // Vérifier silencieusement le statut pour adapter l'affichage (sans révéler si l'email existe)
+      try {
+        const statut = await api.get(`/inscription/statut?email=${encodeURIComponent(email)}`)
+        if (statut.statut === 'ACTIF') {
+          // Compte déjà actif, pas encore d'organisation → reprendre ici sans passer par le login
+          const errEl = document.getElementById('err-fond')
+          errEl.innerHTML = `
+            <div style="margin-bottom:8px;">Saisissez votre mot de passe pour continuer.</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="password" id="fond-reprendre-mdp" class="form-input" placeholder="Mot de passe" style="max-width:220px;"/>
+              <button class="btn btn-primary btn-sm" id="btn-reprendre-org">Reprendre →</button>
+            </div>
+            <div id="err-reprendre" style="color:#b91c1c;font-size:12px;margin-top:6px;display:none;"></div>`
+          errEl.style.display = 'block'
+          document.getElementById('btn-reprendre-org').addEventListener('click', async () => {
+            const mdp = document.getElementById('fond-reprendre-mdp').value
+            if (!mdp) return
+            try {
+              const loginData = await api.post('/connexion', { email, password: mdp })
+              // Stocker le token pour les appels API de création d'org
+              localStorage.setItem('accessToken', loginData.accessToken)
+              if (loginData.refreshToken) localStorage.setItem('refreshToken', loginData.refreshToken)
+              fondEmail = email
+              renderSteps(STEPS_CREER, 3)
+              show('sec-org-infos')
+            } catch {
+              document.getElementById('err-reprendre').textContent = 'Mot de passe incorrect.'
+              document.getElementById('err-reprendre').style.display = 'block'
+            }
+          })
+        } else if (statut.statut === 'EN_ATTENTE_VERIFICATION') {
+          // Email non vérifié → renvoyer le code
+          fondEmail = email
+          fondPassword = password
+          document.getElementById('fond-email-display').textContent = email
+          setupOtpInputs('fond-otp-inputs')
+          renderSteps(STEPS_CREER, 2)
+          show('sec-fond-otp')
+        } else {
+          showErr('err-fond', e.message || 'Erreur lors de l\'inscription.')
+        }
+      } catch {
+        showErr('err-fond', e.message || 'Erreur lors de l\'inscription.')
+      }
     } finally {
       btn.disabled = false; btn.textContent = 'Continuer →'
     }
@@ -617,9 +656,7 @@
 
     btn.disabled = true; btn.textContent = 'Vérification...'
     try {
-      await api.post('/activation', { email: fondEmail, code })
-      // Connexion automatique pour récupérer le JWT
-      const loginResp = await api.post('/connexion', { email: fondEmail, password: fondPassword })
+      const loginResp = await api.post('/activation', { email: fondEmail, code })
       saveLogin(loginResp)
       renderSteps(STEPS_CREER, 3)
       show('sec-org-infos')
@@ -650,6 +687,21 @@
     } catch(e) {}
   }
 
+  window.renvoyerOtpOrg = async () => {
+    if (!orgCreeId) return
+    try {
+      await api.post(`/organisations/${orgCreeId}/renvoyer-otp`)
+      // Vider les inputs OTP
+      document.querySelectorAll('#org-otp-inputs input').forEach(i => i.value = '')
+      document.querySelectorAll('#org-otp-inputs input')[0].focus()
+      hideErr('err-org-otp')
+      const resend = document.querySelector('#sec-org-otp .otp-resend span')
+      if (resend) { resend.textContent = 'Code envoyé !'; setTimeout(() => { resend.textContent = 'Renvoyer le code' }, 3000) }
+    } catch(e) {
+      showErr('err-org-otp', 'Impossible de renvoyer le code. Réessayez.')
+    }
+  }
+
   // ─── FLUX CRÉER — ÉTAPE 3 : INFOS ORGANISATION ───────
   document.getElementById('btn-org-soumettre').addEventListener('click', async () => {
     const btn = document.getElementById('btn-org-soumettre')
@@ -665,15 +717,22 @@
     const lat = document.getElementById('org-lat').value
     const lng = document.getElementById('org-lng').value
     const description = document.getElementById('org-description').value.trim()
-    const docFile = document.getElementById('org-doc').files[0]
+    docFile = document.getElementById('org-doc').files[0]
 
     if (!nom || !type || !pays || !email || !agrement) {
       return showErr('err-org', 'Veuillez remplir tous les champs obligatoires (*).')
     }
 
-    btn.disabled = true; btn.textContent = 'Création en cours...'
+    if (!docFile) {
+      return showErr('err-org', 'Veuillez joindre votre document d\'agrément.')
+    }
+
+    btn.disabled = true; btn.textContent = 'Analyse du document en cours...'
     try {
-      const orgResp = await api.post('/organisations/creer', {
+      // Envoyer les données org + fichier en une seule requête multipart
+      // L'IA valide le document en premier côté backend — rien n'est créé si rejeté
+      const fd = new FormData()
+      fd.append('data', new Blob([JSON.stringify({
         libAssociation: nom,
         typeOrganisation: type,
         codePays: pays,
@@ -685,18 +744,14 @@
         latitudeAssoc: lat ? parseFloat(lat) : null,
         longitudeAssoc: lng ? parseFloat(lng) : null,
         description: description || null,
-      })
+      })], { type: 'application/json' }))
+      fd.append('file', docFile)
+
+      const orgResp = await api.upload('/organisations/creer', fd)
       orgCreeId = orgResp.id
       orgCreeEmail = email
+
       document.getElementById('org-email-display').textContent = email
-
-      // Upload document d'agrément si fourni
-      if (docFile) {
-        const fd = new FormData()
-        fd.append('file', docFile)
-        await api.upload(`/organisations/${orgCreeId}/upload-agrement`, fd)
-      }
-
       setupOtpInputs('org-otp-inputs')
       renderSteps(STEPS_CREER, 4)
       show('sec-org-otp')
@@ -806,35 +861,32 @@
     const nom = document.getElementById('adh-nom').value.trim()
     const prenom = document.getElementById('adh-prenom').value.trim()
     const email = document.getElementById('adh-email').value.trim()
-    const naissance = document.getElementById('adh-naissance').value
-    const sexe = document.getElementById('adh-sexe').value
-    const situation = document.getElementById('adh-situation').value
-    const password = document.getElementById('adh-password').value
-    const confirm = document.getElementById('adh-confirm').value
+    const tel = document.getElementById('adh-tel').value.trim()
 
-    if (!nom || !prenom || !email || !naissance || !sexe || !situation || !password) {
+    if (!nom || !prenom || !email) {
       return showErr('err-adhesion', 'Veuillez remplir tous les champs obligatoires.')
     }
-    if (password !== confirm) return showErr('err-adhesion', 'Les mots de passe ne correspondent pas.')
 
-    btn.disabled = true; btn.textContent = 'Envoi en cours...'
+    const photo = document.getElementById('adh-photo').files[0]
+    const cni = document.getElementById('adh-cni').files[0]
+
+    if (!photo) return showErr('err-adhesion', 'La photo de profil est obligatoire.')
+    if (!cni)   return showErr('err-adhesion', 'La pièce d\'identité est obligatoire.')
+
+    btn.disabled = true; btn.textContent = 'Validation en cours...'
     try {
+      // Un seul appel multipart : IA valide en premier, rien créé si rejeté
       const fd = new FormData()
-      fd.append('orgId', selectedOrg.orgId || selectedOrg.id)
-      fd.append('nom', nom)
-      fd.append('prenom', prenom)
-      fd.append('email', email)
-      fd.append('dateNaissance', naissance)
-      fd.append('libSexe', sexe)
-      fd.append('situationMatrimoniale', situation)
-      fd.append('password', password)
-      fd.append('confirmPassword', confirm)
-      const photo = document.getElementById('adh-photo').files[0]
-      const cni = document.getElementById('adh-cni').files[0]
-      if (photo) fd.append('photo', photo)
-      if (cni) fd.append('documentCni', cni)
-
-      await api.upload('/adhesion', fd)
+      fd.append('data', new Blob([JSON.stringify({
+        organisationId: selectedOrg.id,
+        nom,
+        prenom,
+        email,
+        telephone: tel || null,
+      })], { type: 'application/json' }))
+      fd.append('photo', photo)
+      fd.append('cni', cni)
+      const adhesion = await api.upload('/adhesions/postuler', fd)
 
       document.getElementById('succes-adhesion-msg').textContent =
         `Votre demande d'adhésion à ${selectedOrg.nomOrganisation || selectedOrg.libAssociation} a bien été envoyée. L'administrateur de l'organisation examinera votre dossier et vous recevrez une réponse par email.`

@@ -61,6 +61,7 @@
               <th>Groupe / Rôle</th>
               <th>Statut</th>
               <th>Depuis</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="tbody-utilisateurs">
@@ -81,6 +82,7 @@
   import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
   import { buildHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
@@ -90,7 +92,8 @@
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
-  const perm = getPermission('/utilisateurs/liste')
+  const navUrl = sessionStorage.getItem('lastNavUrl') || '/utilisateurs/liste'
+  const perm = getPermission(navUrl)
 
   let page = 0, totalPages = 1
 
@@ -100,7 +103,7 @@
     if (q) params.set('q', q)
 
     const tbody = document.getElementById('tbody-utilisateurs')
-    tbody.innerHTML = `<tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
 
     try {
       const data = await api.get(`/utilisateurs/organisation/${ctx.orgId}?${params}`)
@@ -108,14 +111,14 @@
       totalPages = data.totalPages || 1
 
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucun utilisateur</p></div></td></tr>`
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun utilisateur</p></div></td></tr>`
         document.getElementById('pagination-info').textContent = ''
         document.getElementById('pagination-btns').innerHTML = ''
         return
       }
 
       tbody.innerHTML = items.map(u => `
-        <tr>
+        <tr id="row-${u.idUtilisateur}">
           <td>
             <div style="display:flex; align-items:center; gap:10px;">
               <div style="width:34px;height:34px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">
@@ -129,8 +132,12 @@
           </td>
           <td style="font-family:monospace;font-size:12px;">${u.numAdherent||'—'}</td>
           <td><span class="badge badge-secondary">${u.libelleGroupe||'—'}</span></td>
-          <td><span class="badge ${u.actif ? 'badge-success' : 'badge-danger'}">${u.actif ? 'Actif' : 'Inactif'}</span></td>
+          <td><span class="badge ${u.actif ? 'badge-success' : 'badge-danger'}" id="badge-${u.idUtilisateur}">${u.actif ? 'Actif' : 'Inactif'}</span></td>
           <td style="font-size:12.5px;color:var(--text-muted);">${u.dateCreation ? new Date(u.dateCreation).toLocaleDateString('fr-FR') : '—'}</td>
+          <td style="display:flex;gap:6px;align-items:center;">
+            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" id="btn-toggle-${u.idUtilisateur}" onclick="toggleActif('${u.idUtilisateur}', '${u.prenomPersonne||''} ${u.nomPersonne||''}'.trim(), ${u.actif})">${u.actif ? 'Désactiver' : 'Activer'}</button>` : ''}
+            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimerAcces('${u.idUtilisateur}', '${u.prenomPersonne||''} ${u.nomPersonne||''}'.trim())">Supprimer accès</button>` : ''}
+          </td>
         </tr>
       `).join('')
 
@@ -139,7 +146,38 @@
         <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
         <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+    }
+  }
+
+  window.toggleActif = async (id, nom, actuelActif) => {
+    const action = actuelActif ? 'désactiver' : 'activer'
+    if (!confirm(`Voulez-vous ${action} le compte de ${nom || 'cet utilisateur'} ?`)) return
+    const btn = document.getElementById(`btn-toggle-${id}`)
+    if (btn) { btn.disabled = true; btn.textContent = '...' }
+    try {
+      const res = await api.put(`/utilisateurs/${id}/toggle-actif`, {})
+      const badge = document.getElementById(`badge-${id}`)
+      if (badge) {
+        badge.className = `badge ${res.actif ? 'badge-success' : 'badge-danger'}`
+        badge.textContent = res.actif ? 'Actif' : 'Inactif'
+      }
+      if (btn) { btn.disabled = false; btn.textContent = res.actif ? 'Désactiver' : 'Activer' }
+      toast.success(res.actif ? 'Compte activé.' : 'Compte désactivé.')
+    } catch(err) {
+      if (btn) { btn.disabled = false; btn.textContent = actuelActif ? 'Désactiver' : 'Activer' }
+      toast.error(err.message)
+    }
+  }
+
+  window.supprimerAcces = async (id, nom) => {
+    if (!confirm(`Supprimer l'accès de ${nom || 'cet utilisateur'} ?\n\nIl restera adhérent mais n'aura plus accès à la plateforme.`)) return
+    try {
+      await api.delete(`/utilisateurs/${id}/acces`)
+      toast.success('Accès supprimé.')
+      charger()
+    } catch(err) {
+      toast.error(err.message)
     }
   }
 

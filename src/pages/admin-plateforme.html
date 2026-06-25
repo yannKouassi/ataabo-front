@@ -52,9 +52,18 @@
         <textarea class="form-input" id="plat-description" rows="3" placeholder="Description de la plateforme"></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label">URL du logo</label>
-        <input type="text" class="form-input" id="plat-logo" placeholder="https://..."/>
-        <div id="plat-logo-preview" style="margin-top:8px;"></div>
+        <label class="form-label">Logo</label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div id="plat-logo-preview" style="width:80px;height:80px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--bg-secondary);">
+            <span style="color:var(--text-muted);font-size:11px;">Aucun</span>
+          </div>
+          <div>
+            <input type="file" id="plat-logo-file" accept="image/*" style="display:none;"/>
+            <button class="btn btn-secondary btn-sm" id="btn-choisir-logo" type="button">Choisir un fichier</button>
+            <div id="plat-logo-nom" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+            <div id="plat-logo-upload-progress" style="display:none;font-size:12px;color:var(--primary);margin-top:4px;">Upload en cours...</div>
+          </div>
+        </div>
       </div>
 
       <button class="btn btn-primary" id="btn-sauvegarder" style="margin-top:8px;">Sauvegarder</button>
@@ -79,20 +88,50 @@
   const perm = getPermission('/admin/plateforme/infos')
   if (!perm.peutEcrire) document.getElementById('btn-sauvegarder').style.display = 'none'
 
+  function afficherLogoPreview(url) {
+    const el = document.getElementById('plat-logo-preview')
+    el.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;">`
+  }
+
   async function charger() {
     try {
       const p = await api.get('/plateforme')
       document.getElementById('plat-nom').value = p.nom || ''
       document.getElementById('plat-description').value = p.description || ''
-      document.getElementById('plat-logo').value = p.urlLogo || ''
-      if (p.urlLogo) {
-        document.getElementById('plat-logo-preview').innerHTML = `<img src="${p.urlLogo}" style="height:60px;border-radius:8px;object-fit:contain;">`
-      }
+      if (p.urlLogo) afficherLogoPreview(p.urlLogo)
     } catch(err) {
       document.getElementById('err-plat').textContent = err.message
       document.getElementById('err-plat').style.display = 'block'
     }
   }
+
+  // Sélection fichier logo
+  document.getElementById('btn-choisir-logo').addEventListener('click', () => {
+    document.getElementById('plat-logo-file').click()
+  })
+
+  document.getElementById('plat-logo-file').addEventListener('change', async (e) => {
+    const fichier = e.target.files[0]
+    if (!fichier) return
+    document.getElementById('plat-logo-nom').textContent = fichier.name
+    const progress = document.getElementById('plat-logo-upload-progress')
+    const errEl = document.getElementById('err-plat')
+    errEl.style.display = 'none'
+    progress.style.display = 'block'
+    try {
+      const formData = new FormData()
+      formData.append('fichier', fichier)
+      const res = await api.upload('/plateforme/upload-logo', formData)
+      afficherLogoPreview(res.urlLogo)
+      progress.style.display = 'none'
+      document.getElementById('ok-plat').textContent = 'Logo mis à jour.'
+      document.getElementById('ok-plat').style.display = 'block'
+    } catch(err) {
+      progress.style.display = 'none'
+      errEl.textContent = err.message
+      errEl.style.display = 'block'
+    }
+  })
 
   document.getElementById('btn-sauvegarder').addEventListener('click', async () => {
     const errEl = document.getElementById('err-plat')
@@ -103,8 +142,6 @@
         nom: document.getElementById('plat-nom').value,
         description: document.getElementById('plat-description').value,
       })
-      const logo = document.getElementById('plat-logo').value
-      if (logo) await api.put('/plateforme/logo', { urlLogo: logo })
       okEl.textContent = 'Plateforme mise à jour avec succès.'
       okEl.style.display = 'block'
     } catch(err) {

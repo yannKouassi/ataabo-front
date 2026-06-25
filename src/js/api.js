@@ -5,7 +5,7 @@
 const BASE = '/api'
 
 function getToken() {
-  return localStorage.getItem('accessToken')
+  return localStorage.getItem('accessToken') || localStorage.getItem('_tmp_token')
 }
 
 function getLangue() {
@@ -42,7 +42,8 @@ async function request(method, path, body = null) {
   }
 
   if (res.status === 204) return null
-  return res.json()
+  const text = await res.text()
+  return text ? JSON.parse(text) : null
 }
 
 async function tryRefresh() {
