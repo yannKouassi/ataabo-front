@@ -147,70 +147,91 @@
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   const perm = getPermission('/adherents/liste')
+  // Permission pour gérer les accès plateforme (donner/changer groupe)
+  const _pa1 = getPermission('/utilisateurs/liste')
+  const _pa2 = getPermission('/utilisateurs/groupes')
+  const permAcces = {
+    peutLire:      _pa1.peutLire      || _pa2.peutLire,
+    peutEcrire:    _pa1.peutEcrire    || _pa2.peutEcrire,
+    peutSupprimer: _pa1.peutSupprimer || _pa2.peutSupprimer,
+  }
 
   let page = 0
   const size = 15
   let totalPages = 0
 
+  let tousLesAdherents = []
+
   async function charger() {
-    const statut = document.getElementById('filtre-statut').value
-    const recherche = document.getElementById('search-input').value
-
-    const params = new URLSearchParams({ page, size })
-    if (statut) params.set('statut', statut)
-    if (recherche) params.set('q', recherche)
-
     const tbody = document.getElementById('tbody-adherents')
     tbody.innerHTML = `<tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
-
     try {
-      const data = await api.get(`/adherents/organisation/${ctx.orgId}?${params}`)
-      totalPages = data.totalPages || 1
-      const items = data.content || []
-
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun adhérent trouvé</p></div></td></tr>`
-        document.getElementById('pagination-info').textContent = ''
-        document.getElementById('pagination-btns').innerHTML = ''
-        return
-      }
-
-      tbody.innerHTML = items.map(a => `
-        <tr>
-          <td><span style="font-family:monospace; font-size:12px;">${a.numAdherent || '—'}</span></td>
-          <td>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">
-                ${(a.prenom?.[0] || '') + (a.nom?.[0] || '')}
-              </div>
-              <div>
-                <div style="font-weight:600; font-size:13.5px;">${a.prenom} ${a.nom}</div>
-              </div>
-            </div>
-          </td>
-          <td style="font-size:13px; color:var(--text-muted);">${a.email || '—'}</td>
-          <td style="font-size:13px;">${a.dateAdhesion ? new Date(a.dateAdhesion).toLocaleDateString('fr-FR') : '—'}</td>
-          <td>${badgeStatut(a.statut)}</td>
-          <td style="display:flex;gap:6px;align-items:center;">
-            <button class="btn btn-ghost btn-sm" onclick="voirDetail(${a.adhesionId})">Voir</button>
-            <button class="btn btn-outline btn-sm btn-acces" data-num="${a.numAdherent}" data-nom="${a.prenom} ${a.nom}" data-has="${a.aAcces ? '1' : '0'}" style="font-size:11px;padding:3px 8px;${a.aAcces ? 'color:var(--primary);' : ''}">
-              ${a.aAcces ? '✓ Accès' : 'Donner accès'}
-            </button>
-          </td>
-        </tr>
-      `).join('')
-
-      tbody.querySelectorAll('.btn-acces').forEach(btn => {
-        btn.addEventListener('click', () => ouvrirModalAcces(btn.dataset.num, btn.dataset.nom, btn.dataset.has === '1'))
-      })
-
-      const debut = page * size + 1
-      const fin = Math.min((page + 1) * size, data.totalElements || items.length)
-      document.getElementById('pagination-info').textContent = `${debut}–${fin} sur ${data.totalElements || items.length} adhérents`
-      afficherPagination()
+      const data = await api.get(`/adherents/organisation/${ctx.orgId}`)
+      tousLesAdherents = Array.isArray(data) ? data : (data.content || [])
+      afficherFiltres()
     } catch (err) {
       tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c; padding:20px; text-align:center;">Erreur : ${err.message}</td></tr>`
     }
+  }
+
+  function afficherFiltres() {
+    const statut = document.getElementById('filtre-statut').value
+    const recherche = document.getElementById('search-input').value.toLowerCase().trim()
+    const tbody = document.getElementById('tbody-adherents')
+
+    let items = tousLesAdherents
+    if (statut) items = items.filter(a => a.statut === statut)
+    if (recherche) items = items.filter(a =>
+      (a.nom || '').toLowerCase().includes(recherche) ||
+      (a.prenom || '').toLowerCase().includes(recherche) ||
+      (a.email || '').toLowerCase().includes(recherche) ||
+      (a.numAdherent || '').toLowerCase().includes(recherche)
+    )
+
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun adhérent trouvé</p></div></td></tr>`
+      document.getElementById('pagination-info').textContent = ''
+      document.getElementById('pagination-btns').innerHTML = ''
+      return
+    }
+
+    const debut = page * size
+    const paginees = items.slice(debut, debut + size)
+    totalPages = Math.ceil(items.length / size)
+
+    tbody.innerHTML = paginees.map(a => `
+      <tr>
+        <td><span style="font-family:monospace; font-size:12px;">${a.numAdherent || '—'}</span></td>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">
+              ${(a.prenom?.[0] || '') + (a.nom?.[0] || '')}
+            </div>
+            <div style="font-weight:600; font-size:13.5px;">${a.prenom || ''} ${a.nom || ''}</div>
+          </div>
+        </td>
+        <td style="font-size:13px; color:var(--text-muted);">${a.email || '—'}</td>
+        <td style="font-size:13px;">${a.dateAdhesion ? new Date(a.dateAdhesion).toLocaleDateString('fr-FR') : '—'}</td>
+        <td>${badgeStatut(a.statut)}</td>
+        <td style="display:flex;gap:6px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" data-num="${a.numAdherent}" data-action="voir">Voir</button>
+          ${permAcces.peutEcrire ? `
+          <button class="btn btn-outline btn-sm btn-acces" data-num="${a.numAdherent}" data-nom="${a.prenom || ''} ${a.nom || ''}" data-has="${a.aAcces ? '1' : '0'}" style="font-size:11px;padding:3px 8px;${a.aAcces ? 'color:var(--primary);' : ''}">
+            ${a.aAcces ? '✓ Accès' : 'Donner accès'}
+          </button>` : (a.aAcces ? `<span class="badge badge-success" style="font-size:11px;">✓ Accès</span>` : '')}
+        </td>
+      </tr>
+    `).join('')
+
+    tbody.querySelectorAll('[data-action="voir"]').forEach(btn => {
+      btn.addEventListener('click', () => voirDetail(btn.dataset.num))
+    })
+    tbody.querySelectorAll('.btn-acces').forEach(btn => {
+      btn.addEventListener('click', () => ouvrirModalAcces(btn.dataset.num, btn.dataset.nom, btn.dataset.has === '1'))
+    })
+
+    document.getElementById('pagination-info').textContent = `${debut + 1}–${Math.min(debut + size, items.length)} sur ${items.length} adhérents`
+    afficherPagination()
   }
 
   function badgeStatut(statut) {
@@ -277,27 +298,48 @@
     }
   })
 
-  window.voirDetail = async (id) => {
+  window.voirDetail = async (numAdherent) => {
+    const a = tousLesAdherents.find(x => x.numAdherent === numAdherent)
+    if (!a) return
     document.getElementById('modal-detail').style.display = 'flex'
-    document.getElementById('modal-body').innerHTML = `<div class="page-loader"><div class="spinner"></div></div>`
-    try {
-      const a = await api.get(`/adherents/${id}`)
-      document.getElementById('modal-body').innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          ${champ('N° adhérent', a.numAdherent)}
-          ${champ('Nom', `${a.prenom} ${a.nom}`)}
-          ${champ('Email', a.email)}
-          ${champ('Date de naissance', a.dateNaissance ? new Date(a.dateNaissance).toLocaleDateString('fr-FR') : '—')}
-          ${champ('Sexe', a.libSexe)}
-          ${champ('Situation matrimoniale', a.situationMatrimoniale)}
-          ${champ('Date d\'adhésion', a.dateAdhesion ? new Date(a.dateAdhesion).toLocaleDateString('fr-FR') : '—')}
-          ${champ('Statut', a.statut)}
-          ${a.urlPhotoDemandeur ? `<img src="${a.urlPhotoDemandeur}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-top:8px;">` : ''}
+
+    // Badge accès plateforme
+    const badgeAcces = a.aAcces
+      ? `<span class="badge badge-success">✓ Accès plateforme</span>`
+      : `<span class="badge badge-secondary">Pas d'accès plateforme</span>`
+
+    // Section groupe
+    const groupeSection = a.aAcces
+      ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+           <span style="font-size:13px;color:var(--text-muted);">Groupe / Rôle</span>
+           <div style="display:flex;align-items:center;gap:8px;">
+             <span style="font-size:13.5px;font-weight:600;">${a.libelleGroupe || '—'}</span>
+             ${permAcces.peutEcrire ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px;" onclick="ouvrirModalAcces('${a.numAdherent}','${(a.prenom||'')} ${(a.nom||'')}',true);document.getElementById('modal-detail').style.display='none'">Changer</button>` : ''}
+           </div>
+         </div>`
+      : `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+           <span style="font-size:13px;color:var(--text-muted);">Accès plateforme</span>
+           ${permAcces.peutEcrire ? `<button class="btn btn-outline btn-sm" style="font-size:11px;" onclick="ouvrirModalAcces('${a.numAdherent}','${(a.prenom||'')} ${(a.nom||'')}',false);document.getElementById('modal-detail').style.display='none'">Donner accès</button>` : '<span style="font-size:12px;color:var(--text-muted);">Aucun accès</span>'}
+         </div>`
+
+    document.getElementById('modal-body').innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;">
+          ${(a.prenom?.[0]||'') + (a.nom?.[0]||'')}
         </div>
-      `
-    } catch (err) {
-      document.getElementById('modal-body').innerHTML = `<p style="color:#b91c1c;">Erreur : ${err.message}</p>`
-    }
+        <div>
+          <div style="font-weight:700;font-size:15px;">${a.prenom||''} ${a.nom||''}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${a.numAdherent}</div>
+          <div style="margin-top:4px;">${badgeAcces}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        ${champ('Email', a.email)}
+        ${champ('Date d\'adhésion', a.dateAdhesion ? new Date(a.dateAdhesion).toLocaleDateString('fr-FR') : '—')}
+        ${champ('Statut', a.statut)}
+        ${groupeSection}
+      </div>
+    `
   }
 
   function champ(label, val) {
@@ -312,17 +354,17 @@
     document.getElementById('modal-detail').style.display = 'none'
   })
 
-  document.getElementById('btn-filtrer').addEventListener('click', () => { page = 0; charger() })
+  document.getElementById('btn-filtrer').addEventListener('click', () => { page = 0; afficherFiltres() })
   document.getElementById('btn-reset').addEventListener('click', () => {
     document.getElementById('filtre-statut').value = ''
     document.getElementById('search-input').value = ''
-    page = 0; charger()
+    page = 0; afficherFiltres()
   })
 
   let searchTimer
   document.getElementById('search-input').addEventListener('input', () => {
     clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => { page = 0; charger() }, 400)
+    searchTimer = setTimeout(() => { page = 0; afficherFiltres() }, 400)
   })
 
   charger()
