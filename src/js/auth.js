@@ -33,8 +33,8 @@ export function isAdminPlateforme() {
 }
 
 export function saveContexte(ctx) {
+  if (!ctx) return
   localStorage.setItem('contexte', JSON.stringify(ctx))
-  // Appliquer la couleur primaire de l'organisation
   if (ctx.couleurPrimaire) {
     applyOrgColor(ctx.couleurPrimaire)
   }

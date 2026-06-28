@@ -24,16 +24,26 @@ async function request(method, path, body = null) {
   })
 
   if (res.status === 401) {
-    // Token expiré — on essaie de rafraîchir
     const refreshed = await tryRefresh()
     if (!refreshed) {
       localStorage.clear()
       window.location.href = '/login.html'
       return
     }
-    // Réessayer avec le nouveau token
     headers['Authorization'] = `Bearer ${getToken()}`
     return request(method, path, body)
+  }
+
+  if (res.status === 403) {
+    const err = await res.json().catch(() => ({}))
+    // Si c'est un vrai refus d'accès métier (désactivé, banni…), on lance l'erreur
+    // pour que la page l'affiche. Sinon, session invalide → login.
+    if (err.error === 'ACCES_REFUSE') {
+      throw new Error(err.message || 'Accès refusé')
+    }
+    localStorage.clear()
+    window.location.href = '/login.html'
+    return
   }
 
   if (!res.ok) {

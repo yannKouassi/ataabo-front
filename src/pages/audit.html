@@ -149,11 +149,11 @@
     }
 
     tbody.innerHTML = slice.map(a => {
-      const utilisateur = a.utilisateur
-        ? `<div style="font-weight:600;font-size:13px;">${a.utilisateur.prenom||''} ${a.utilisateur.nom||''}</div>`
+      const utilisateur = a.nomUtilisateur
+        ? `<div style="font-weight:600;font-size:13px;">${a.nomUtilisateur}</div>`
         : `<span style="color:var(--text-muted);">—</span>`
-      const adherent = a.adherent?.numAdherent
-        ? `<span style="font-family:monospace;font-size:12px;">${a.adherent.numAdherent}</span>`
+      const adherent = a.numAdherentCible
+        ? `<span style="font-family:monospace;font-size:12px;">${a.numAdherentCible}</span>`
         : '—'
       return `
         <tr>

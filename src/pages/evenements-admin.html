@@ -41,10 +41,10 @@
   <main class="main-content">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
       <div>
-        <div class="page-title">Événements</div>
-        <div class="page-subtitle">Gérer les événements de l'organisation</div>
+        <div class="page-title">Gestion des activités</div>
+        <div class="page-subtitle">Activités organisées par l'organisation (réunions, formations, ateliers...)</div>
       </div>
-      <button class="btn btn-primary" id="btn-nouvel-evt">+ Nouvel événement</button>
+      <button class="btn btn-primary" id="btn-nouvel-evt">+ Nouvelle activité</button>
     </div>
 
     <div class="card">
@@ -133,10 +133,11 @@
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
-  const perm = getPermission('/evenements/admin')
+  const perm = getPermission('/activites/admin')
   if (!perm.peutEcrire) document.getElementById('btn-nouvel-evt').style.display = 'none'
 
   let page = 0, totalPages = 1, evtActif = null
+  const _evts = {}
 
   async function chargerTypes() {
     try {
@@ -167,16 +168,17 @@
         document.getElementById('pagination-btns').innerHTML = ''
         return
       }
+      items.forEach(e => { _evts[e.id] = e })
       tbody.innerHTML = items.map(e => `
         <tr>
           <td style="font-weight:600;">${e.titre || e.libelle || '—'}</td>
-          <td><span class="badge badge-secondary">${e.libelleType || e.typeEvenement || '—'}</span></td>
+          <td><span class="badge badge-secondary">${libelleType(e.typeEvenement || e.libelleType)}</span></td>
           <td style="font-size:13px;">${e.dateDebut ? new Date(e.dateDebut).toLocaleDateString('fr-FR') : '—'}</td>
           <td style="font-size:13px;">${e.dateFin ? new Date(e.dateFin).toLocaleDateString('fr-FR') : '—'}</td>
           <td>${badgeStatut(e.statut)}</td>
           <td style="display:flex; gap:6px;">
-            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" onclick="editer(${JSON.stringify(e).replace(/"/g,'&quot;')})">Modifier</button>` : ''}
-            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimer(${e.id})">Supprimer</button>` : ''}
+            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" onclick="editer('${e.id}')">Modifier</button>` : ''}
+            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimer('${e.id}')">Supprimer</button>` : ''}
           </td>
         </tr>
       `).join('')
@@ -189,6 +191,14 @@
     }
   }
 
+  function libelleType(t) {
+    const map = {
+      REUNION: 'Réunion', CONFERENCE: 'Conférence', ASSEMBLEE_GENERALE: 'Assemblée Générale',
+      FORMATION: 'Formation', CELEBRATION: 'Célébration', COLLECTE: 'Collecte', AUTRE: 'Autre'
+    }
+    return map[t] || t || '—'
+  }
+
   function badgeStatut(s) {
     const m = { PLANIFIE: 'badge-info', EN_COURS: 'badge-warning', TERMINE: 'badge-success', ANNULE: 'badge-danger' }
     return `<span class="badge ${m[s]||'badge-secondary'}">${s||'—'}</span>`
@@ -198,7 +208,7 @@
 
   function ouvrirModal(evt = null) {
     evtActif = evt
-    document.getElementById('modal-evt-titre').textContent = evt ? 'Modifier l\'événement' : 'Nouvel événement'
+    document.getElementById('modal-evt-titre').textContent = evt ? 'Modifier l\'activité' : 'Nouvelle activité'
     document.getElementById('evt-titre').value = evt?.titre || evt?.libelle || ''
     document.getElementById('evt-type').value = evt?.typeEvenementCode || ''
     document.getElementById('evt-description').value = evt?.description || ''
@@ -209,7 +219,7 @@
     document.getElementById('modal-evt').style.display = 'flex'
   }
 
-  window.editer = (e) => ouvrirModal(e)
+  window.editer = (id) => ouvrirModal(_evts[id])
 
   window.supprimer = async (id) => {
     if (!confirm('Supprimer cet événement ?')) return

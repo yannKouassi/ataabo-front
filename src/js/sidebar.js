@@ -207,9 +207,8 @@ const NAV_PAGES = {
     // Dons
     '/dons/emission':                 '/src/pages/dons-emission.html',
     '/dons/reception':                '/src/pages/dons-reception.html',
-    // Événements
-    '/evenements/admin':              '/src/pages/evenements-admin.html',
-    '/evenements/adherent':           '/src/pages/evenements-adherent.html',
+    // Événements de vie (déclarations adhérents) — menu direct /evenements
+    // Activités org (admin) — menu direct /activites
     // Mon espace
     '/moi/profil':                    '/src/pages/mon-profil.html',
     '/moi/cotisations':               '/src/pages/mes-cotisations.html',
@@ -232,14 +231,16 @@ const NAV_PAGES = {
     '/utilisateurs/liste':            '/src/pages/utilisateurs.html',
     '/utilisateurs/groupes':          '/src/pages/groupes-organisation.html',
     '/habilitations/droits':          '/src/pages/habilitations.html',
-    // Activités
-    '/activites':                     '/src/pages/audit.html',
-    // Admin plateforme
-    '/admin/organisations-en-attente': '/src/pages/admin-organisations-attente.html',
-    '/admin/organisations':            '/src/pages/admin-organisations-attente.html',
     // Audit & sauvegardes
     '/audit':                         '/src/pages/audit.html',
     '/sauvegardes':                   '/src/pages/sauvegardes.html',
+    '/activites/admin':               '/src/pages/evenements-admin.html',
+    '/activites':                     '/src/pages/evenements-admin.html',
+    // Événements de vie (adhérents) — anciennement activites
+    '/evenements':                    '/src/pages/activites.html',
+    // Admin plateforme
+    '/admin/organisations-en-attente': '/src/pages/admin-organisations-attente.html',
+    '/admin/organisations':            '/src/pages/admin-organisations-attente.html',
 }
 
 function navigate(url) {

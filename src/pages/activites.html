@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Gestion des activités</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar-search" style="visibility:hidden;"></div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </header>
+
+  <main class="main-content">
+    <!-- En-tête -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="page-title">Gestion des événements</div>
+        <div class="page-subtitle">Déclarations d'événements de vie des adhérents (mariage, naissance, décès...)</div>
+      </div>
+      <button class="btn btn-primary" id="btn-declarer" style="display:none;">
+        + Déclarer un événement
+      </button>
+    </div>
+
+    <!-- Section admin : toutes les déclarations -->
+    <div id="section-admin" style="display:none;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text-primary);">Toutes les déclarations</div>
+      <!-- Filtres statut -->
+      <div class="card" style="padding:16px;margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Filtrer :</span>
+        <button class="btn btn-sm filtre-btn active" data-statut="">Tous</button>
+        <button class="btn btn-sm filtre-btn" data-statut="EN_ATTENTE">En attente</button>
+        <button class="btn btn-sm filtre-btn" data-statut="TRAITE">Traités</button>
+        <button class="btn btn-sm filtre-btn" data-statut="REJETE">Rejetés</button>
+      </div>
+
+      <div class="card" style="overflow:hidden;">
+        <table class="table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>ADHÉRENT</th>
+              <th>CATÉGORIE</th>
+              <th>NATURE</th>
+              <th>DATE ÉVÉNEMENT</th>
+              <th>DATE DÉCLARATION</th>
+              <th>DOCUMENT</th>
+              <th>STATUT</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-admin"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vue adhérent : mes propres déclarations -->
+    <div id="section-adherent" style="display:none;">
+      <div style="font-size:15px;font-weight:700;margin:24px 0 14px;color:var(--text-primary);" id="titre-mes-declarations">Mes déclarations</div>
+      <div id="liste-mes-declarations" style="display:grid;gap:16px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<!-- Modal déclaration -->
+<div id="modal-declaration" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div class="card" style="width:100%;max-width:540px;padding:28px;position:relative;max-height:90vh;overflow-y:auto;">
+    <button id="modal-close" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">Déclarer un événement de vie</div>
+
+    <form id="form-declaration">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Catégorie *</label>
+          <select id="f-categorie" class="form-input" required>
+            <option value="">Choisir...</option>
+            <option value="HEUREUX">😊 Événement heureux</option>
+            <option value="MALHEUREUX">😔 Événement malheureux</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Nature *</label>
+          <select id="f-nature" class="form-input" required>
+            <option value="">Choisir...</option>
+            <option value="MARIAGE">Mariage</option>
+            <option value="NAISSANCE">Naissance</option>
+            <option value="DECES">Décès</option>
+            <option value="MALADIE">Maladie</option>
+            <option value="ACCIDENT">Accident</option>
+            <option value="PROMOTION">Promotion professionnelle</option>
+            <option value="RETRAITE">Retraite</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Date de l'événement *</label>
+        <input type="date" id="f-date" class="form-input" required/>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Description</label>
+        <textarea id="f-description" class="form-input" rows="3" placeholder="Décrivez brièvement l'événement..."></textarea>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Document justificatif</label>
+        <input type="file" id="f-document" class="form-input" accept=".pdf,.jpg,.jpeg,.png"/>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">PDF, JPG ou PNG — ex: acte de mariage, certificat médical...</div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" id="btn-annuler">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="btn-soumettre">Soumettre</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal traitement admin -->
+<div id="modal-traitement" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="width:100%;max-width:440px;padding:28px;position:relative;">
+    <button id="modal-traitement-close" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+    <div id="modal-traitement-titre" style="font-size:18px;font-weight:700;margin-bottom:20px;"></div>
+    <textarea id="f-commentaire" class="form-input" rows="3" placeholder="Commentaire (optionnel)..." style="margin-bottom:20px;"></textarea>
+    <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <button class="btn btn-outline" id="btn-traitement-annuler">Annuler</button>
+      <button class="btn btn-primary" id="btn-traitement-confirmer">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, logout, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique } from '/src/js/historique.js'
+
+  requireContexte()
+  const ctx = getContexte()
+  const orgId = ctx.orgId
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  const perm = getPermission('/evenements')
+  let toutesDeclarations = []
+  let filtreStatut = ''
+  let actionEnCours = null
+
+  const isAdmin = perm.peutEcrire
+
+  // Tout le monde peut déclarer
+  document.getElementById('btn-declarer').style.display = 'inline-flex'
+  document.getElementById('section-adherent').style.display = 'block'
+  chargerMesDeclarations()
+
+  // L'admin voit EN PLUS le tableau de toutes les déclarations
+  if (isAdmin) {
+    document.getElementById('section-admin').style.display = 'block'
+    chargerAdmin()
+  }
+
+  // Bouton déclarer
+  document.getElementById('btn-declarer').addEventListener('click', () => ouvrirModal())
+
+  // Filtres admin
+  document.querySelectorAll('.filtre-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      filtreStatut = btn.dataset.statut
+      afficherAdmin()
+    })
+  })
+
+  // ── Admin ────────────────────────────────────────────────────────────
+  async function chargerAdmin() {
+    try {
+      toutesDeclarations = await api.get(`/activites/${orgId}`)
+      afficherAdmin()
+    } catch (e) {
+      document.getElementById('tbody-admin').innerHTML =
+        `<tr><td colspan="8"><div class="empty-state"><p>${e.message}</p></div></td></tr>`
+    }
+  }
+
+  function afficherAdmin() {
+    const liste = filtreStatut
+      ? toutesDeclarations.filter(d => d.statut === filtreStatut)
+      : toutesDeclarations
+    const tbody = document.getElementById('tbody-admin')
+    if (!liste.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Aucune déclaration</p></div></td></tr>`
+      return
+    }
+    tbody.innerHTML = liste.map(d => `
+      <tr>
+        <td>
+          <div style="font-weight:600;font-size:13px;">${d.nomAdherent || '—'}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:monospace;">${d.numAdherent || ''}</div>
+        </td>
+        <td>${badgeCategorie(d.categorie)}</td>
+        <td style="font-size:13px;">${libelleNature(d.nature)}</td>
+        <td style="font-size:13px;">${formatDate(d.dateEvenement)}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${formatDateHeure(d.dateDeclaration)}</td>
+        <td>${d.urlDocument ? `<a href="${d.urlDocument}" target="_blank" style="color:var(--primary);font-size:12px;">📎 Voir</a>` : '<span style="color:var(--text-muted);font-size:12px;">—</span>'}</td>
+        <td>${badgeStatut(d.statut)}</td>
+        <td>
+          ${d.statut === 'EN_ATTENTE' ? `
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;" onclick="traiter('${d.id}')">✓ Traiter</button>
+              <button class="btn btn-sm" style="background:#fce4ec;color:#c62828;" onclick="rejeter('${d.id}')">✕ Rejeter</button>
+            </div>` : `<span style="font-size:12px;color:var(--text-muted);">${d.commentaireAdmin || '—'}</span>`}
+        </td>
+      </tr>`).join('')
+  }
+
+  window.traiter = (id) => ouvrirModalTraitement(id, 'traiter')
+  window.rejeter = (id) => ouvrirModalTraitement(id, 'rejeter')
+
+  // ── Adhérent ─────────────────────────────────────────────────────────
+  async function chargerMesDeclarations() {
+    const el = document.getElementById('liste-mes-declarations')
+    el.innerHTML = `<div class="page-loader"><div class="spinner"></div></div>`
+    try {
+      const liste = await api.get(`/activites/${orgId}/mes-declarations`)
+      if (!liste.length) {
+        el.innerHTML = `<div class="empty-state"><p>Vous n'avez pas encore fait de déclaration.<br>Cliquez sur "Déclarer un événement" pour commencer.</p></div>`
+        return
+      }
+      el.innerHTML = liste.map(d => `
+        <div class="card" style="padding:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div>
+              <div style="font-weight:700;font-size:15px;">${libelleNature(d.nature)}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Le ${formatDate(d.dateEvenement)}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              ${badgeCategorie(d.categorie)}
+              ${badgeStatut(d.statut)}
+            </div>
+          </div>
+          ${d.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${d.description}</p>` : ''}
+          <div style="display:flex;gap:16px;align-items:center;font-size:12px;color:var(--text-muted);">
+            <span>Déclaré le ${formatDateHeure(d.dateDeclaration)}</span>
+            ${d.urlDocument ? `<a href="${d.urlDocument}" target="_blank" style="color:var(--primary);">📎 Document joint</a>` : ''}
+          </div>
+          ${d.commentaireAdmin ? `<div style="margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:6px;font-size:12px;"><strong>Réponse de l'organisation :</strong> ${d.commentaireAdmin}</div>` : ''}
+        </div>`).join('')
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`
+    }
+  }
+
+  // ── Modal déclaration ─────────────────────────────────────────────────
+  function ouvrirModal() {
+    document.getElementById('modal-declaration').style.display = 'flex'
+    document.getElementById('form-declaration').reset()
+  }
+  function fermerModal() {
+    document.getElementById('modal-declaration').style.display = 'none'
+  }
+  document.getElementById('modal-close').addEventListener('click', fermerModal)
+  document.getElementById('btn-annuler').addEventListener('click', fermerModal)
+
+  document.getElementById('form-declaration').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('btn-soumettre')
+    btn.disabled = true
+    btn.textContent = 'Envoi...'
+    try {
+      const fd = new FormData()
+      fd.append('categorie', document.getElementById('f-categorie').value)
+      fd.append('nature', document.getElementById('f-nature').value)
+      fd.append('dateEvenement', document.getElementById('f-date').value)
+      const desc = document.getElementById('f-description').value
+      if (desc) fd.append('description', desc)
+      const file = document.getElementById('f-document').files[0]
+      if (file) fd.append('document', file)
+
+      await api.upload(`/activites/${orgId}/declarer`, fd)
+      fermerModal()
+      toast.success('Déclaration envoyée avec succès.')
+      chargerMesDeclarations()
+    } catch(e) {
+      toast.error(e.message)
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Soumettre'
+    }
+  })
+
+  // ── Modal traitement admin ────────────────────────────────────────────
+  function ouvrirModalTraitement(id, type) {
+    actionEnCours = { id, type }
+    const titre = type === 'traiter' ? '✓ Marquer comme traité' : '✕ Rejeter la déclaration'
+    document.getElementById('modal-traitement-titre').textContent = titre
+    document.getElementById('f-commentaire').value = ''
+    document.getElementById('modal-traitement').style.display = 'flex'
+  }
+  document.getElementById('modal-traitement-close').addEventListener('click', () => {
+    document.getElementById('modal-traitement').style.display = 'none'
+  })
+  document.getElementById('btn-traitement-annuler').addEventListener('click', () => {
+    document.getElementById('modal-traitement').style.display = 'none'
+  })
+  document.getElementById('btn-traitement-confirmer').addEventListener('click', async () => {
+    if (!actionEnCours) return
+    const commentaire = document.getElementById('f-commentaire').value
+    const btn = document.getElementById('btn-traitement-confirmer')
+    btn.disabled = true
+    try {
+      const endpoint = actionEnCours.type === 'traiter' ? 'traiter' : 'rejeter'
+      const bodyKey = actionEnCours.type === 'traiter' ? 'commentaire' : 'motif'
+      await api.put(`/activites/${actionEnCours.id}/${endpoint}`, { [bodyKey]: commentaire })
+      document.getElementById('modal-traitement').style.display = 'none'
+      toast.success(actionEnCours.type === 'traiter' ? 'Déclaration traitée.' : 'Déclaration rejetée.')
+      chargerAdmin()
+    } catch(e) {
+      toast.error(e.message)
+    } finally {
+      btn.disabled = false
+    }
+  })
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function badgeCategorie(c) {
+    if (c === 'HEUREUX') return `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">😊 Heureux</span>`
+    return `<span style="background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">😔 Malheureux</span>`
+  }
+
+  function badgeStatut(s) {
+    const map = {
+      EN_ATTENTE: ['#fff3e0', '#e65100', 'En attente'],
+      TRAITE:     ['#e8f5e9', '#2e7d32', 'Traité'],
+      REJETE:     ['#fce4ec', '#c62828', 'Rejeté'],
+    }
+    const [bg, color, label] = map[s] || ['#f5f5f5', '#666', s]
+    return `<span style="background:${bg};color:${color};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">${label}</span>`
+  }
+
+  function libelleNature(n) {
+    const map = { MARIAGE:'Mariage', NAISSANCE:'Naissance', DECES:'Décès', MALADIE:'Maladie',
+                  ACCIDENT:'Accident', PROMOTION:'Promotion professionnelle', RETRAITE:'Retraite', AUTRE:'Autre' }
+    return map[n] || n
+  }
+
+  function formatDate(d) {
+    if (!d) return '—'
+    return new Date(d).toLocaleDateString('fr-FR')
+  }
+
+  function formatDateHeure(d) {
+    if (!d) return '—'
+    return new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+  }
+
+  buildHistorique('historique-container', 50, 'déclaration')
+</script>
+</body>
+</html>
