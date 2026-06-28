@@ -43,8 +43,22 @@
 
   <!-- CONTENU PRINCIPAL -->
   <main class="main-content">
-    <div class="page-title">Tableau de bord</div>
-    <div class="page-subtitle">Bienvenue sur votre espace de gestion</div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+      <div>
+        <div class="page-title">Tableau de bord</div>
+        <div class="page-subtitle" id="subtitle-periode">Bienvenue sur votre espace de gestion</div>
+      </div>
+      <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <label style="font-size:12px; color:var(--text-muted); font-weight:600;">PÉRIODE</label>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input type="date" id="filtre-debut" class="form-input" style="width:145px; font-size:13px; padding:6px 10px;"/>
+          <span style="color:var(--text-muted); font-size:12px;">→</span>
+          <input type="date" id="filtre-fin" class="form-input" style="width:145px; font-size:13px; padding:6px 10px;"/>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-filtrer">Filtrer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-reset-periode">Ce mois</button>
+      </div>
+    </div>
 
     <!-- Stats -->
     <div class="stats-grid" id="stats-grid">
@@ -53,22 +67,54 @@
           <div class="stat-card-label">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            Total adhérents
-          </div>
-          <div class="stat-card-icon-btn">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-            </svg>
+            Total membres
           </div>
         </div>
         <div class="stat-card-value" id="stat-adherents">—</div>
-        <div class="stat-card-trend trend-up">
-          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-          </svg>
-          Membres actifs
+        <div class="stat-card-trend trend-up">Tous statuts confondus</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-label" style="color:#16a34a;">
+            <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+            Membres actifs
+          </div>
         </div>
+        <div class="stat-card-value" id="stat-actifs" style="color:#16a34a;">—</div>
+        <div class="stat-card-trend">Accès complet à l'org</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-label" style="color:#d97706;">
+            <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
+            </svg>
+            Membres inactifs
+          </div>
+        </div>
+        <div class="stat-card-value" id="stat-inactifs" style="color:#d97706;">—</div>
+        <div class="stat-card-trend">Temporairement désactivés</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-label" style="color:#dc2626;">
+            <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
+            </svg>
+            Membres bannis
+          </div>
+        </div>
+        <div class="stat-card-value" id="stat-banis" style="color:#dc2626;">—</div>
+        <div class="stat-card-trend">Accès révoqué définitivement</div>
       </div>
 
       <div class="stat-card">
@@ -264,14 +310,37 @@
     })
   }
 
+  // Initialiser les dates au mois en cours
+  function initPeriode() {
+    const now = new Date()
+    const debut = new Date(now.getFullYear(), now.getMonth(), 1)
+    const fin   = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    document.getElementById('filtre-debut').value = debut.toISOString().slice(0, 10)
+    document.getElementById('filtre-fin').value   = fin.toISOString().slice(0, 10)
+  }
+
+  function formatDateFR(iso) {
+    if (!iso) return '—'
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}/${y}`
+  }
+
   // Charger les stats de l'organisation connectée
   async function chargerStats() {
+    const debut = document.getElementById('filtre-debut').value
+    const fin   = document.getElementById('filtre-fin').value
+    const params = new URLSearchParams()
+    if (debut) params.set('debut', debut)
+    if (fin)   params.set('fin', fin)
     try {
-      const stats = await api.get(`/organisations/${ctx.orgId}/stats`)
-      document.getElementById('stat-adherents').textContent = stats.totalAdherents ?? '—'
-      document.getElementById('stat-demandes').textContent = stats.demandesEnAttente ?? '—'
+      const stats = await api.get(`/organisations/${ctx.orgId}/stats?${params}`)
+      document.getElementById('stat-adherents').textContent  = stats.totalAdherents  ?? '—'
+      document.getElementById('stat-actifs').textContent     = stats.membresActifs    ?? '—'
+      document.getElementById('stat-inactifs').textContent   = stats.membresInactifs  ?? '—'
+      document.getElementById('stat-banis').textContent      = stats.membresBanis     ?? '—'
+      document.getElementById('stat-demandes').textContent   = stats.demandesEnAttente ?? '—'
       document.getElementById('stat-cotisations').textContent = stats.cotisationsMois ?? '—'
-      document.getElementById('stat-evenements').textContent = stats.evenementsAvenir ?? '0'
+      document.getElementById('stat-evenements').textContent  = stats.evenementsAvenir ?? '0'
 
       // Dernières demandes d'adhésion
       const tbody = document.getElementById('tbody-demandes')
@@ -288,6 +357,11 @@
       }
 
       dessinerGraphiques(stats)
+
+      // Mettre à jour le sous-titre avec la période
+      const d = stats.periodeDebut ? formatDateFR(stats.periodeDebut) : '—'
+      const f = stats.periodeFin   ? formatDateFR(stats.periodeFin)   : '—'
+      document.getElementById('subtitle-periode').textContent = `Données du ${d} au ${f}`
     } catch {
       document.getElementById('tbody-demandes').innerHTML =
         `<tr><td colspan="3" style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Données non disponibles</td></tr>`
@@ -308,6 +382,14 @@
       </div>
     `).join('')
   }
+
+  initPeriode()
+
+  document.getElementById('btn-filtrer').addEventListener('click', () => chargerStats())
+  document.getElementById('btn-reset-periode').addEventListener('click', () => {
+    initPeriode()
+    chargerStats()
+  })
 
   chargerStats()
   afficherInfosOrg()

@@ -1,0 +1,26 @@
+{
+  "ACCUEIL_TITRE": "Gérez vos <span>organisations communautaires</span> simplement",
+  "ACCUEIL_SOUS_TITRE": "Ataabo est la plateforme dédiée aux associations, mutuelles et ONG d'Afrique. Adhésions, cotisations, événements — tout en un seul endroit.",
+  "ACCUEIL_BTN_REJOINDRE": "Rejoindre ou créer une organisation",
+  "ACCUEIL_BTN_CONNEXION": "J'ai déjà un compte",
+  "ACCUEIL_CTA_TITRE": "Prêt à simplifier la gestion de votre organisation ?",
+  "ACCUEIL_CTA_SOUS": "Rejoignez les organisations qui font confiance à Ataabo",
+  "ACCUEIL_CTA_BTN": "Commencer maintenant — c'est gratuit",
+
+  "FEATURE_ADHERENTS": "Gestion des adhérents",
+  "FEATURE_ADHERENTS_DESC": "Demandes d'adhésion, validation, suivi des membres actifs avec analyse IA.",
+  "FEATURE_COTISATIONS": "Cotisations",
+  "FEATURE_COTISATIONS_DESC": "Enregistrement des paiements, suivi des retards, historique complet.",
+  "FEATURE_EVENEMENTS": "Événements",
+  "FEATURE_EVENEMENTS_DESC": "Planification, inscriptions et suivi de présences pour vos activités.",
+  "FEATURE_HABILITATIONS": "Habilitations",
+  "FEATURE_HABILITATIONS_DESC": "Rôles personnalisés, permissions granulaires, audit complet des actions.",
+
+  "LOGIN_TAGLINE": "Gérez vos organisations communautaires",
+  "LOGIN_TITRE": "Bon retour 👋",
+  "LOGIN_SOUS_TITRE": "Connectez-vous à votre espace",
+  "LOGIN_BTN": "Se connecter",
+
+  "NAV_CONNEXION": "Se connecter",
+  "NAV_COMMENCER": "Commencer gratuitement"
+}

@@ -61,7 +61,7 @@
           <option value="">Tous les statuts</option>
           <option value="ACTIF">Actif</option>
           <option value="INACTIF">Inactif</option>
-          <option value="SUSPENDU">Suspendu</option>
+          <option value="BANNI">Banni</option>
         </select>
         <button class="btn btn-secondary" id="btn-filtrer">Filtrer</button>
         <button class="btn btn-ghost" id="btn-reset">Réinitialiser</button>
@@ -235,8 +235,9 @@
   }
 
   function badgeStatut(statut) {
-    const map = { ACTIF: 'badge-success', INACTIF: 'badge-secondary', SUSPENDU: 'badge-warning', EN_ATTENTE: 'badge-warning' }
-    return `<span class="badge ${map[statut] || 'badge-secondary'}">${statut || '—'}</span>`
+    const map   = { ACTIF: 'badge-success', INACTIF: 'badge-secondary', BANNI: 'badge-danger', EN_ATTENTE: 'badge-warning' }
+    const label = { ACTIF: 'Actif', INACTIF: 'Inactif', BANNI: 'Banni', EN_ATTENTE: 'En attente' }
+    return `<span class="badge ${map[statut] || 'badge-secondary'}">${label[statut] || statut || '—'}</span>`
   }
 
   function afficherPagination() {
@@ -368,7 +369,7 @@
   })
 
   charger()
-  buildHistorique('historique-container')
+  buildHistorique('historique-container', 50, 'adhérent')
 </script>
 </body>
 </html>

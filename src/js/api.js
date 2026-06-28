@@ -71,12 +71,12 @@ export const api = {
   put: (path, body) => request('PUT', path, body),
   delete: (path) => request('DELETE', path),
 
-  // Upload multipart
-  async upload(path, formData) {
+  // Upload multipart (method optionnel, 'POST' par défaut)
+  async upload(path, formData, method = 'POST') {
     const token = getToken()
     const headers = {}
     if (token) headers['Authorization'] = `Bearer ${token}`
-    const res = await fetch(BASE + path, { method: 'POST', headers, body: formData })
+    const res = await fetch(BASE + path, { method, headers, body: formData })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: 'Erreur upload' }))
       throw new Error(err.message || 'Erreur upload')

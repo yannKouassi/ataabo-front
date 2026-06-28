@@ -2,8 +2,11 @@
 // SIDEBAR — Construction dynamique depuis le contexte
 // =============================================
 
-import { getContexte, logout } from './auth.js'
+import { getContexte, saveContexte, logout } from './auth.js'
 import { api } from './api.js'
+import { buildComboboxPays, chargerTraductions, appliquerTraductions } from './i18n.js'
+import { getTheme, appliquerTheme, initTheme } from './theme.js'
+import { initTraductionAuto } from './translator.js'
 
 const ICONS = {
   '/dashboard':           `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>`,
@@ -25,9 +28,16 @@ function getIcon(url) {
   return ICONS[url] || `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>`
 }
 
-export function buildSidebar() {
+// Appliquer le thème immédiatement au chargement
+appliquerTheme(getTheme())
+
+export async function buildSidebar() {
   const ctx = getContexte()
   if (!ctx) return
+
+  // Traductions — applique data-i18n (uniquement les éléments statiques marqués)
+  await chargerTraductions()
+  appliquerTraductions()
 
   // ── Topbar : notification + user ──────────────────────────────
   const actionsEl = document.getElementById('topbar-actions') || document.querySelector('.topbar-actions')
@@ -42,6 +52,9 @@ export function buildSidebar() {
       ? `<img src="${urlPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`
       : initiales
     actionsEl.innerHTML = `
+      <button class="topbar-icon-btn" id="btn-theme" title="Mode nuit">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
       <button class="topbar-icon-btn" id="btn-notif" title="Notifications">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -55,6 +68,9 @@ export function buildSidebar() {
           ${email ? `<div class="topbar-user-email" id="topbar-email">${email}</div>` : ''}
         </div>
       </div>`
+
+    // Bouton mode nuit
+    initTheme()
 
     // Récupérer la photo depuis le serveur si pas encore dans localStorage
     if (!urlPhoto) {
@@ -76,13 +92,39 @@ export function buildSidebar() {
   const logoEl = document.getElementById('sidebar-org-logo')
   const nameEl = document.getElementById('sidebar-org-name')
 
-  if (ctx.urlLogo) {
-    logoEl.innerHTML = `<img src="${ctx.urlLogo}" alt="logo" class="sidebar-logo">`
-  } else {
-    const initiale = ctx.nomOrganisation?.[0]?.toUpperCase() || 'A'
-    logoEl.innerHTML = `<div class="sidebar-logo-placeholder">${initiale}</div>`
+  const _initiale = ctx.nomOrganisation?.[0]?.toUpperCase() || 'A'
+
+  function afficherPlaceholder() {
+    if (!logoEl) return
+    logoEl.innerHTML = `<div class="sidebar-logo-placeholder">${_initiale}</div>`
   }
+
+  function afficherLogo(urlLogo) {
+    if (!logoEl) return
+    if (!urlLogo) { afficherPlaceholder(); return }
+    logoEl.innerHTML = `<img src="${urlLogo}" alt="logo" class="sidebar-logo" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'sidebar-logo-placeholder\\'>${_initiale}</div>'">`
+  }
+
+  // Afficher le placeholder immédiatement, puis charger l'image
+  afficherPlaceholder()
   if (nameEl) nameEl.textContent = ctx.nomOrganisation
+
+  // Toujours récupérer le logo depuis le serveur pour garantir la fraîcheur
+  if (ctx.orgId) {
+    api.get(`/contexte/${ctx.orgId}`).then(freshCtx => {
+      if (freshCtx?.urlLogo) {
+        if (freshCtx.urlLogo !== ctx.urlLogo) {
+          saveContexte({ ...ctx, urlLogo: freshCtx.urlLogo })
+        }
+        afficherLogo(freshCtx.urlLogo)
+      }
+    }).catch(() => {
+      // Fallback : essayer avec l'URL déjà dans le contexte local
+      if (ctx.urlLogo) afficherLogo(ctx.urlLogo)
+    })
+  } else if (ctx.urlLogo) {
+    afficherLogo(ctx.urlLogo)
+  }
 
   // Construire les menus
   const nav = document.getElementById('sidebar-nav')
@@ -141,6 +183,9 @@ export function buildSidebar() {
       nav.appendChild(item)
     }
   })
+
+  // Traduction automatique — lancée après que tout le DOM (sidebar + page) est construit
+  initTraductionAuto()
 }
 
 const NAV_PAGES = {

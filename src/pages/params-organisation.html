@@ -183,7 +183,7 @@
   const ctx = getContexte()
   const user = getUser()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
-  buildSidebar()
+  await buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   const perm = getPermission('/organisation/params/infos')
@@ -203,11 +203,20 @@
     })
   })
 
-  document.getElementById('f-couleur').addEventListener('input', e => {
-    document.getElementById('f-couleur-hex').value = e.target.value
+  let _debounceColor = null
+  const couleurInput = document.getElementById('f-couleur')
+  const couleurHex   = document.getElementById('f-couleur-hex')
+
+  couleurInput.addEventListener('input', e => {
+    clearTimeout(_debounceColor)
+    _debounceColor = setTimeout(() => { couleurHex.value = e.target.value }, 400)
   })
-  document.getElementById('f-couleur-hex').addEventListener('input', e => {
-    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) document.getElementById('f-couleur').value = e.target.value
+  couleurInput.addEventListener('change', e => {
+    clearTimeout(_debounceColor)
+    couleurHex.value = e.target.value
+  })
+  couleurHex.addEventListener('input', e => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) couleurInput.value = e.target.value
   })
 
   async function charger() {
@@ -239,7 +248,14 @@
 
       const logoEl = document.getElementById('logo-preview')
       if (org.urlLogo) {
-        logoEl.innerHTML = `<img src="${org.urlLogo}" style="width:80px;height:80px;object-fit:cover;"/>`
+        logoEl.innerHTML = `<img src="${org.urlLogo}" style="width:80px;height:80px;object-fit:cover;border-radius:12px;"/>`
+        // Synchroniser le contexte localStorage si le logo n'y est pas encore
+        if (!ctx.urlLogo || ctx.urlLogo !== org.urlLogo) {
+          saveContexte({ ...ctx, urlLogo: org.urlLogo })
+          const sidebarLogo = document.getElementById('sidebar-org-logo')
+          if (sidebarLogo) sidebarLogo.innerHTML =
+            `<img src="${org.urlLogo}" alt="logo" class="sidebar-logo"/>`
+        }
       } else {
         logoEl.textContent = (org.nomOrganisation?.[0] || 'A').toUpperCase()
       }
@@ -269,15 +285,31 @@
     const btn = document.getElementById('btn-sauvegarder-logo')
     btn.disabled = true; btn.textContent = 'Application...'
     try {
-      const couleur = document.getElementById('f-couleur-hex').value || document.getElementById('f-couleur').value
-      const res = await api.post(`/organisations/${ctx.orgId}/apparence`, { couleurPrimaire: couleur })
-      const nouvelleCouleur = res.couleurPrimaire
-      if (nouvelleCouleur) {
-        applyOrgColor(nouvelleCouleur)
-        saveContexte({ ...ctx, couleurPrimaire: nouvelleCouleur })
+      const couleur  = document.getElementById('f-couleur-hex').value || document.getElementById('f-couleur').value
+      const logoFile = document.getElementById('f-logo').files[0]
+      if (!logoFile && !couleur) return toast.error('Choisissez un logo ou une couleur.')
+
+      const fd = new FormData()
+      if (logoFile) fd.append('logo', logoFile)
+      if (couleur)  fd.append('couleurPrimaire', couleur)
+
+      const res = await api.upload(`/organisations/${ctx.orgId}/apparence`, fd, 'PUT')
+      const newCtx = { ...ctx }
+      if (res.couleurPrimaire) {
+        newCtx.couleurPrimaire = res.couleurPrimaire
+        applyOrgColor(res.couleurPrimaire)
       }
+      if (res.urlLogo) {
+        newCtx.urlLogo = res.urlLogo
+        document.getElementById('logo-preview').innerHTML =
+          `<img src="${res.urlLogo}" style="width:80px;height:80px;object-fit:cover;border-radius:16px;"/>`
+        // Mettre à jour la sidebar immédiatement
+        const sidebarLogo = document.getElementById('sidebar-org-logo')
+        if (sidebarLogo) sidebarLogo.innerHTML =
+          `<img src="${res.urlLogo}" alt="logo" class="sidebar-logo">`
+      }
+      saveContexte(newCtx)
       toast.success('Apparence mise à jour !')
-      charger()
     } catch(err) { toast.error(err.message) }
     finally { btn.disabled = false; btn.textContent = 'Appliquer' }
   })
@@ -321,7 +353,8 @@
     }
 
     if (lat && lng) placerMarqueurParams(lat, lng)
-    setTimeout(() => paramsMap.invalidateSize(), 200)
+    setTimeout(() => paramsMap.invalidateSize(), 100)
+    setTimeout(() => paramsMap.invalidateSize(), 600)
   }
 
   function placerMarqueurParams(lat, lng) {
@@ -350,13 +383,13 @@
     const lng = parseFloat(document.getElementById('f-lng').value)
     if (!lat || !lng) return toast.error('Cliquez d\'abord sur la carte pour choisir une localisation.')
     try {
-      await api.put('/mon-organisation', { latitudeAssoc: lat, longitudeAssoc: lng })
+      await api.put(`/organisations/${ctx.orgId}/localisation`, { latitudeAssoc: lat, longitudeAssoc: lng })
       toast.success('Localisation mise à jour !')
     } catch(err) { toast.error(err.message) }
   })
 
   charger()
-  buildHistorique('historique-container')
+  buildHistorique('historique-container', 50, 'organisation')
 </script>
 </body>
 </html>

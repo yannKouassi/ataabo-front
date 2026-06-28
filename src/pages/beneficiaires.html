@@ -58,13 +58,16 @@
             <thead>
               <tr>
                 <th>Nom & prénom</th>
-                <th>Relation</th>
-                <th>Contact</th>
+                <th>Sexe</th>
+                <th>Date naissance</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Depuis</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="tbody-beneficiaires">
-              <tr><td colspan="4"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+              <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -96,6 +99,7 @@
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   const perm = getPermission('/adherents/beneficiaires')
+  const isAdmin = ctx.codeGroupe === 'ADMIN' || perm.peutSupprimer
 
   async function chercher() {
     const id = document.getElementById('id-personne-input').value.trim()
@@ -113,16 +117,22 @@
         tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>Aucun bénéficiaire trouvé</p></div></td></tr>`
         return
       }
-      tbody.innerHTML = items.map(b => `
-        <tr>
-          <td style="font-weight:600;">${b.prenomBeneficiaire||''} ${b.nomBeneficiaire||''}</td>
-          <td><span class="badge badge-secondary">${b.relation || '—'}</span></td>
-          <td style="font-size:13px;">${b.contact || '—'}</td>
-          <td>
-            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimer(${b.id})">Supprimer</button>` : ''}
+      tbody.innerHTML = items.map(b => {
+        const sexe  = b.beneficiaire?.sexe?.libSexe === 'MASCULIN' ? 'M' : b.beneficiaire?.sexe?.libSexe === 'FEMININ' ? 'F' : '—'
+        const ddn   = b.beneficiaire?.dateNaisPersonne ? new Date(b.beneficiaire.dateNaisPersonne).toLocaleDateString('fr-FR') : '—'
+        const depuis = b.dateLien ? new Date(b.dateLien).toLocaleDateString('fr-FR') : '—'
+        return `<tr>
+          <td style="font-weight:600;">${b.beneficiaire?.prenPersonne||''} ${b.beneficiaire?.nomPersonne||''}</td>
+          <td style="font-size:13px;">${sexe}</td>
+          <td style="font-size:13px;">${ddn}</td>
+          <td style="font-size:13px;">${b.beneficiaire?.telPersonne || '—'}</td>
+          <td style="font-size:13px;">${b.beneficiaire?.emailPersonne || '—'}</td>
+          <td style="font-size:13px;">${depuis}</td>
+          <td style="text-align:right;">
+            ${isAdmin ? `<button class="btn btn-sm" style="color:#b91c1c;background:none;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;" onclick="supprimer('${b.id}')">Supprimer</button>` : ''}
           </td>
-        </tr>
-      `).join('')
+        </tr>`
+      }).join('')
     } catch(err) {
       tbody.innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
@@ -141,7 +151,7 @@
 
   document.getElementById('btn-rechercher').addEventListener('click', chercher)
   document.getElementById('id-personne-input').addEventListener('keydown', e => { if (e.key === 'Enter') chercher() })
-  buildHistorique('historique-container')
+  buildHistorique('historique-container', 50, 'bénéficiaire')
 </script>
 </body>
 </html>

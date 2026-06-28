@@ -51,6 +51,20 @@
       </button>
     </div>
 
+    <!-- Filtres -->
+    <div class="card" style="margin-bottom:20px; padding:16px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <select class="form-input" id="filtre-statut" style="width:auto; min-width:160px;">
+          <option value="">Tous les statuts</option>
+          <option value="ACTIF">Actif</option>
+          <option value="INACTIF">Inactif</option>
+          <option value="BANNI">Banni</option>
+        </select>
+        <button class="btn btn-secondary" id="btn-filtrer">Filtrer</button>
+        <button class="btn btn-ghost" id="btn-reset">Réinitialiser</button>
+      </div>
+    </div>
+
     <div class="card">
       <div class="table-wrapper">
         <table>
@@ -96,28 +110,47 @@
   const perm = getPermission(navUrl)
 
   let page = 0, totalPages = 1
+  let tousLesUtilisateurs = []
 
   async function charger() {
-    const q = document.getElementById('search-input').value
-    const params = new URLSearchParams({ page, size: 20 })
-    if (q) params.set('q', q)
-
     const tbody = document.getElementById('tbody-utilisateurs')
     tbody.innerHTML = `<tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
-
     try {
-      const data = await api.get(`/utilisateurs/organisation/${ctx.orgId}?${params}`)
-      const items = Array.isArray(data) ? data : (data.content || [])
-      totalPages = data.totalPages || 1
+      const data = await api.get(`/utilisateurs/organisation/${ctx.orgId}`)
+      tousLesUtilisateurs = Array.isArray(data) ? data : (data.content || [])
+      afficherFiltres()
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+    }
+  }
 
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun utilisateur</p></div></td></tr>`
-        document.getElementById('pagination-info').textContent = ''
-        document.getElementById('pagination-btns').innerHTML = ''
-        return
-      }
+  function afficherFiltres() {
+    const statut    = document.getElementById('filtre-statut').value
+    const recherche = document.getElementById('search-input').value.toLowerCase().trim()
 
-      tbody.innerHTML = items.map(u => `
+    let items = tousLesUtilisateurs
+    if (statut)    items = items.filter(u => u.statut === statut)
+    if (recherche) items = items.filter(u =>
+      (u.prenomPersonne + ' ' + u.nomPersonne).toLowerCase().includes(recherche) ||
+      (u.emailPersonne || '').toLowerCase().includes(recherche) ||
+      (u.numAdherent || '').toLowerCase().includes(recherche)
+    )
+
+    const pageSize = 20
+    totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+    if (page >= totalPages) page = 0
+    const pageItems = items.slice(page * pageSize, (page + 1) * pageSize)
+
+    const tbody = document.getElementById('tbody-utilisateurs')
+
+    if (!pageItems.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun utilisateur</p></div></td></tr>`
+      document.getElementById('pagination-info').textContent = ''
+      document.getElementById('pagination-btns').innerHTML = ''
+      return
+    }
+
+    tbody.innerHTML = pageItems.map(u => `
         <tr id="row-${u.idUtilisateur}">
           <td>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -132,22 +165,25 @@
           </td>
           <td style="font-family:monospace;font-size:12px;">${u.numAdherent||'—'}</td>
           <td><span class="badge badge-secondary">${u.libelleGroupe||'—'}</span></td>
-          <td><span class="badge ${u.actif ? 'badge-success' : 'badge-danger'}" id="badge-${u.idUtilisateur}">${u.actif ? 'Actif' : 'Inactif'}</span></td>
+          <td>${badgeStatut(u.statut, u.idUtilisateur)}</td>
           <td style="font-size:12.5px;color:var(--text-muted);">${u.dateCreation ? new Date(u.dateCreation).toLocaleDateString('fr-FR') : '—'}</td>
           <td style="display:flex;gap:6px;align-items:center;">
-            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" id="btn-toggle-${u.idUtilisateur}" onclick="toggleActif('${u.idUtilisateur}', '${u.prenomPersonne||''} ${u.nomPersonne||''}'.trim(), ${u.actif})">${u.actif ? 'Désactiver' : 'Activer'}</button>` : ''}
-            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimerAcces('${u.idUtilisateur}', '${u.prenomPersonne||''} ${u.nomPersonne||''}'.trim())">Supprimer accès</button>` : ''}
+            ${perm.peutEcrire && u.statut !== 'BANNI' ? `<button class="btn btn-ghost btn-sm" id="btn-toggle-${u.idUtilisateur}" onclick="toggleActif('${u.idUtilisateur}', '${u.prenomPersonne||''} ${u.nomPersonne||''}'.trim(), ${u.actif})">${u.actif ? 'Désactiver' : 'Activer'}</button>` : ''}
+            ${perm.peutSupprimer && u.statut !== 'BANNI' ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimerAcces('${u.idUtilisateur}', '${u.prenomPersonne||''} ${u.nomPersonne||''}'.trim())">Bannir</button>` : ''}
           </td>
         </tr>
       `).join('')
 
-      document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages}`
-      document.getElementById('pagination-btns').innerHTML = `
-        <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
-        <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
-    } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
-    }
+    document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages}`
+    document.getElementById('pagination-btns').innerHTML = `
+      <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
+      <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
+  }
+
+  function badgeStatut(statut, id) {
+    const map   = { ACTIF: 'badge-success', INACTIF: 'badge-secondary', BANNI: 'badge-danger' }
+    const label = { ACTIF: 'Actif', INACTIF: 'Inactif', BANNI: 'Banni' }
+    return `<span class="badge ${map[statut] || 'badge-secondary'}" id="badge-${id||''}">${label[statut] || statut || '—'}</span>`
   }
 
   window.toggleActif = async (id, nom, actuelActif) => {
@@ -159,8 +195,10 @@
       const res = await api.put(`/utilisateurs/${id}/toggle-actif`, {})
       const badge = document.getElementById(`badge-${id}`)
       if (badge) {
-        badge.className = `badge ${res.actif ? 'badge-success' : 'badge-danger'}`
-        badge.textContent = res.actif ? 'Actif' : 'Inactif'
+        const map   = { ACTIF: 'badge-success', INACTIF: 'badge-secondary', BANNI: 'badge-danger' }
+        const label = { ACTIF: 'Actif', INACTIF: 'Inactif', BANNI: 'Banni' }
+        badge.className = `badge ${map[res.statut] || 'badge-secondary'}`
+        badge.textContent = label[res.statut] || res.statut
       }
       if (btn) { btn.disabled = false; btn.textContent = res.actif ? 'Désactiver' : 'Activer' }
       toast.success(res.actif ? 'Compte activé.' : 'Compte désactivé.')
@@ -181,14 +219,21 @@
     }
   }
 
-  window.changerPage = n => { page = n; charger() }
+  window.changerPage = n => { page = n; afficherFiltres() }
+
+  document.getElementById('btn-filtrer').addEventListener('click', () => { page = 0; afficherFiltres() })
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('filtre-statut').value = ''
+    document.getElementById('search-input').value = ''
+    page = 0; afficherFiltres()
+  })
 
   let t; document.getElementById('search-input').addEventListener('input', () => {
-    clearTimeout(t); t = setTimeout(() => { page=0; charger() }, 400)
+    clearTimeout(t); t = setTimeout(() => { page = 0; afficherFiltres() }, 400)
   })
 
   charger()
-  buildHistorique('historique-container')
+  buildHistorique('historique-container', 50, 'utilisateur')
 </script>
 </body>
 </html>

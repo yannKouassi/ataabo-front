@@ -104,7 +104,11 @@
       padding: 6px 14px;
       font-size: 13px;
       font-weight: 600;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
     }
+    .pays-chip:hover { border-color: var(--primary); background: var(--primary-light); }
+    .pays-chip-actif { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 
     /* FEATURES */
     .features {
@@ -169,10 +173,14 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="navbar-brand">
-    <div class="navbar-brand-icon">A</div>
-    Ataabo
+    <div class="navbar-brand-icon" id="navbar-brand-icon">A</div>
+    <span id="navbar-brand-nom">Ataabo</span>
   </div>
   <div class="navbar-actions">
+    <div id="pays-combobox-container"></div>
+    <button id="btn-theme" class="topbar-icon-btn" title="Mode nuit">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <button class="btn-hero-outline" onclick="window.location.href='/login.html'">Se connecter</button>
     <button class="btn-hero-primary" onclick="window.location.href='/adhesion.html'">Commencer gratuitement</button>
   </div>
@@ -185,28 +193,24 @@
     Plateforme SaaS multi-pays
   </div>
 
-  <h1>Gérez vos <span>organisations communautaires</span> simplement</h1>
+  <h1 data-i18n="ACCUEIL_TITRE" data-i18n-html>Gérez vos <span>organisations communautaires</span> simplement</h1>
 
-  <p class="hero-sub">
+  <p class="hero-sub" data-i18n="ACCUEIL_SOUS_TITRE">
     Ataabo est la plateforme dédiée aux associations, mutuelles et ONG d'Afrique.
     Adhésions, cotisations, événements — tout en un seul endroit.
   </p>
 
   <div class="hero-actions">
-    <button class="btn-hero-primary" onclick="window.location.href='/adhesion.html'">
+    <button class="btn-hero-primary" data-i18n="ACCUEIL_BTN_REJOINDRE" onclick="window.location.href='/adhesion.html'">
       Rejoindre ou créer une organisation
     </button>
-    <button class="btn-hero-outline" onclick="window.location.href='/login.html'">
+    <button class="btn-hero-outline" data-i18n="ACCUEIL_BTN_CONNEXION" onclick="window.location.href='/login.html'">
       J'ai déjà un compte
     </button>
   </div>
 
-  <div class="pays-strip">
-    <div class="pays-chip">🇨🇮 Côte d'Ivoire</div>
-    <div class="pays-chip">🇧🇯 Bénin</div>
-    <div class="pays-chip">🇲🇱 Mali</div>
-    <div class="pays-chip">🇳🇬 Nigeria</div>
-    <div class="pays-chip">🇲🇬 Madagascar</div>
+  <div class="pays-strip" id="pays-strip">
+    <div class="pays-chip">⏳ Chargement...</div>
   </div>
 </section>
 
@@ -218,8 +222,8 @@
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
       </svg>
     </div>
-    <div class="feature-title">Gestion des adhérents</div>
-    <div class="feature-desc">Demandes d'adhésion, validation, suivi des membres actifs avec analyse IA.</div>
+    <div class="feature-title" data-i18n="FEATURE_ADHERENTS">Gestion des adhérents</div>
+    <div class="feature-desc" data-i18n="FEATURE_ADHERENTS_DESC">Demandes d'adhésion, validation, suivi des membres actifs avec analyse IA.</div>
   </div>
 
   <div class="feature-card">
@@ -228,8 +232,8 @@
         <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
       </svg>
     </div>
-    <div class="feature-title">Cotisations</div>
-    <div class="feature-desc">Enregistrement des paiements, suivi des retards, historique complet.</div>
+    <div class="feature-title" data-i18n="FEATURE_COTISATIONS">Cotisations</div>
+    <div class="feature-desc" data-i18n="FEATURE_COTISATIONS_DESC">Enregistrement des paiements, suivi des retards, historique complet.</div>
   </div>
 
   <div class="feature-card">
@@ -239,8 +243,8 @@
         <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
     </div>
-    <div class="feature-title">Événements</div>
-    <div class="feature-desc">Planification, inscriptions et suivi de présences pour vos activités.</div>
+    <div class="feature-title" data-i18n="FEATURE_EVENEMENTS">Événements</div>
+    <div class="feature-desc" data-i18n="FEATURE_EVENEMENTS_DESC">Planification, inscriptions et suivi de présences pour vos activités.</div>
   </div>
 
   <div class="feature-card">
@@ -249,16 +253,16 @@
         <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
     </div>
-    <div class="feature-title">Habilitations</div>
-    <div class="feature-desc">Rôles personnalisés, permissions granulaires, audit complet des actions.</div>
+    <div class="feature-title" data-i18n="FEATURE_HABILITATIONS">Habilitations</div>
+    <div class="feature-desc" data-i18n="FEATURE_HABILITATIONS_DESC">Rôles personnalisés, permissions granulaires, audit complet des actions.</div>
   </div>
 </section>
 
 <!-- CTA -->
 <section class="cta-bottom">
-  <h2>Prêt à simplifier la gestion de votre organisation ?</h2>
-  <p>Rejoignez les organisations qui font confiance à Ataabo</p>
-  <button class="btn-cta-white" onclick="window.location.href='/adhesion.html'">
+  <h2 data-i18n="ACCUEIL_CTA_TITRE">Prêt à simplifier la gestion de votre organisation ?</h2>
+  <p data-i18n="ACCUEIL_CTA_SOUS">Rejoignez les organisations qui font confiance à Ataabo</p>
+  <button class="btn-cta-white" data-i18n="ACCUEIL_CTA_BTN" onclick="window.location.href='/adhesion.html'">
     Commencer maintenant — c'est gratuit
   </button>
 </section>
@@ -267,5 +271,40 @@
   © 2025 Ataabo · Plateforme de gestion d'organisations communautaires
 </footer>
 
+<script type="module">
+  import { buildComboboxPays, chargerTraductions, appliquerTraductions, chargerPaysLangues, getCodePays } from '/src/js/i18n.js'
+  import { initTheme } from '/src/js/theme.js'
+  import { initTraductionAuto } from '/src/js/translator.js'
+
+  initTheme()
+  await chargerTraductions()
+  appliquerTraductions()
+  initTraductionAuto()
+
+  // Charger le logo et le nom de la plateforme depuis le serveur
+  fetch('/api/plateforme')
+    .then(r => r.ok ? r.json() : null)
+    .then(p => {
+      if (!p) return
+      const iconEl = document.getElementById('navbar-brand-icon')
+      const nomEl = document.getElementById('navbar-brand-nom')
+      if (p.urlLogoPlateforme && iconEl) {
+        iconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" onerror="this.parentElement.textContent='A'">`
+      }
+      if (p.nomPlateforme && nomEl) nomEl.textContent = p.nomPlateforme
+    })
+    .catch(() => {})
+
+  await buildComboboxPays('pays-combobox-container')
+
+  const paysList = await chargerPaysLangues()
+  const paysActuel = getCodePays()
+  const strip = document.getElementById('pays-strip')
+  if (strip) {
+    strip.innerHTML = paysList.map(p => `
+      <div class="pays-chip${p.codePays === paysActuel ? ' pays-chip-actif' : ''}">${p.libPays}</div>
+    `).join('')
+  }
+</script>
 </body>
 </html>

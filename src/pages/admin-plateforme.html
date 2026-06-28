@@ -96,9 +96,9 @@
   async function charger() {
     try {
       const p = await api.get('/plateforme')
-      document.getElementById('plat-nom').value = p.nom || ''
-      document.getElementById('plat-description').value = p.description || ''
-      if (p.urlLogo) afficherLogoPreview(p.urlLogo)
+      document.getElementById('plat-nom').value = p.nomPlateforme || ''
+      document.getElementById('plat-description').value = p.descriptionPlateforme || ''
+      if (p.urlLogoPlateforme) afficherLogoPreview(p.urlLogoPlateforme)
     } catch(err) {
       document.getElementById('err-plat').textContent = err.message
       document.getElementById('err-plat').style.display = 'block'
@@ -151,7 +151,7 @@
   })
 
   charger()
-  buildHistorique('historique-container')
+  buildHistorique('historique-container', 50, 'plateforme')
 </script>
 </body>
 </html>

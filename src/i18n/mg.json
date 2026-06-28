@@ -1,0 +1,26 @@
+{
+  "ACCUEIL_TITRE": "Andramo ny <span>fikambanana</span> aminareo mora foana",
+  "ACCUEIL_SOUS_TITRE": "Ataabo no sehatra ho an'ny fikambanana, fifanampiana ary ONG any Afrika. Fidirana, sara, hetsika — iray ihany no toerana.",
+  "ACCUEIL_BTN_REJOINDRE": "Miditra na mamorona fikambanana",
+  "ACCUEIL_BTN_CONNEXION": "Manana kaonty aho",
+  "ACCUEIL_CTA_TITRE": "Vonona hampaivohitra ny fitantanana ny fikambananao?",
+  "ACCUEIL_CTA_SOUS": "Miara-dia amin'ny fikambanana matoky an'i Ataabo",
+  "ACCUEIL_CTA_BTN": "Manomboka izao — maimaim-poana",
+
+  "FEATURE_ADHERENTS": "Fitantanana ny mpikambana",
+  "FEATURE_ADHERENTS_DESC": "Fangatahana fidirana, fanamafisana, fanaraha-maso ny mpikambana mavitrika.",
+  "FEATURE_COTISATIONS": "Sara",
+  "FEATURE_COTISATIONS_DESC": "Firaketana ny fandoavana, fanaraha-maso ny tara, tantara feno.",
+  "FEATURE_EVENEMENTS": "Hetsika",
+  "FEATURE_EVENEMENTS_DESC": "Fandaminana, fisoratana anarana ary fanaraha-maso fanatrehana.",
+  "FEATURE_HABILITATIONS": "Fahazoan-dalana",
+  "FEATURE_HABILITATIONS_DESC": "Andraikitra voafaritra, fahazoan-dalana, fanara-maso ny asa rehetra.",
+
+  "LOGIN_TAGLINE": "Andramo ny fikambanam-bahoaka aminareo",
+  "LOGIN_TITRE": "Tonga soa indray 👋",
+  "LOGIN_SOUS_TITRE": "Midira ao amin'ny efitrao aminareo",
+  "LOGIN_BTN": "Miditra",
+
+  "NAV_CONNEXION": "Miditra",
+  "NAV_COMMENCER": "Manomboka maimaimpoana"
+}

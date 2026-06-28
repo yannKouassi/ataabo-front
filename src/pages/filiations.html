@@ -64,12 +64,14 @@
               <tr>
                 <th>Type de lien</th>
                 <th>Nom & prénom</th>
+                <th>Sexe</th>
                 <th>Date naissance</th>
+                <th>Téléphone</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="tbody-filiations">
-              <tr><td colspan="4"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+              <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -85,6 +87,22 @@
     </div>
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
+</div>
+
+<!-- MODAL MODIFIER TYPE DE LIEN -->
+<div id="modal-modifier" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="width:100%;max-width:400px;padding:28px;position:relative;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:20px;">Modifier le type de lien</div>
+    <div id="err-modal-fil" style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;"></div>
+    <div class="form-group">
+      <label class="form-label">Type de lien *</label>
+      <select class="form-input" id="modal-fil-type"></select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+      <button class="btn btn-secondary" id="btn-annuler-modal">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirmer-modal">Enregistrer</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -119,20 +137,59 @@
         tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>Aucune filiation trouvée</p></div></td></tr>`
         return
       }
-      tbody.innerHTML = items.map(f => `
-        <tr>
-          <td><span class="badge badge-info">${f.typeFiliation || f.libelleType || '—'}</span></td>
-          <td style="font-weight:600;">${f.prenomFilie||''} ${f.nomFilie||''}</td>
-          <td style="font-size:13px;">${f.dateNaissanceFilie ? new Date(f.dateNaissanceFilie).toLocaleDateString('fr-FR') : '—'}</td>
-          <td>
-            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimer(${f.id})">Supprimer</button>` : ''}
+      tbody.innerHTML = items.map(f => {
+        const sexe = f.afiliation?.sexe?.libSexe === 'MASCULIN' ? 'M' : f.afiliation?.sexe?.libSexe === 'FEMININ' ? 'F' : '—'
+        const ddn  = f.afiliation?.dateNaisPersonne ? new Date(f.afiliation.dateNaisPersonne).toLocaleDateString('fr-FR') : '—'
+        return `<tr>
+          <td><span class="badge badge-info">${f.filiation?.libelleFiliation || '—'}</span></td>
+          <td style="font-weight:600;">${f.afiliation?.prenPersonne||''} ${f.afiliation?.nomPersonne||''}</td>
+          <td style="font-size:13px;">${sexe}</td>
+          <td style="font-size:13px;">${ddn}</td>
+          <td style="font-size:13px;">${f.afiliation?.telPersonne || '—'}</td>
+          <td style="text-align:right;white-space:nowrap;">
+            ${perm.peutEcrire ? `<button class="btn btn-sm btn-secondary" style="margin-right:6px;" onclick="ouvrirModifier('${f.id}','${f.filiation?.idFiliation||''}')">Modifier</button>` : ''}
+            ${perm.peutSupprimer ? `<button class="btn btn-sm" style="color:#b91c1c;background:none;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;" onclick="supprimer('${f.id}')">Supprimer</button>` : ''}
           </td>
-        </tr>
-      `).join('')
+        </tr>`
+      }).join('')
     } catch(err) {
       tbody.innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
+
+  let _typesCache = []
+  let _idEnCours = null
+
+  async function chargerTypes() {
+    if (!_typesCache.length)
+      _typesCache = await api.get('/filiations/types').catch(() => [])
+  }
+
+  window.ouvrirModifier = async (id, idTypeActuel) => {
+    _idEnCours = id
+    document.getElementById('err-modal-fil').style.display = 'none'
+    await chargerTypes()
+    document.getElementById('modal-fil-type').innerHTML =
+      `<option value="">Choisir le lien</option>` +
+      _typesCache.map(t => `<option value="${t.idFiliation}" ${t.idFiliation === idTypeActuel ? 'selected' : ''}>${t.libelleFiliation}</option>`).join('')
+    document.getElementById('modal-modifier').style.display = 'flex'
+  }
+
+  document.getElementById('btn-annuler-modal').addEventListener('click', () => {
+    document.getElementById('modal-modifier').style.display = 'none'
+  })
+
+  document.getElementById('btn-confirmer-modal').addEventListener('click', async () => {
+    const idFiliation = document.getElementById('modal-fil-type').value
+    const err = document.getElementById('err-modal-fil')
+    if (!idFiliation) { err.textContent = 'Choisissez un type de lien.'; err.style.display = 'block'; return }
+    try {
+      await api.put(`/filiations/${_idEnCours}`, { idFiliation })
+      document.getElementById('modal-modifier').style.display = 'none'
+      toast.success('Filiation modifiée.')
+      chercher()
+    } catch(e) { err.textContent = e.message; err.style.display = 'block' }
+  })
 
   window.supprimer = async (id) => {
     if (!confirm('Supprimer cette filiation ?')) return
@@ -147,7 +204,7 @@
 
   document.getElementById('btn-rechercher').addEventListener('click', chercher)
   document.getElementById('num-adherent-input').addEventListener('keydown', e => { if (e.key === 'Enter') chercher() })
-  buildHistorique('historique-container')
+  buildHistorique('historique-container', 50, 'filiation')
 </script>
 </body>
 </html>

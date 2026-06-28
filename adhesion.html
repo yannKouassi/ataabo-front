@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ataabo — Inscription</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <style>
     body { min-height:100vh; background:var(--bg); }
     .navbar { display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:var(--surface); border-bottom:1px solid var(--border); }
@@ -133,25 +133,58 @@
   </div>
 
   <!-- ════════════════════════════════════════════════ -->
-  <!-- FLUX CRÉER — Étape 1 : Infos personnelles fondateur -->
+  <!-- FLUX CRÉER — Étape 2 : Infos personnelles fondateur -->
   <!-- ════════════════════════════════════════════════ -->
   <div class="section" id="sec-fond-infos">
-    <div class="btn-back" id="back-fond">← Retour</div>
-    <div style="font-size:20px; font-weight:800; margin-bottom:4px;">Votre compte</div>
-    <div style="font-size:13.5px; color:var(--text-muted); margin-bottom:24px;">Vous serez le fondateur et administrateur de l'organisation</div>
+    <div class="btn-back" id="back-fond">← Retour à l'organisation</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px;">Votre compte</div>
+    <div style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;">Vous serez le fondateur et administrateur de l'organisation</div>
     <div class="form-card">
       <div class="err-box" id="err-fond"></div>
-      <div class="form-section-title">Identité</div>
+
+      <!-- Ligne 1 : Nom + Prénom -->
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nom *</label><input type="text" class="form-input" id="fond-nom" placeholder="Kouassi"/></div>
         <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" id="fond-prenom" placeholder="Yannick"/></div>
       </div>
-      <div class="form-group"><label class="form-label">Adresse email *</label><input type="email" class="form-input" id="fond-email" placeholder="vous@exemple.com"/></div>
+
+      <!-- Ligne 2 : Email + Téléphone avec indicatif -->
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Date de naissance *</label><input type="date" class="form-input" id="fond-naissance"/></div>
-        <div class="form-group"><label class="form-label">Sexe *</label><select class="form-input" id="fond-sexe"><option value="">Chargement...</option></select></div>
+        <div class="form-group"><label class="form-label">Adresse email *</label><input type="email" class="form-input" id="fond-email" placeholder="vous@exemple.com"/></div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <div style="display:flex;gap:6px;">
+            <select class="form-input" id="fond-indicatif" style="width:105px;flex-shrink:0;padding-left:8px;">
+              <option value="+225">🇨🇮 +225</option>
+              <option value="+229">🇧🇯 +229</option>
+              <option value="+223">🇲🇱 +223</option>
+              <option value="+234">🇳🇬 +234</option>
+              <option value="+261">🇲🇬 +261</option>
+            </select>
+            <input type="tel" class="form-input" id="fond-tel-num" placeholder="07 00 00 00 00" style="flex:1;min-width:0;"/>
+          </div>
+        </div>
       </div>
-      <div class="form-group"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="fond-situation"><option value="">Chargement...</option></select></div>
+
+      <!-- Ligne 3 : Date naissance (3 sélecteurs) + Sexe -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date de naissance *</label>
+          <div style="display:grid;grid-template-columns:64px 1fr 80px;gap:6px;">
+            <select class="form-input" id="fond-jour" style="padding-left:8px;"><option value="">JJ</option></select>
+            <select class="form-input" id="fond-mois" style="padding-left:8px;"><option value="">Mois</option></select>
+            <select class="form-input" id="fond-annee" style="padding-left:8px;"><option value="">AAAA</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Sexe *</label><select class="form-input" id="fond-sexe"><option value="">Choisir</option></select></div>
+      </div>
+
+      <!-- Ligne 4 : Situation matrimoniale (demi-largeur) + vide -->
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="fond-situation"><option value="">Choisir</option></select></div>
+        <div class="form-group"></div>
+      </div>
+
       <div class="form-section-title">Mot de passe</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" class="form-input" id="fond-password" placeholder="6 à 10 caractères"/></div>
@@ -186,26 +219,69 @@
   </div>
 
   <!-- ════════════════════════════════════════ -->
-  <!-- FLUX CRÉER — Étape 3 : Infos organisation -->
+  <!-- FLUX CRÉER — Étape 1 : Infos organisation -->
   <!-- ════════════════════════════════════════ -->
   <div class="section" id="sec-org-infos">
-    <div style="font-size:20px; font-weight:800; margin-bottom:4px;">Votre organisation</div>
-    <div style="font-size:13.5px; color:var(--text-muted); margin-bottom:24px;">Renseignez toutes les informations de votre organisation</div>
+    <div class="btn-back" id="back-org">← Retour</div>
+
+    <!-- Bandeau pays : armoiries + nom pays, sans boîte -->
+    <div id="org-country-banner" style="display:none;flex-direction:column;align-items:center;gap:8px;text-align:center;margin-bottom:18px;">
+      <div id="org-armoiries-preview" style="display:flex;align-items:center;justify-content:center;"></div>
+      <div id="org-country-name" style="font-size:17px;font-weight:800;"></div>
+    </div>
+
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px;">Votre organisation</div>
+    <div style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;">Renseignez les informations de votre organisation</div>
+
     <div class="form-card">
       <div class="err-box" id="err-org"></div>
 
-      <div class="form-section-title">Identification</div>
+      <!-- Logo organisation -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;margin-top:4px;">Identification</div>
+        <div style="text-align:center;">
+          <div id="org-logo-preview" onclick="document.getElementById('org-logo').click()" style="
+            width:72px;height:72px;border-radius:12px;
+            background:var(--bg-secondary,#f1f5f9);
+            border:2px dashed var(--border,#e2e8f0);
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            cursor:pointer;overflow:hidden;transition:border-color .15s;
+          " title="Logo de l'organisation">
+            <svg width="22" height="22" fill="none" stroke="var(--text-muted,#94a3b8)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Logo (optionnel)</div>
+          <input type="file" id="org-logo" accept="image/*" style="display:none" onchange="
+            const f=this.files[0];if(f){const r=new FileReader();r.onload=e=>{document.getElementById('org-logo-preview').innerHTML='<img src=\''+e.target.result+'\' style=\'width:100%;height:100%;object-fit:cover;\'/>';};r.readAsDataURL(f);}
+          "/>
+        </div>
+      </div>
+
       <div class="form-group"><label class="form-label">Nom de l'organisation *</label><input type="text" class="form-input" id="org-nom" placeholder="Ex: Association Fraternité Abidjan"/></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Type d'organisation *</label><select class="form-input" id="org-type"><option value="">Chargement...</option></select></div>
-        <div class="form-group"><label class="form-label">Pays *</label><select class="form-input" id="org-pays"><option value="">Chargement...</option></select></div>
+        <div class="form-group">
+          <label class="form-label">Pays *</label>
+          <select class="form-input" id="org-pays" onchange="afficherArmoiriesPays(this)"><option value="">Chargement...</option></select>
+        </div>
       </div>
       <div class="form-group"><label class="form-label">N° agrément *</label><input type="text" class="form-input" id="org-agrement" placeholder="Ex: N°0234/MEIS/DGAT"/></div>
 
       <div class="form-section-title">Contact</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Email de l'organisation *</label><input type="email" class="form-input" id="org-email" placeholder="contact@monorg.com"/></div>
-        <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="org-tel" placeholder="+225 07 00 00 00 00"/></div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <div style="display:flex;gap:6px;">
+            <select class="form-input" id="org-indicatif" style="width:105px;flex-shrink:0;padding-left:8px;">
+              <option value="+225">🇨🇮 +225</option>
+              <option value="+229">🇧🇯 +229</option>
+              <option value="+223">🇲🇱 +223</option>
+              <option value="+234">🇳🇬 +234</option>
+              <option value="+261">🇲🇬 +261</option>
+            </select>
+            <input type="tel" class="form-input" id="org-tel-num" placeholder="07 00 00 00 00" style="flex:1;min-width:0;"/>
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Siège social</label><input type="text" class="form-input" id="org-siege" placeholder="Ex: Cocody, Abidjan"/></div>
@@ -213,13 +289,11 @@
       </div>
 
       <div class="form-section-title">Localisation</div>
-      <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">
-        Choisissez d'abord votre pays, puis cliquez sur la carte pour localiser votre organisation.
-      </div>
-      <div id="org-map" style="height:280px; border-radius:var(--radius-sm); border:1px solid var(--border); overflow:hidden; margin-bottom:10px;"></div>
-      <div style="display:flex; gap:16px; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; font-size:13px;">
+      <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;">Choisissez d'abord votre pays, puis cliquez sur la carte.</div>
+      <div id="org-map" style="height:260px;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:16px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;">
         <svg width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span id="org-coords-display" style="color:var(--text-muted); font-style:italic;">Aucune localisation sélectionnée</span>
+        <span id="org-coords-display" style="color:var(--text-muted);font-style:italic;">Aucune localisation sélectionnée</span>
       </div>
       <input type="hidden" id="org-lat"/>
       <input type="hidden" id="org-lng"/>
@@ -227,16 +301,16 @@
       <div class="form-section-title">Description</div>
       <div class="form-group"><textarea class="form-input" id="org-description" rows="3" placeholder="Décrivez brièvement votre organisation, ses objectifs..." style="resize:vertical;"></textarea></div>
 
-      <div class="form-section-title">Document d'agrément</div>
+      <div class="form-section-title">Document d'agrément *</div>
       <div class="upload-zone" onclick="document.getElementById('org-doc').click()">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 6px; display:block;">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 6px;display:block;">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
         </svg>
-        <div id="org-doc-label">PDF ou image · Cliquer pour uploader (optionnel)</div>
+        <div id="org-doc-label">PDF ou image · Cliquer pour uploader</div>
         <input type="file" id="org-doc" accept=".pdf,image/*" style="display:none" onchange="previewFile('org-doc','org-doc-label')"/>
       </div>
 
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:20px;font-size:14px;padding:12px;" id="btn-org-soumettre">Soumettre mon organisation →</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:20px;font-size:14px;padding:12px;" id="btn-org-continuer">Continuer — Créer mon compte →</button>
     </div>
   </div>
 
@@ -323,43 +397,127 @@
   <!-- ════════════════════════════════════════════════ -->
   <div class="section" id="sec-form-adhesion">
     <div class="btn-back" id="back-adhesion">← Retour à la liste</div>
-    <div style="font-size:20px; font-weight:800; margin-bottom:4px;">Demande d'adhésion</div>
-    <div style="font-size:13.5px; color:var(--text-muted); margin-bottom:20px;">Remplissez le formulaire pour soumettre votre demande</div>
-    <div class="org-selected-banner" id="org-banner">
-      <svg width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      <div>
-        <div style="font-size:11px;color:var(--primary);font-weight:600;margin-bottom:1px;">Organisation sélectionnée</div>
-        <div style="font-weight:700;font-size:14px;color:var(--primary);" id="org-selected-name">—</div>
+
+    <!-- Bannière organisation : logo + infos + armoiries -->
+    <div id="org-detail-card" style="
+      display:flex;align-items:stretch;gap:0;
+      background:var(--primary);color:white;
+      border-radius:14px;overflow:hidden;
+      margin-bottom:20px;min-height:100px;
+    ">
+      <div id="org-detail-logo" style="
+        width:90px;min-height:100px;flex-shrink:0;
+        background:rgba(255,255,255,.15);
+        display:flex;align-items:center;justify-content:center;
+        font-size:32px;font-weight:800;color:white;
+      "></div>
+      <div style="flex:1;padding:16px 20px;display:flex;flex-direction:column;justify-content:center;gap:4px;">
+        <div style="font-size:11px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:.5px;">Organisation sélectionnée</div>
+        <div id="org-detail-nom" style="font-size:17px;font-weight:800;line-height:1.2;">—</div>
+        <div id="org-detail-type" style="font-size:12px;opacity:.8;"></div>
+        <div style="font-size:12px;opacity:.8;display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="org-detail-pays-nom"></span>
+        </div>
       </div>
+      <div id="org-detail-armoiries" style="
+        width:90px;flex-shrink:0;
+        background:rgba(255,255,255,.1);
+        display:flex;align-items:center;justify-content:center;
+        padding:12px;
+      "></div>
     </div>
+
     <div class="form-card">
       <div class="err-box" id="err-adhesion"></div>
-      <div class="form-section-title">Informations personnelles</div>
+
+      <!-- Titre section + photo de profil en haut à droite -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;">Informations personnelles</div>
+        <div style="text-align:center;">
+          <div id="adh-photo-preview" onclick="document.getElementById('adh-photo').click()" style="
+            width:72px;height:72px;border-radius:50%;
+            background:var(--bg-secondary,#f1f5f9);
+            border:2px dashed var(--border,#e2e8f0);
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            cursor:pointer;overflow:hidden;
+            transition:border-color .15s;
+          " title="Photo de profil">
+            <svg width="22" height="22" fill="none" stroke="var(--text-muted,#94a3b8)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Photo *</div>
+          <input type="file" id="adh-photo" accept="image/*" style="display:none" onchange="
+            const f=this.files[0];if(f){const r=new FileReader();r.onload=e=>{document.getElementById('adh-photo-preview').innerHTML='<img src=\''+e.target.result+'\' style=\'width:100%;height:100%;object-fit:cover;\'/>';};r.readAsDataURL(f);}
+          "/>
+        </div>
+      </div>
+
+      <!-- Ligne 1 : Nom + Prénom -->
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nom *</label><input type="text" class="form-input" id="adh-nom" placeholder="Kouassi"/></div>
         <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" id="adh-prenom" placeholder="Yannick"/></div>
       </div>
-      <div class="form-group"><label class="form-label">Email *</label><input type="email" class="form-input" id="adh-email" placeholder="vous@exemple.com"/></div>
-      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="adh-tel" placeholder="+225 07 00 00 00 00"/></div>
-      <div class="form-section-title">Documents</div>
+
+      <!-- Ligne 2 : Email + Téléphone avec indicatif -->
       <div class="form-row">
+        <div class="form-group"><label class="form-label">Email *</label><input type="email" class="form-input" id="adh-email" placeholder="vous@exemple.com"/></div>
         <div class="form-group">
-          <label class="form-label">Photo de profil</label>
-          <div class="upload-zone" onclick="document.getElementById('adh-photo').click()">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 6px;display:block;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <div id="adh-photo-label">Cliquer pour uploader</div>
-            <input type="file" id="adh-photo" accept="image/*" style="display:none" onchange="previewFile('adh-photo','adh-photo-label')"/>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">CNI / Passeport</label>
-          <div class="upload-zone" onclick="document.getElementById('adh-cni').click()">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 6px;display:block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <div id="adh-cni-label">Cliquer pour uploader</div>
-            <input type="file" id="adh-cni" accept="image/*,.pdf" style="display:none" onchange="previewFile('adh-cni','adh-cni-label')"/>
+          <label class="form-label">Téléphone</label>
+          <div style="display:flex;gap:6px;">
+            <select class="form-input" id="adh-indicatif" style="width:105px;flex-shrink:0;padding-left:8px;">
+              <option value="+225">🇨🇮 +225</option>
+              <option value="+229">🇧🇯 +229</option>
+              <option value="+223">🇲🇱 +223</option>
+              <option value="+234">🇳🇬 +234</option>
+              <option value="+261">🇲🇬 +261</option>
+            </select>
+            <input type="tel" class="form-input" id="adh-tel-num" placeholder="07 00 00 00 00" style="flex:1;min-width:0;"/>
           </div>
         </div>
       </div>
+
+      <!-- Ligne 3 : Date de naissance (3 sélecteurs) + Sexe -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date de naissance *</label>
+          <div style="display:grid;grid-template-columns:64px 1fr 80px;gap:6px;">
+            <select class="form-input" id="adh-jour" style="padding-left:8px;"><option value="">JJ</option></select>
+            <select class="form-input" id="adh-mois" style="padding-left:8px;"><option value="">Mois</option></select>
+            <select class="form-input" id="adh-annee" style="padding-left:8px;"><option value="">AAAA</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Sexe *</label><select class="form-input" id="adh-sexe"><option value="">Choisir</option></select></div>
+      </div>
+
+      <!-- Ligne 4 : Situation matrimoniale (demi-largeur) -->
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="adh-situation"><option value="">Choisir</option></select></div>
+        <div class="form-group"></div>
+      </div>
+
+      <!-- Ligne 5 : Type de pièce + Numéro -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type de pièce d'identité *</label>
+          <select class="form-input" id="adh-type-piece" onchange="
+            const num = document.getElementById('adh-num-piece');
+            num.placeholder = this.value === 'PASSEPORT' ? 'Ex: A12345678' : 'Ex: CI0123456789';
+            document.getElementById('adh-label-num-piece').textContent = this.value === 'PASSEPORT' ? 'Numéro du passeport *' : 'Numéro de la CNI *';
+          ">
+            <option value="">Choisir</option>
+            <option value="CNI">CNI (Carte Nationale d'Identité)</option>
+            <option value="PASSEPORT">Passeport</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="adh-label-num-piece">Numéro de la pièce *</label>
+          <input type="text" class="form-input" id="adh-num-piece" placeholder="Choisir le type d'abord" style="text-transform:uppercase;"/>
+        </div>
+      </div>
+
+      <!-- Documents requis — générés dynamiquement selon l'organisation -->
+      <div id="docs-requis-container"></div>
+
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;font-size:14px;padding:12px;" id="btn-soumettre-adhesion">Soumettre ma demande</button>
     </div>
   </div>
@@ -383,10 +541,21 @@
 
 </div><!-- /page-wrap -->
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<button id="btn-theme" class="btn-theme-float" title="Mode nuit">
+  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
 <script type="module">
   import { api } from '/src/js/api.js'
   import { saveLogin, saveContexte } from '/src/js/auth.js'
+  import { chargerTraductions, appliquerTraductions } from '/src/js/i18n.js'
+  import { initTheme } from '/src/js/theme.js'
+  import { initTraductionAuto } from '/src/js/translator.js'
+
+  initTheme()
+  chargerTraductions().then(appliquerTraductions)
+  initTraductionAuto()
 
   // ─── STATE ───────────────────────────────────────────
   let mode = null
@@ -405,6 +574,7 @@
         api.get('/referentiel/types-organisation'),
         api.get('/referentiel/pays'),
       ])
+      _paysDataCache = pays
       const fill = (id, items, vKey, lKey) => {
         const s = document.getElementById(id)
         if (!s) return
@@ -415,11 +585,44 @@
       ;['adh-situation','fond-situation'].forEach(id => fill(id, situations, 'idSituationMatrimoniale', 'libSituationMatrimoniale'))
       fill('org-type', typesOrg, 'libelle', 'libelle')
       fill('org-pays', pays, 'codePays', 'libPays')
+      // Si le form org est déjà affiché (user a cliqué Créer avant la fin du chargement)
+      if (document.getElementById('sec-org-infos')?.classList.contains('visible')) {
+        preselecterPaysOrg()
+      }
     } catch(e) { console.error('Référentiels :', e) }
   }
   chargerReferentiels()
 
+  // ─── SÉLECTEURS DATE DE NAISSANCE ────────────────────
+  ;(() => {
+    const jourEl  = document.getElementById('adh-jour')
+    const moisEl  = document.getElementById('adh-mois')
+    const anneeEl = document.getElementById('adh-annee')
+
+    for (let j = 1; j <= 31; j++) {
+      jourEl.innerHTML += `<option value="${String(j).padStart(2,'0')}">${String(j).padStart(2,'0')}</option>`
+    }
+
+    const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+    MOIS.forEach((m, i) => {
+      moisEl.innerHTML += `<option value="${String(i+1).padStart(2,'0')}">${m}</option>`
+    })
+
+    const anneeMax = new Date().getFullYear() - 10
+    for (let a = anneeMax; a >= anneeMax - 90; a--) {
+      anneeEl.innerHTML += `<option value="${a}">${a}</option>`
+    }
+  })()
+
   // ─── CARTE LEAFLET ────────────────────────────────────
+  // Correction icônes Leaflet bloquées par Edge Tracking Prevention
+  delete L.Icon.Default.prototype._getIconUrl
+  L.Icon.Default.mergeOptions({
+    iconUrl:       'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+    shadowUrl:     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  })
+
   const PAYS_CENTRES = {
     CIV: { lat: 5.3600,   lng: -4.0083,  zoom: 7,  nom: "Côte d'Ivoire" },
     BEN: { lat: 6.3654,   lng: 2.4183,   zoom: 7,  nom: "Bénin"         },
@@ -428,14 +631,29 @@
     MDG: { lat: -18.9137, lng: 47.5361,  zoom: 6,  nom: "Madagascar"    },
   }
 
+  const PAYS_BOUNDS = {
+    CIV: [[ 4.30, -8.60], [10.75, -2.49]],
+    BEN: [[ 6.22,  0.77], [12.42,  3.85]],
+    MLI: [[10.14,-12.25], [25.00,  4.25]],
+    NGA: [[ 4.27,  2.67], [13.90, 14.68]],
+    MDG: [[-25.61, 43.22], [-11.95, 50.49]],
+  }
+
   let orgMap = null
   let orgMarker = null
 
   function initOrgMap(codePays) {
-    const centre = PAYS_CENTRES[codePays] || { lat: 7.5, lng: 1.0, zoom: 4 }
+    if (!codePays) return
+    const centre = PAYS_CENTRES[codePays] || { lat: 7.5, lng: -1.0, zoom: 4 }
+    if (!isFinite(centre.lat) || !isFinite(centre.lng)) return
+    const bounds = PAYS_BOUNDS[codePays] || null
 
     if (!orgMap) {
-      orgMap = L.map('org-map').setView([centre.lat, centre.lng], centre.zoom)
+      orgMap = L.map('org-map', {
+        maxBounds: bounds || undefined,
+        maxBoundsViscosity: 1.0,
+        minZoom: centre.zoom - 1,
+      }).setView([centre.lat, centre.lng], centre.zoom)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
         maxZoom: 19
@@ -446,6 +664,10 @@
         placerMarqueur(lat, lng)
       })
     } else {
+      if (bounds) {
+        orgMap.setMaxBounds(bounds)
+        orgMap.setMinZoom(centre.zoom - 1)
+      }
       orgMap.flyTo([centre.lat, centre.lng], centre.zoom, { duration: 1 })
       // Supprimer l'ancien marqueur si changement de pays
       if (orgMarker) {
@@ -481,18 +703,107 @@
     display.style.color = 'var(--primary)'
   }
 
-  // Quand le pays change → recentrer la carte
+  // Quand le pays change → recentrer la carte + afficher armoiries
   document.getElementById('org-pays').addEventListener('change', (e) => {
     const code = e.target.value
     if (!code) return
-    // Initialiser la carte si pas encore fait (la section n'est visible qu'à l'étape 3)
     initOrgMap(code)
-    // Forcer le recalcul de taille au cas où la carte vient d'être affichée
     setTimeout(() => orgMap && orgMap.invalidateSize(), 100)
+    afficherArmoiriesPays(e.target)
+    // Sync indicatif téléphone
+    const MAP_IND = { CIV:'+225', BEN:'+229', MLI:'+223', NGA:'+234', MDG:'+261' }
+    const indEl = document.getElementById('org-indicatif')
+    if (indEl && MAP_IND[code]) indEl.value = MAP_IND[code]
   })
 
+  // Pré-sélection automatique du pays depuis localStorage
+  function preselecterPaysOrg() {
+    const codePays = localStorage.getItem('pays')
+    if (!codePays) return
+
+    const paysSelect = document.getElementById('org-pays')
+    if (!paysSelect || !paysSelect.querySelector(`option[value="${codePays}"]`)) return
+
+    // Pré-remplir le pays (sans verrouiller — l'utilisateur peut changer)
+    paysSelect.value = codePays
+
+    // Pré-remplir l'indicatif
+    const MAP_IND = { CIV:'+225', BEN:'+229', MLI:'+223', NGA:'+234', MDG:'+261' }
+    const indEl = document.getElementById('org-indicatif')
+    if (indEl && MAP_IND[codePays]) indEl.value = MAP_IND[codePays]
+
+    // Armoiries
+    afficherArmoiriesPays(paysSelect)
+
+    // Carte — attendre que le DOM soit peint avant d'initialiser Leaflet
+    setTimeout(() => {
+      initOrgMap(codePays)
+      setTimeout(() => orgMap && orgMap.invalidateSize(), 300)
+    }, 50)
+  }
+
+  const PLACEHOLDERS_PAYS = {
+    CIV: { siege: 'Ex: Cocody, Abidjan', adresse: 'Ex: BP 1234 Abidjan', tel: 'Ex: 01 02 03 04 05' },
+    BEN: { siege: 'Ex: Cadjehoun, Cotonou', adresse: 'Ex: BP 456 Cotonou', tel: 'Ex: 97 00 00 00' },
+    MLI: { siege: 'Ex: ACI 2000, Bamako', adresse: 'Ex: BP 789 Bamako', tel: 'Ex: 76 00 00 00' },
+    NGA: { siege: 'Ex: Victoria Island, Lagos', adresse: 'Ex: PMB 100 Lagos', tel: 'Ex: 080 0000 0000' },
+    MDG: { siege: 'Ex: Analakely, Antananarivo', adresse: 'Ex: BP 012 Antananarivo', tel: 'Ex: 034 00 000 00' },
+  }
+
+  // Met à jour le bandeau pays + placeholders
+  let _paysDataCache = []
+  window.afficherArmoiriesPays = (select) => {
+    const code = select.value
+    const banner   = document.getElementById('org-country-banner')
+    const preview  = document.getElementById('org-armoiries-preview')
+    const nameEl   = document.getElementById('org-country-name')
+    if (!banner || !preview) return
+
+    const pays = _paysDataCache.find(p => p.codePays === code)
+    if (pays) {
+      // Bandeau visible
+      banner.style.display = 'flex'
+      nameEl.textContent = pays.libPays || pays.nomPays || code
+      if (pays.urlArmoiries) {
+        preview.innerHTML = `<img src="${pays.urlArmoiries}" style="width:140px;height:140px;object-fit:contain;" alt="Armoiries ${code}"/>`
+      } else {
+        preview.innerHTML = `<svg width="32" height="32" fill="none" stroke="var(--text-muted,#94a3b8)" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
+      }
+    } else {
+      banner.style.display = 'none'
+    }
+
+    // Placeholders dynamiques selon le pays
+    const ph = PLACEHOLDERS_PAYS[code] || {}
+    const s = document.getElementById('org-siege')
+    const a = document.getElementById('org-adresse')
+    const t = document.getElementById('org-tel-num')
+    if (s) s.placeholder = ph.siege  || 'Ex: Quartier, Ville'
+    if (a) a.placeholder = ph.adresse || 'Ex: BP 000 Ville'
+    if (t) t.placeholder = ph.tel    || 'Ex: 00 00 00 00'
+  }
+
+  // ─── SÉLECTEURS DATE FONDATEUR ────────────────────────
+  ;(() => {
+    const jourEl  = document.getElementById('fond-jour')
+    const moisEl  = document.getElementById('fond-mois')
+    const anneeEl = document.getElementById('fond-annee')
+    if (!jourEl) return
+    for (let j = 1; j <= 31; j++) {
+      jourEl.innerHTML += `<option value="${String(j).padStart(2,'0')}">${String(j).padStart(2,'0')}</option>`
+    }
+    const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+    MOIS.forEach((m, i) => {
+      moisEl.innerHTML += `<option value="${String(i+1).padStart(2,'0')}">${m}</option>`
+    })
+    const anneeMax = new Date().getFullYear() - 10
+    for (let a = anneeMax; a >= anneeMax - 90; a--) {
+      anneeEl.innerHTML += `<option value="${a}">${a}</option>`
+    }
+  })()
+
   // ─── INDICATEUR D'ÉTAPES ─────────────────────────────
-  const STEPS_CREER = ['Compte','Confirmation','Organisation','Email org','Validation']
+  const STEPS_CREER = ['Organisation','Votre compte','Confirmation','Email org','Finalisation']
   const STEPS_REJOINDRE = ['Choisir','Formulaire','Confirmation']
 
   function renderSteps(steps, active) {
@@ -555,7 +866,8 @@
   document.getElementById('btn-creer').addEventListener('click', () => {
     mode = 'creer'
     renderSteps(STEPS_CREER, 1)
-    show('sec-fond-infos')
+    show('sec-org-infos')
+    preselecterPaysOrg()
   })
 
   document.getElementById('btn-rejoindre').addEventListener('click', () => {
@@ -565,26 +877,41 @@
     chargerOrgs()
   })
 
-  document.getElementById('back-fond').addEventListener('click', () => {
+  // Back depuis org form → choix
+  document.getElementById('back-org').addEventListener('click', () => {
     document.getElementById('steps-bar').style.display = 'none'
     show('sec-choix')
   })
 
-  // ─── FLUX CRÉER — ÉTAPE 1 : INSCRIPTION FONDATEUR ────
+  // Back depuis fondateur form → org form
+  document.getElementById('back-fond').addEventListener('click', () => {
+    renderSteps(STEPS_CREER, 1)
+    show('sec-org-infos')
+  })
+
+  // ─── FLUX CRÉER — ÉTAPE 2 : INSCRIPTION FONDATEUR ────
   document.getElementById('btn-fond-suivant').addEventListener('click', async () => {
     const btn = document.getElementById('btn-fond-suivant')
     hideErr('err-fond')
-    const nom = document.getElementById('fond-nom').value.trim()
-    const prenom = document.getElementById('fond-prenom').value.trim()
-    const email = document.getElementById('fond-email').value.trim()
-    const naissance = document.getElementById('fond-naissance').value
-    const sexe = document.getElementById('fond-sexe').value
+    const nom       = document.getElementById('fond-nom').value.trim()
+    const prenom    = document.getElementById('fond-prenom').value.trim()
+    const email     = document.getElementById('fond-email').value.trim()
+    const indicatif = document.getElementById('fond-indicatif').value
+    const telNum    = document.getElementById('fond-tel-num').value.trim()
+    const jour      = document.getElementById('fond-jour').value
+    const mois      = document.getElementById('fond-mois').value
+    const annee     = document.getElementById('fond-annee').value
+    const naissance = (jour && mois && annee) ? `${annee}-${mois}-${jour}` : ''
+    const sexe      = document.getElementById('fond-sexe').value
     const situation = document.getElementById('fond-situation').value
-    const password = document.getElementById('fond-password').value
-    const confirm = document.getElementById('fond-confirm').value
+    const password  = document.getElementById('fond-password').value
+    const confirm   = document.getElementById('fond-confirm').value
 
-    if (!nom || !prenom || !email || !naissance || !sexe || !situation || !password) {
+    if (!nom || !prenom || !email || !sexe || !situation || !password) {
       return showErr('err-fond', 'Veuillez remplir tous les champs obligatoires.')
+    }
+    if (!jour || !mois || !annee) {
+      return showErr('err-fond', 'Veuillez renseigner votre date de naissance complète.')
     }
     if (password !== confirm) return showErr('err-fond', 'Les mots de passe ne correspondent pas.')
 
@@ -595,7 +922,7 @@
       fondPassword = password
       document.getElementById('fond-email-display').textContent = email
       setupOtpInputs('fond-otp-inputs')
-      renderSteps(STEPS_CREER, 2)
+      renderSteps(STEPS_CREER, 3)
       show('sec-fond-otp')
     } catch(e) {
       // Vérifier silencieusement le statut pour adapter l'affichage (sans révéler si l'email existe)
@@ -617,24 +944,22 @@
             if (!mdp) return
             try {
               const loginData = await api.post('/connexion', { email, password: mdp })
-              // Stocker le token pour les appels API de création d'org
               localStorage.setItem('accessToken', loginData.accessToken)
               if (loginData.refreshToken) localStorage.setItem('refreshToken', loginData.refreshToken)
               fondEmail = email
-              renderSteps(STEPS_CREER, 3)
-              show('sec-org-infos')
+              // Compte existant → soumettre l'org directement
+              await soumettreOrganisation()
             } catch {
               document.getElementById('err-reprendre').textContent = 'Mot de passe incorrect.'
               document.getElementById('err-reprendre').style.display = 'block'
             }
           })
         } else if (statut.statut === 'EN_ATTENTE_VERIFICATION') {
-          // Email non vérifié → renvoyer le code
           fondEmail = email
           fondPassword = password
           document.getElementById('fond-email-display').textContent = email
           setupOtpInputs('fond-otp-inputs')
-          renderSteps(STEPS_CREER, 2)
+          renderSteps(STEPS_CREER, 3)
           show('sec-fond-otp')
         } else {
           showErr('err-fond', e.message || 'Erreur lors de l\'inscription.')
@@ -647,7 +972,30 @@
     }
   })
 
-  // ─── FLUX CRÉER — ÉTAPE 2 : OTP FONDATEUR ────────────
+  // ─── FLUX CRÉER — ÉTAPE 3 : OTP FONDATEUR → puis soumettre org ─
+  async function soumettreOrganisation() {
+    if (!orgDataStored) return
+    try {
+      const fd = new FormData()
+      fd.append('data', new Blob([JSON.stringify(orgDataStored)], { type: 'application/json' }))
+      fd.append('file', docFile)
+      const logo = document.getElementById('org-logo').files[0]
+      if (logo) fd.append('logo', logo)
+      const orgResp = await api.upload('/organisations/creer', fd)
+      orgCreeId = orgResp.id
+      orgCreeEmail = orgDataStored.emailAssociation
+      document.getElementById('org-email-display').textContent = orgCreeEmail
+      setupOtpInputs('org-otp-inputs')
+      renderSteps(STEPS_CREER, 4)
+      show('sec-org-otp')
+    } catch(e) {
+      // Revenir sur le formulaire org pour afficher l'erreur
+      renderSteps(STEPS_CREER, 1)
+      show('sec-org-infos')
+      showErr('err-org', e.message || 'Erreur lors de la création de l\'organisation.')
+    }
+  }
+
   document.getElementById('btn-fond-otp-valider').addEventListener('click', async () => {
     const btn = document.getElementById('btn-fond-otp-valider')
     hideErr('err-fond-otp')
@@ -658,14 +1006,9 @@
     try {
       const loginResp = await api.post('/activation', { email: fondEmail, code })
       saveLogin(loginResp)
-      renderSteps(STEPS_CREER, 3)
-      show('sec-org-infos')
-      // Initialiser la carte si un pays est déjà sélectionné, sinon attendre le choix
-      const codePays = document.getElementById('org-pays').value
-      setTimeout(() => {
-        if (codePays) initOrgMap(codePays)
-        else if (orgMap) orgMap.invalidateSize()
-      }, 150)
+      // Compte confirmé → maintenant soumettre l'organisation
+      btn.textContent = 'Création de l\'organisation...'
+      await soumettreOrganisation()
     } catch(e) {
       showErr('err-fond-otp', e.message || 'Code invalide ou expiré.')
     } finally {
@@ -675,11 +1018,14 @@
 
   window.renvoyerOtpFond = async () => {
     try {
+      const jour   = document.getElementById('fond-jour').value
+      const mois   = document.getElementById('fond-mois').value
+      const annee  = document.getElementById('fond-annee').value
       await api.post('/inscription', {
         nom: document.getElementById('fond-nom').value,
         prenom: document.getElementById('fond-prenom').value,
         email: fondEmail, password: fondPassword, confirmPassword: fondPassword,
-        dateNaissance: document.getElementById('fond-naissance').value,
+        dateNaissance: (jour && mois && annee) ? `${annee}-${mois}-${jour}` : '',
         libSexe: document.getElementById('fond-sexe').value,
         situationMatrimoniale: document.getElementById('fond-situation').value
       })
@@ -691,7 +1037,6 @@
     if (!orgCreeId) return
     try {
       await api.post(`/organisations/${orgCreeId}/renvoyer-otp`)
-      // Vider les inputs OTP
       document.querySelectorAll('#org-otp-inputs input').forEach(i => i.value = '')
       document.querySelectorAll('#org-otp-inputs input')[0].focus()
       hideErr('err-org-otp')
@@ -702,64 +1047,54 @@
     }
   }
 
-  // ─── FLUX CRÉER — ÉTAPE 3 : INFOS ORGANISATION ───────
-  document.getElementById('btn-org-soumettre').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-org-soumettre')
+  // ─── FLUX CRÉER — ÉTAPE 1 : INFOS ORG → stocker localement ───
+  let orgDataStored = null
+
+  document.getElementById('btn-org-continuer').addEventListener('click', () => {
     hideErr('err-org')
-    const nom = document.getElementById('org-nom').value.trim()
-    const type = document.getElementById('org-type').value
-    const pays = document.getElementById('org-pays').value
-    const email = document.getElementById('org-email').value.trim()
-    const agrement = document.getElementById('org-agrement').value.trim()
-    const tel = document.getElementById('org-tel').value.trim()
-    const siege = document.getElementById('org-siege').value.trim()
-    const adresse = document.getElementById('org-adresse').value.trim()
-    const lat = document.getElementById('org-lat').value
-    const lng = document.getElementById('org-lng').value
+    const nom       = document.getElementById('org-nom').value.trim()
+    const type      = document.getElementById('org-type').value
+    const pays      = document.getElementById('org-pays').value
+    const email     = document.getElementById('org-email').value.trim()
+    const agrement  = document.getElementById('org-agrement').value.trim()
+    const indicatif = document.getElementById('org-indicatif').value
+    const telNum    = document.getElementById('org-tel-num').value.trim()
+    const siege     = document.getElementById('org-siege').value.trim()
+    const adresse   = document.getElementById('org-adresse').value.trim()
+    const lat       = document.getElementById('org-lat').value
+    const lng       = document.getElementById('org-lng').value
     const description = document.getElementById('org-description').value.trim()
     docFile = document.getElementById('org-doc').files[0]
 
     if (!nom || !type || !pays || !email || !agrement) {
       return showErr('err-org', 'Veuillez remplir tous les champs obligatoires (*).')
     }
-
     if (!docFile) {
       return showErr('err-org', 'Veuillez joindre votre document d\'agrément.')
     }
 
-    btn.disabled = true; btn.textContent = 'Analyse du document en cours...'
-    try {
-      // Envoyer les données org + fichier en une seule requête multipart
-      // L'IA valide le document en premier côté backend — rien n'est créé si rejeté
-      const fd = new FormData()
-      fd.append('data', new Blob([JSON.stringify({
-        libAssociation: nom,
-        typeOrganisation: type,
-        codePays: pays,
-        emailAssociation: email,
-        numAgr: agrement,
-        telAssociation: tel || null,
-        siegeSocial: siege || null,
-        adrPostale: adresse || null,
-        latitudeAssoc: lat ? parseFloat(lat) : null,
-        longitudeAssoc: lng ? parseFloat(lng) : null,
-        description: description || null,
-      })], { type: 'application/json' }))
-      fd.append('file', docFile)
-
-      const orgResp = await api.upload('/organisations/creer', fd)
-      orgCreeId = orgResp.id
-      orgCreeEmail = email
-
-      document.getElementById('org-email-display').textContent = email
-      setupOtpInputs('org-otp-inputs')
-      renderSteps(STEPS_CREER, 4)
-      show('sec-org-otp')
-    } catch(e) {
-      showErr('err-org', e.message || 'Erreur lors de la création de l\'organisation.')
-    } finally {
-      btn.disabled = false; btn.textContent = 'Soumettre mon organisation →'
+    // Stocker tout localement — la soumission se fera après le compte fondateur
+    orgDataStored = {
+      libAssociation: nom,
+      typeOrganisation: type,
+      codePays: pays,
+      emailAssociation: email,
+      numAgr: agrement,
+      telAssociation: telNum ? `${indicatif} ${telNum}` : null,
+      siegeSocial: siege || null,
+      adrPostale: adresse || null,
+      latitudeAssoc: lat ? parseFloat(lat) : null,
+      longitudeAssoc: lng ? parseFloat(lng) : null,
+      description: description || null,
     }
+
+    // Pré-sélectionner l'indicatif fondateur selon le pays org
+    const MAP_INDICATIF = { CIV:'+225', BEN:'+229', MLI:'+223', NGA:'+234', MDG:'+261' }
+    const fondIndicatif = document.getElementById('fond-indicatif')
+    if (fondIndicatif && MAP_INDICATIF[pays]) fondIndicatif.value = MAP_INDICATIF[pays]
+
+    renderSteps(STEPS_CREER, 2)
+    show('sec-fond-infos')
   })
 
   // ─── FLUX CRÉER — ÉTAPE 4 : OTP ORGANISATION ─────────
@@ -781,13 +1116,6 @@
     }
   })
 
-  window.renvoyerOtpOrg = async () => {
-    try {
-      await api.post(`/organisations/${orgCreeId}/renvoyer-otp`, {})
-      alert('Un nouveau code a été envoyé.')
-    } catch(e) {}
-  }
-
   // ─── FLUX REJOINDRE — LISTE DES ORGS ──────────────────
   document.getElementById('back-liste').addEventListener('click', () => {
     document.getElementById('steps-bar').style.display = 'none'
@@ -798,7 +1126,9 @@
     const list = document.getElementById('org-list')
     list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);"><div class="spinner" style="margin:0 auto 12px;"></div>Chargement...</div>`
     try {
-      toutesOrgs = await api.get('/organisations/publiques')
+      const codePays = localStorage.getItem('pays')
+      const url = codePays ? `/organisations/publiques?pays=${codePays}` : '/organisations/publiques'
+      toutesOrgs = await api.get(url)
       afficherOrgs(toutesOrgs)
     } catch(e) {
       list.innerHTML = `<div style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${e.message}</div>`
@@ -829,12 +1159,76 @@
         <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`
       el.addEventListener('click', () => {
         selectedOrg = org
-        document.getElementById('org-selected-name').textContent = org.nomOrganisation || org.libAssociation
+        // Remplir la bannière organisation
+        const nom = org.nomOrganisation || org.libAssociation || '—'
+        const initiale = nom[0]?.toUpperCase() || 'O'
+        const logoEl = document.getElementById('org-detail-logo')
+        if (org.urlLogo) {
+          logoEl.innerHTML = `<img src="${org.urlLogo}" style="width:70px;height:70px;object-fit:contain;border-radius:8px;" />`
+        } else {
+          logoEl.textContent = initiale
+        }
+        document.getElementById('org-detail-nom').textContent = nom
+        document.getElementById('org-detail-type').textContent = org.typeOrganisation || ''
+        document.getElementById('org-detail-pays-nom').textContent = org.pays?.libPays || org.libellePays || ''
+        const armoiriesEl = document.getElementById('org-detail-armoiries')
+        const urlArmoiries = org.pays?.urlArmoiries
+        armoiriesEl.innerHTML = urlArmoiries
+          ? `<img src="${urlArmoiries}" style="width:60px;height:60px;object-fit:contain;" alt="Armoiries" />`
+          : ''
         renderSteps(STEPS_REJOINDRE, 2)
         show('sec-form-adhesion')
+        chargerDocsRequis(org.id)
       })
       list.appendChild(el)
     })
+  }
+
+  // ─── DOCUMENTS REQUIS DYNAMIQUES ──────────────────────
+  let docsRequis = []
+
+  async function chargerDocsRequis(orgId) {
+    const container = document.getElementById('docs-requis-container')
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;margin-top:12px;">Chargement des documents requis...</div>'
+    try {
+      docsRequis = await api.get(`/organisations/${orgId}/documents-requis`)
+    } catch {
+      docsRequis = []
+    }
+
+    if (docsRequis.length === 0) {
+      // Fallback : CNI obligatoire par défaut si l'org n'a rien configuré
+      docsRequis = [{ id: 'default-cni', libelle: 'CNI / Passeport', description: 'Recto-verso en couleur', obligatoire: true, categorieDocument: 'CNI' }]
+    }
+
+    container.innerHTML = `
+      <div class="form-section-title" style="margin-top:16px;">Documents requis</div>
+      ${docsRequis.map(doc => `
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">
+            ${doc.libelle}${doc.obligatoire ? ' *' : ' <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span>'}
+          </label>
+          ${doc.description ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">${doc.description}</div>` : ''}
+          <div class="upload-zone" id="zone-${doc.id}" onclick="document.getElementById('file-${doc.id}').click()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 6px;display:block;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <div id="label-${doc.id}">Cliquer pour uploader</div>
+            <input type="file" id="file-${doc.id}" accept="image/*,.pdf" style="display:none"
+              data-doc-id="${doc.id}"
+              data-categorie="${doc.categorieDocument}"
+              onchange="
+                const f=this.files[0];
+                if(f){
+                  document.getElementById('label-'+this.dataset.docId).textContent=f.name;
+                  document.getElementById('zone-'+this.dataset.docId).style.borderColor='var(--primary)';
+                }
+              "/>
+          </div>
+        </div>
+      `).join('')}
+    `
   }
 
   document.getElementById('search-org').addEventListener('input', e => {
@@ -858,34 +1252,68 @@
     hideErr('err-adhesion')
     if (!selectedOrg) return
 
-    const nom = document.getElementById('adh-nom').value.trim()
-    const prenom = document.getElementById('adh-prenom').value.trim()
-    const email = document.getElementById('adh-email').value.trim()
-    const tel = document.getElementById('adh-tel').value.trim()
+    const nom        = document.getElementById('adh-nom').value.trim()
+    const prenom     = document.getElementById('adh-prenom').value.trim()
+    const email      = document.getElementById('adh-email').value.trim()
+    const indicatif  = document.getElementById('adh-indicatif').value
+    const telNum     = document.getElementById('adh-tel-num').value.trim()
+    const tel        = telNum ? `${indicatif} ${telNum}` : null
+    const jour       = document.getElementById('adh-jour').value
+    const mois       = document.getElementById('adh-mois').value
+    const annee      = document.getElementById('adh-annee').value
+    const naissance  = (jour && mois && annee) ? `${annee}-${mois}-${jour}` : ''
+    const sexeId      = document.getElementById('adh-sexe').value
+    const situationId = document.getElementById('adh-situation').value
+    const typePiece   = document.getElementById('adh-type-piece').value
+    const numeroPiece = document.getElementById('adh-num-piece').value.trim().toUpperCase()
 
     if (!nom || !prenom || !email) {
-      return showErr('err-adhesion', 'Veuillez remplir tous les champs obligatoires.')
+      return showErr('err-adhesion', 'Nom, prénom et email sont obligatoires.')
+    }
+    if (!jour || !mois || !annee) {
+      return showErr('err-adhesion', 'Veuillez renseigner votre date de naissance complète.')
+    }
+    if (!sexeId || !situationId) {
+      return showErr('err-adhesion', 'Veuillez renseigner votre sexe et situation matrimoniale.')
+    }
+    if (!typePiece || !numeroPiece) {
+      return showErr('err-adhesion', 'Veuillez choisir le type de pièce et saisir son numéro.')
     }
 
     const photo = document.getElementById('adh-photo').files[0]
-    const cni = document.getElementById('adh-cni').files[0]
-
     if (!photo) return showErr('err-adhesion', 'La photo de profil est obligatoire.')
-    if (!cni)   return showErr('err-adhesion', 'La pièce d\'identité est obligatoire.')
+
+    // Vérifier les documents obligatoires et collecter tous les fichiers
+    const fichiersDocs = []
+    for (const doc of docsRequis) {
+      const input = document.getElementById(`file-${doc.id}`)
+      const fichier = input?.files[0]
+      if (doc.obligatoire && !fichier) {
+        return showErr('err-adhesion', `Le document "${doc.libelle}" est obligatoire.`)
+      }
+      if (fichier) fichiersDocs.push({ fichier, categorie: doc.categorieDocument, docId: doc.id })
+    }
 
     btn.disabled = true; btn.textContent = 'Validation en cours...'
     try {
-      // Un seul appel multipart : IA valide en premier, rien créé si rejeté
       const fd = new FormData()
       fd.append('data', new Blob([JSON.stringify({
-        organisationId: selectedOrg.id,
+        organisationId:          selectedOrg.id,
         nom,
         prenom,
         email,
-        telephone: tel || null,
+        telephone:               tel || null,
+        dateNaissance:           naissance,
+        sexeId,
+        situationMatrimonialeId: situationId,
+        typePiece,
+        numeroPiece,
       })], { type: 'application/json' }))
       fd.append('photo', photo)
-      fd.append('cni', cni)
+      // Ajouter chaque document avec sa catégorie comme clé
+      fichiersDocs.forEach(({ fichier, categorie }) => {
+        fd.append(categorie.toLowerCase(), fichier)
+      })
       const adhesion = await api.upload('/adhesions/postuler', fd)
 
       document.getElementById('succes-adhesion-msg').textContent =

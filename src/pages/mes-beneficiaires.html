@@ -35,9 +35,12 @@
   </header>
 
   <main class="main-content">
-    <div style="margin-bottom:24px;">
-      <div class="page-title">Mes bénéficiaires</div>
-      <div class="page-subtitle">Personnes que vous avez désignées comme bénéficiaires</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <div class="page-title">Mes bénéficiaires</div>
+        <div class="page-subtitle">Personnes que vous avez désignées comme bénéficiaires</div>
+      </div>
+      <button class="btn btn-primary" id="btn-ajouter-benef">+ Ajouter</button>
     </div>
 
     <div class="card">
@@ -46,53 +49,149 @@
           <thead>
             <tr>
               <th>Nom & prénom</th>
-              <th>Relation</th>
-              <th>Contact</th>
+              <th>Sexe</th>
+              <th>Date de naissance</th>
+              <th>Téléphone</th>
+              <th>Email</th>
+              <th>Depuis</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-beneficiaires">
-            <tr><td colspan="3"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <div class="card" style="margin-top:20px;padding:16px 20px;" id="historique-container"></div>
   </main>
 </div>
 
+<!-- MODAL AJOUTER BÉNÉFICIAIRE -->
+<div id="modal-benef" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="width:100%;max-width:480px;padding:28px;position:relative;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:20px;">Ajouter un bénéficiaire</div>
+    <div id="err-modal-benef" style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;"></div>
+
+    <div class="form-group">
+      <label class="form-label">Membre de l'organisation *</label>
+      <select class="form-input" id="benef-adherent">
+        <option value="">Chargement...</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;justify-content:flex-end;">
+      <button class="btn btn-secondary" id="btn-annuler-benef">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirmer-benef">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-  import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
-  const user = getUser()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
+  const perm = getPermission('/moi/beneficiaires')
+  if (!perm.peutEcrire) document.getElementById('btn-ajouter-benef').style.display = 'none'
+
   const tbody = document.getElementById('tbody-beneficiaires')
+  const modal = document.getElementById('modal-benef')
+  const errModal = document.getElementById('err-modal-benef')
 
   async function charger() {
     try {
-      const items = await api.get(`/beneficiaires/moi`)
+      const items = await api.get('/beneficiaires/moi')
       if (!items || !items.length) {
-        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>Aucun bénéficiaire enregistré</p></div></td></tr>`
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucun bénéficiaire enregistré</p></div></td></tr>`
         return
       }
-      tbody.innerHTML = items.map(b => `
-        <tr>
-          <td style="font-weight:600;">${b.prenomBeneficiaire||''} ${b.nomBeneficiaire||''}</td>
-          <td><span class="badge badge-secondary">${b.relation || '—'}</span></td>
-          <td style="font-size:13px;">${b.contact || '—'}</td>
-        </tr>
-      `).join('')
+      tbody.innerHTML = items.map(b => {
+        const sexe = b.beneficiaire?.sexe?.libSexe === 'MASCULIN' ? 'M' : b.beneficiaire?.sexe?.libSexe === 'FEMININ' ? 'F' : '—'
+        const ddn  = b.beneficiaire?.dateNaisPersonne ? new Date(b.beneficiaire.dateNaisPersonne).toLocaleDateString('fr-FR') : '—'
+        return `<tr>
+          <td style="font-weight:600;">${b.beneficiaire?.prenPersonne||''} ${b.beneficiaire?.nomPersonne||''}</td>
+          <td style="font-size:13px;">${sexe}</td>
+          <td style="font-size:13px;">${ddn}</td>
+          <td style="font-size:13px;">${b.beneficiaire?.telPersonne || '—'}</td>
+          <td style="font-size:13px;">${b.beneficiaire?.emailPersonne || '—'}</td>
+          <td style="font-size:13px;">${b.dateLien ? new Date(b.dateLien).toLocaleDateString('fr-FR') : '—'}</td>
+          <td style="text-align:right;">
+            <button class="btn btn-sm" style="color:#b91c1c;background:none;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;" data-id="${b.id}">Supprimer</button>
+          </td>
+        </tr>`
+      }).join('')
+
+      if (!perm.peutSupprimer) {
+        tbody.querySelectorAll('[data-id]').forEach(btn => btn.style.display = 'none')
+      } else {
+        tbody.querySelectorAll('[data-id]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Supprimer ce bénéficiaire ?')) return
+            try {
+              await api.delete(`/beneficiaires/${btn.dataset.id}`)
+              charger()
+              rafraichirHistorique('historique-container')
+            } catch(e) { alert(e.message) }
+          })
+        })
+      }
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="3" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="7" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
 
+  document.getElementById('btn-ajouter-benef').addEventListener('click', async () => {
+    errModal.style.display = 'none'
+    modal.style.display = 'flex'
+
+    // Charger les filiations de l'adhérent connecté
+    const filiations = await api.get(`/filiations/adherent/${ctx.numAdherent}`).catch(() => [])
+    document.getElementById('benef-adherent').innerHTML =
+      `<option value="">Choisir parmi vos filiations</option>` +
+      filiations.map(f => {
+        const nom = `${f.afiliation?.prenPersonne||''} ${f.afiliation?.nomPersonne||''}`.trim()
+        const type = f.filiation?.libelleFiliation || ''
+        return `<option value="${f.afiliation?.idPersonne}">${nom} — ${type}</option>`
+      }).join('')
+  })
+
+  document.getElementById('btn-annuler-benef').addEventListener('click', () => { modal.style.display = 'none' })
+
+  document.getElementById('btn-confirmer-benef').addEventListener('click', async () => {
+    errModal.style.display = 'none'
+    const idPersonneBeneficiaire = document.getElementById('benef-adherent').value
+    if (!idPersonneBeneficiaire) {
+      errModal.textContent = 'Veuillez sélectionner un membre.'
+      errModal.style.display = 'block'
+      return
+    }
+    if (!ctx.idPersonne) {
+      errModal.textContent = 'Votre identifiant personnel est introuvable. Reconnectez-vous.'
+      errModal.style.display = 'block'
+      return
+    }
+    try {
+      await api.post('/beneficiaires', { idPersonneBeneficiaire })
+      modal.style.display = 'none'
+      charger()
+      rafraichirHistorique('historique-container')
+    } catch(e) {
+      errModal.textContent = e.message
+      errModal.style.display = 'block'
+    }
+  })
+
   charger()
+  buildHistorique('historique-container', 50, 'bénéficiaire')
 </script>
 </body>
 </html>
