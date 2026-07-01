@@ -76,6 +76,14 @@
 
     <!-- Champs création personne (mode Ajouter uniquement) -->
     <div id="row-personne">
+      <!-- Photo -->
+      <div class="form-group" style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+        <div id="fil-photo-preview" style="width:64px;height:64px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px dashed #cbd5e1;flex-shrink:0;overflow:hidden;">👤</div>
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Photo (optionnelle)</label>
+          <input type="file" id="fil-photo" accept="image/*" style="font-size:13px;"/>
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group">
           <label class="form-label">Nom *</label>
@@ -105,13 +113,7 @@
         <div class="form-group">
           <label class="form-label">Téléphone</label>
           <div style="display:flex;gap:6px;">
-            <select class="form-input" id="fil-indicatif" style="width:110px;flex-shrink:0;">
-              <option value="+225">🇨🇮 +225</option>
-              <option value="+229">🇧🇯 +229</option>
-              <option value="+223">🇲🇱 +223</option>
-              <option value="+234">🇳🇬 +234</option>
-              <option value="+261">🇲🇬 +261</option>
-            </select>
+            <span id="fil-indicatif" style="display:flex;align-items:center;padding:0 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;color:#475569;white-space:nowrap;flex-shrink:0;"></span>
             <input class="form-input" id="fil-tel" type="tel" placeholder="07 00 00 00 00" style="flex:1;"/>
           </div>
         </div>
@@ -154,6 +156,8 @@
   let _modeEdit = false
   let _idEnCours = null
   let _typesCache = []
+  const INDICATIFS = { CIV: '+225', BEN: '+229', MLI: '+223', NGA: '+234', MDG: '+261' }
+  const _indicatif = ctx.codePays ? (INDICATIFS[ctx.codePays] || '+225') : (INDICATIFS[localStorage.getItem('pays')] || '+225')
 
   async function charger() {
     try {
@@ -221,11 +225,10 @@
       ddn.value = ''
       ddn.max = new Date().toISOString().split('T')[0]
       document.getElementById('fil-sexe').value = ''
-      // Pré-sélectionner l'indicatif selon le pays choisi
-      const INDICATIFS = { CIV: '+225', BEN: '+229', MLI: '+223', NGA: '+234', MDG: '+261' }
-      const pays = localStorage.getItem('pays')
-      const indicatif = INDICATIFS[pays] || '+225'
-      document.getElementById('fil-indicatif').value = indicatif
+      document.getElementById('fil-photo').value = ''
+      document.getElementById('fil-photo-preview').innerHTML = '👤'
+      document.getElementById('fil-photo-preview').style.background = '#e2e8f0'
+      document.getElementById('fil-indicatif').textContent = _indicatif
     }
 
     await chargerReferentiels()
@@ -236,6 +239,19 @@
 
     modal.style.display = 'flex'
   }
+
+  // Prévisualisation photo
+  document.getElementById('fil-photo').addEventListener('change', function() {
+    const file = this.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = e => {
+      const preview = document.getElementById('fil-photo-preview')
+      preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`
+      preview.style.background = 'none'
+    }
+    reader.readAsDataURL(file)
+  })
 
   document.getElementById('btn-ajouter-filiation').addEventListener('click', () => ouvrirModal(false))
   document.getElementById('btn-annuler-fil').addEventListener('click', () => { modal.style.display = 'none' })
@@ -252,16 +268,22 @@
         const nom = document.getElementById('fil-nom').value.trim()
         const prenom = document.getElementById('fil-prenom').value.trim()
         if (!nom || !prenom) { errModal.textContent = 'Nom et prénom sont obligatoires.'; errModal.style.display = 'block'; return }
-        await api.post('/filiations', {
-          numAdherent: ctx.numAdherent,
-          idFiliation,
-          nom,
-          prenom,
-          dateNaissance: document.getElementById('fil-ddn').value || null,
-          sexe: document.getElementById('fil-sexe').value || null,
-          telephone: (() => { const num = document.getElementById('fil-tel').value.trim(); const ind = document.getElementById('fil-indicatif').value; return num ? `${ind}${num}` : null })(),
-          email: document.getElementById('fil-email').value.trim() || null,
-        })
+        const fd = new FormData()
+        fd.append('numAdherent', ctx.numAdherent)
+        fd.append('idFiliation', idFiliation)
+        fd.append('nom', nom)
+        fd.append('prenom', prenom)
+        const ddn = document.getElementById('fil-ddn').value
+        if (ddn) fd.append('dateNaissance', ddn)
+        const sexe = document.getElementById('fil-sexe').value
+        if (sexe) fd.append('sexe', sexe)
+        const telNum = document.getElementById('fil-tel').value.trim()
+        if (telNum) fd.append('telephone', _indicatif + telNum)
+        const email = document.getElementById('fil-email').value.trim()
+        if (email) fd.append('email', email)
+        const photoFile = document.getElementById('fil-photo').files[0]
+        if (photoFile) fd.append('photo', photoFile)
+        await api.upload('/filiations', fd)
       }
       modal.style.display = 'none'
       charger()

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ataabo — Mes bénéficiaires</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
@@ -49,6 +50,7 @@
           <thead>
             <tr>
               <th>Nom & prénom</th>
+              <th>Matricule</th>
               <th>Sexe</th>
               <th>Date de naissance</th>
               <th>Téléphone</th>
@@ -58,7 +60,7 @@
             </tr>
           </thead>
           <tbody id="tbody-beneficiaires">
-            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="8"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -111,20 +113,32 @@
     try {
       const items = await api.get('/beneficiaires/moi')
       if (!items || !items.length) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucun bénéficiaire enregistré</p></div></td></tr>`
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Aucun bénéficiaire enregistré</p></div></td></tr>`
         return
       }
       tbody.innerHTML = items.map(b => {
         const sexe = b.beneficiaire?.sexe?.libSexe === 'MASCULIN' ? 'M' : b.beneficiaire?.sexe?.libSexe === 'FEMININ' ? 'F' : '—'
         const ddn  = b.beneficiaire?.dateNaisPersonne ? new Date(b.beneficiaire.dateNaisPersonne).toLocaleDateString('fr-FR') : '—'
+        const mat  = b.matricule || '—'
         return `<tr>
           <td style="font-weight:600;">${b.beneficiaire?.prenPersonne||''} ${b.beneficiaire?.nomPersonne||''}</td>
+          <td><span style="font-family:monospace;font-size:12px;background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:4px;">${mat}</span></td>
           <td style="font-size:13px;">${sexe}</td>
           <td style="font-size:13px;">${ddn}</td>
           <td style="font-size:13px;">${b.beneficiaire?.telPersonne || '—'}</td>
           <td style="font-size:13px;">${b.beneficiaire?.emailPersonne || '—'}</td>
           <td style="font-size:13px;">${b.dateLien ? new Date(b.dateLien).toLocaleDateString('fr-FR') : '—'}</td>
-          <td style="text-align:right;">
+          <td style="text-align:right;white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;">
+            ${b.matricule ? `<button class="btn btn-sm" style="color:#1565c0;background:none;border:1px solid #93c5fd;border-radius:6px;cursor:pointer;font-size:13px;"
+              data-mat="${b.matricule}"
+              data-prenom="${b.beneficiaire?.prenPersonne||''}"
+              data-nom="${b.beneficiaire?.nomPersonne||''}"
+              data-photo="${b.beneficiaire?.urlPhoto||''}"
+              data-since="${b.dateLien ? new Date(b.dateLien).toLocaleDateString('fr-FR') : ''}"
+              data-ddn="${b.beneficiaire?.dateNaisPersonne ? new Date(b.beneficiaire.dateNaisPersonne).toLocaleDateString('fr-FR') : ''}"
+              data-sexe="${b.beneficiaire?.sexe?.libSexe||''}"
+              data-tel="${b.beneficiaire?.telPersonne||''}"
+              onclick="imprimerCarte(this)">🪪 Carte</button>` : ''}
             <button class="btn btn-sm" style="color:#b91c1c;background:none;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;" data-id="${b.id}">Supprimer</button>
           </td>
         </tr>`
@@ -189,6 +203,179 @@
       errModal.style.display = 'block'
     }
   })
+
+  function flagEmoji(code3) {
+    const map = { CIV:'CI', BEN:'BJ', SEN:'SN', CMR:'CM', MLI:'ML', BFA:'BF', GHA:'GH', FRA:'FR', GIN:'GN', TGO:'TG', NER:'NE', TCH:'TD', COD:'CD', MDG:'MG', USA:'US', GBR:'GB', NGA:'NG' }
+    const c2 = map[(code3||'').toUpperCase()] || (code3||'').slice(0,2).toUpperCase()
+    if (c2.length !== 2) return ''
+    return String.fromCodePoint(...[...c2].map(c => 127397 + c.charCodeAt(0)))
+  }
+
+  window.imprimerCarte = function(btn) {
+    const matricule = btn.dataset.mat
+    const prenom    = btn.dataset.prenom
+    const nom       = btn.dataset.nom
+    const photo     = btn.dataset.photo
+    const since     = btn.dataset.since
+    const ddn       = btn.dataset.ddn
+    const sexe      = btn.dataset.sexe === 'MASCULIN' ? 'M' : btn.dataset.sexe === 'FEMININ' ? 'F' : btn.dataset.sexe || '—'
+    const tel       = btn.dataset.tel
+
+    const couleur     = ctx.couleurPrimaire || '#1a5276'
+    const couleurFonce = couleur + 'dd'
+    const flag        = flagEmoji(ctx.codePays)
+    const initiales   = ((prenom?.[0]||'')+(nom?.[0]||'')).toUpperCase()
+    const paysNom     = ctx.libPays || ctx.codePays || ''
+
+    const photoHtml = photo
+      ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;" crossorigin="anonymous"/>`
+      : `<span style="font-size:18px;font-weight:800;color:#fff;">${initiales||'👤'}</span>`
+
+    const versoBg = ctx.urlArmoiries
+      ? `<img src="${ctx.urlArmoiries}" style="width:100%;height:100%;object-fit:contain;" crossorigin="anonymous"/>`
+      : `<span style="font-size:120px;">${flag}</span>`
+
+    const logoHtml = ctx.urlLogo
+      ? `<img src="${ctx.urlLogo}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous"/>`
+      : (ctx.nomOrganisation?.[0] || 'O')
+
+    // QR code
+    const qrDiv = document.createElement('div')
+    qrDiv.style.cssText = 'position:absolute;left:-9999px;'
+    document.body.appendChild(qrDiv)
+    const qrText = [
+      `N° BENEFICIAIRE: ${matricule}`,
+      `NOM: ${nom.toUpperCase()} ${prenom}`,
+      `ADHERENT: ${ctx.numAdherent||''}`,
+      `ORGANISATION: ${ctx.nomOrganisation||''}`,
+      tel   ? `TEL: ${tel}`   : '',
+      since ? `DESIGNE LE: ${since}` : '',
+    ].filter(Boolean).join('\n')
+    new QRCode(qrDiv, {
+      text: qrText,
+      width: 256, height: 256,
+      colorDark: '#000000', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L
+    })
+    const canvas = qrDiv.querySelector('canvas')
+    const qrSrc  = canvas ? canvas.toDataURL('image/png') : ''
+    document.body.removeChild(qrDiv)
+
+    const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"/>
+<title>Carte bénéficiaire — ${prenom} ${nom}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#f0f0f0; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:Arial,sans-serif; }
+  .page { display:flex; flex-direction:column; gap:32px; align-items:center; padding:40px; }
+  .label { font-size:11px; font-weight:700; color:#666; letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; text-align:center; }
+  .carte { width:85.6mm; height:54mm; border-radius:10px; position:relative; overflow:hidden; }
+
+  /* RECTO */
+  .recto { background:${couleur}; color:#fff; display:flex; flex-direction:column; }
+  .r-top { display:flex; align-items:center; gap:7px; padding:9px 11px 7px; border-bottom:1px solid rgba(255,255,255,.15); }
+  .r-logo { width:26px; height:26px; border-radius:5px; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff; flex-shrink:0; overflow:hidden; }
+  .r-orgname { font-size:8px; font-weight:700; color:rgba(255,255,255,.9); flex:1; line-height:1.3; }
+  .r-flag { font-size:17px; }
+  .r-body { display:flex; gap:10px; padding:8px 11px; flex:1; overflow:hidden; min-height:0; }
+  .r-photo { width:52px; height:60px; border-radius:7px; background:rgba(255,255,255,.18); border:1.5px solid rgba(255,255,255,.3); flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .r-infos { flex:1; }
+  .r-name { font-size:11px; font-weight:800; color:#fff; margin-bottom:2px; }
+  .r-role { font-size:7px; color:rgba(255,255,255,.55); letter-spacing:.07em; text-transform:uppercase; margin-bottom:5px; }
+  .r-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px 8px; }
+  .r-field label { font-size:6.5px; color:rgba(255,255,255,.45); display:block; text-transform:uppercase; letter-spacing:.06em; }
+  .r-field span { font-size:8px; color:rgba(255,255,255,.92); font-weight:600; }
+  .r-footer { padding:6px 11px; background:rgba(0,0,0,.2); display:flex; justify-content:space-between; align-items:center; }
+  .r-num { font-size:7.5px; font-family:monospace; color:rgba(255,255,255,.75); }
+  .r-badge { font-size:6.5px; font-weight:700; letter-spacing:.08em; color:rgba(255,255,255,.7); background:rgba(255,255,255,.12); padding:2px 7px; border-radius:8px; }
+
+  /* VERSO */
+  .verso { background:${couleurFonce}; display:flex; }
+  .v-bg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:120px; opacity:.13; user-select:none; }
+  .v-content { position:relative; z-index:1; display:flex; width:100%; }
+  .v-left { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border-right:1px solid rgba(255,255,255,.12); padding:12px; }
+  .v-logo { width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff; overflow:hidden; }
+  .v-orgname { font-size:8.5px; font-weight:700; color:rgba(255,255,255,.92); text-align:center; line-height:1.4; }
+  .v-div { width:36px; height:1px; background:rgba(255,255,255,.2); }
+  .v-title { font-size:7px; color:rgba(255,255,255,.45); letter-spacing:.14em; text-transform:uppercase; }
+  .v-right { width:112px; display:flex; flex-direction:column; justify-content:space-between; gap:0; padding:8px 10px; }
+  .v-row label { font-size:5.5px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.07em; display:block; margin-bottom:1px; }
+  .v-row span { font-size:7.5px; color:rgba(255,255,255,.88); font-family:monospace; }
+  .v-qr { display:flex; justify-content:flex-end; margin-top:2px; }
+  .v-qr img { border-radius:3px; width:44px!important; height:44px!important; }
+
+  @media print {
+    body { background:white; }
+    .page { padding:10mm; gap:8mm; }
+    .label { display:none; }
+    .carte { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head><body>
+<div class="page">
+
+  <div>
+    <div class="label">Recto</div>
+    <div class="carte recto">
+      <div class="v-bg" style="opacity:.13;">${versoBg}</div>
+      <div class="r-top">
+        <div class="r-logo">${logoHtml}</div>
+        <div class="r-orgname">${ctx.nomOrganisation||''}</div>
+        <span class="r-flag">${flag}</span>
+      </div>
+      <div class="r-body">
+        <div class="r-infos">
+          <div class="r-name">${nom.toUpperCase()} ${prenom}</div>
+          <div class="r-role">Bénéficiaire</div>
+          <div class="r-grid">
+            <div class="r-field"><label>Date de naissance</label><span>${ddn||'—'}</span></div>
+            <div class="r-field"><label>Sexe</label><span>${sexe}</span></div>
+            <div class="r-field" style="grid-column:1/-1"><label>N° bénéficiaire</label><span>${matricule}</span></div>
+            ${tel ? `<div class="r-field"><label>Téléphone</label><span>${tel}</span></div>` : '<div></div>'}
+            ${since ? `<div class="r-field"><label>Désigné le</label><span>${since}</span></div>` : ''}
+          </div>
+        </div>
+        <div class="r-photo">${photoHtml}</div>
+      </div>
+      <div class="r-footer">
+        <div class="r-num">ID : ${ctx.orgId||''}</div>
+        <div class="r-badge">${ctx.nomPlateforme||'Ataabo'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">Verso</div>
+    <div class="carte verso">
+      <div class="v-bg">${versoBg}</div>
+      <div class="v-content">
+        <div class="v-left">
+          <div class="v-logo">${logoHtml}</div>
+          <div class="v-orgname">${(ctx.nomOrganisation||'').replace(/ /g,'<br>')}</div>
+          <div class="v-div"></div>
+          <div class="v-title">Carte bénéficiaire</div>
+          ${since ? `<div style="font-size:6px;color:rgba(255,255,255,.4);letter-spacing:.07em;text-transform:uppercase;text-align:center;">Désigné le<br><span style="font-size:7.5px;color:rgba(255,255,255,.75);font-family:monospace;letter-spacing:0;">${since}</span></div>` : ''}
+        </div>
+        <div class="v-right">
+          <div class="v-row"><label>N° bénéficiaire</label><span>${matricule}</span></div>
+          <div class="v-row"><label>Adhérent</label><span>${ctx.numAdherent||'—'}</span></div>
+          <div class="v-row"><label>Organisation</label><span>${ctx.orgId||'—'}</span></div>
+          <div class="v-row"><label>Pays</label><span>${paysNom}</span></div>
+          <div class="v-qr">${qrSrc ? `<img src="${qrSrc}"/>` : ''}</div>
+          <div style="font-size:6px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;text-align:right;margin-top:2px;">${ctx.nomPlateforme||'Ataabo'}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>window.onload = () => window.print()<\/script>
+</body></html>`
+
+    const win = window.open('', '_blank', 'width=700,height=600')
+    win.document.write(html)
+    win.document.close()
+  }
 
   charger()
   buildHistorique('historique-container', 50, 'bénéficiaire')

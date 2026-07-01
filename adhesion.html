@@ -290,7 +290,7 @@
 
       <div class="form-section-title">Localisation</div>
       <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;">Choisissez d'abord votre pays, puis cliquez sur la carte.</div>
-      <div id="org-map" style="height:260px;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;margin-bottom:10px;"></div>
+      <div id="org-map" style="height:260px;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;margin-bottom:10px;background:#e8ecf0;"></div>
       <div style="display:flex;gap:16px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;">
         <svg width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span id="org-coords-display" style="color:var(--text-muted);font-style:italic;">Aucune localisation sélectionnée</span>
@@ -641,8 +641,41 @@
 
   let orgMap = null
   let orgMarker = null
+  let orgCountryLayer = null
+  let orgMaskLayer = null
+  const _geoJsonCache = {}
 
-  function initOrgMap(codePays) {
+  async function chargerGeoJsonPays(codePays) {
+    if (_geoJsonCache[codePays]) return _geoJsonCache[codePays]
+    try {
+      const r = await fetch(`https://raw.githubusercontent.com/johan/world.geo.json/master/countries/${codePays}.geo.json`)
+      if (!r.ok) return null
+      const data = await r.json()
+      _geoJsonCache[codePays] = data
+      return data
+    } catch { return null }
+  }
+
+  function construireMasque(geojsonData) {
+    // Polygone géant couvrant le monde entier, avec le pays en trou
+    const worldRing = [[-90,-180],[-90,180],[90,180],[90,-180],[-90,-180]]
+    const trous = []
+    const geo = geojsonData.geometry || geojsonData.features?.[0]?.geometry
+    if (!geo) return null
+    if (geo.type === 'Polygon') {
+      trous.push(...geo.coordinates)
+    } else if (geo.type === 'MultiPolygon') {
+      geo.coordinates.forEach(poly => trous.push(poly[0]))
+    }
+    const coords = [worldRing, ...trous].map(ring =>
+      ring.map(([lng, lat]) => [lat, lng])
+    )
+    return L.polygon(coords, {
+      color: 'none', fillColor: '#e8ecf0', fillOpacity: 1, interactive: false
+    })
+  }
+
+  async function initOrgMap(codePays) {
     if (!codePays) return
     const centre = PAYS_CENTRES[codePays] || { lat: 7.5, lng: -1.0, zoom: 4 }
     if (!isFinite(centre.lat) || !isFinite(centre.lng)) return
@@ -653,9 +686,11 @@
         maxBounds: bounds || undefined,
         maxBoundsViscosity: 1.0,
         minZoom: centre.zoom - 1,
+        zoomControl: true,
+        attributionControl: false,
       }).setView([centre.lat, centre.lng], centre.zoom)
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
         maxZoom: 19
       }).addTo(orgMap)
 
@@ -664,12 +699,7 @@
         placerMarqueur(lat, lng)
       })
     } else {
-      if (bounds) {
-        orgMap.setMaxBounds(bounds)
-        orgMap.setMinZoom(centre.zoom - 1)
-      }
-      orgMap.flyTo([centre.lat, centre.lng], centre.zoom, { duration: 1 })
-      // Supprimer l'ancien marqueur si changement de pays
+      if (bounds) { orgMap.setMaxBounds(bounds); orgMap.setMinZoom(centre.zoom - 1) }
       if (orgMarker) {
         orgMap.removeLayer(orgMarker)
         orgMarker = null
@@ -679,6 +709,24 @@
         document.getElementById('org-coords-display').style.fontStyle = 'italic'
         document.getElementById('org-coords-display').style.color = 'var(--text-muted)'
       }
+    }
+
+    // Supprimer les anciennes couches pays
+    if (orgCountryLayer) { orgMap.removeLayer(orgCountryLayer); orgCountryLayer = null }
+    if (orgMaskLayer)    { orgMap.removeLayer(orgMaskLayer);    orgMaskLayer = null }
+
+    const geoData = await chargerGeoJsonPays(codePays)
+    if (geoData) {
+      // Contour du pays
+      orgCountryLayer = L.geoJSON(geoData, {
+        style: { color: 'var(--primary,#2563eb)', weight: 2, fillColor: 'var(--primary,#2563eb)', fillOpacity: 0.08, interactive: false }
+      }).addTo(orgMap)
+      // Masque qui cache les pays voisins
+      orgMaskLayer = construireMasque(geoData)
+      if (orgMaskLayer) orgMaskLayer.addTo(orgMap)
+      orgMap.fitBounds(orgCountryLayer.getBounds(), { padding: [16, 16] })
+    } else {
+      orgMap.setView([centre.lat, centre.lng], centre.zoom)
     }
   }
 
