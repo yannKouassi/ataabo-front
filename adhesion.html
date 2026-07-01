@@ -724,13 +724,18 @@
     const paysSelect = document.getElementById('org-pays')
     if (!paysSelect || !paysSelect.querySelector(`option[value="${codePays}"]`)) return
 
-    // Pré-remplir le pays (sans verrouiller — l'utilisateur peut changer)
+    // Pré-remplir ET verrouiller le pays
     paysSelect.value = codePays
+    paysSelect.disabled = true
 
-    // Pré-remplir l'indicatif
+    // Pré-remplir ET verrouiller l'indicatif org
     const MAP_IND = { CIV:'+225', BEN:'+229', MLI:'+223', NGA:'+234', MDG:'+261' }
     const indEl = document.getElementById('org-indicatif')
-    if (indEl && MAP_IND[codePays]) indEl.value = MAP_IND[codePays]
+    if (indEl && MAP_IND[codePays]) { indEl.value = MAP_IND[codePays]; indEl.disabled = true }
+
+    // Pré-remplir ET verrouiller l'indicatif fondateur
+    const fondIndEl = document.getElementById('fond-indicatif')
+    if (fondIndEl && MAP_IND[codePays]) { fondIndEl.value = MAP_IND[codePays]; fondIndEl.disabled = true }
 
     // Armoiries
     afficherArmoiriesPays(paysSelect)
@@ -917,7 +922,7 @@
 
     btn.disabled = true; btn.textContent = 'Envoi en cours...'
     try {
-      await api.post('/inscription', { nom, prenom, email, password, confirmPassword: confirm, dateNaissance: naissance, libSexe: sexe, situationMatrimoniale: situation })
+      await api.post('/inscription', { nom, prenom, email, password, confirmPassword: confirm, dateNaissance: naissance, libSexe: sexe, situationMatrimoniale: situation, tel: telNum ? `${indicatif}${telNum}` : null })
       fondEmail = email
       fondPassword = password
       document.getElementById('fond-email-display').textContent = email
@@ -1027,7 +1032,8 @@
         email: fondEmail, password: fondPassword, confirmPassword: fondPassword,
         dateNaissance: (jour && mois && annee) ? `${annee}-${mois}-${jour}` : '',
         libSexe: document.getElementById('fond-sexe').value,
-        situationMatrimoniale: document.getElementById('fond-situation').value
+        situationMatrimoniale: document.getElementById('fond-situation').value,
+        tel: document.getElementById('fond-tel-num').value ? `${document.getElementById('fond-indicatif').value}${document.getElementById('fond-tel-num').value.trim()}` : null
       })
       alert('Un nouveau code a été envoyé.')
     } catch(e) {}
@@ -1176,6 +1182,12 @@
         armoiriesEl.innerHTML = urlArmoiries
           ? `<img src="${urlArmoiries}" style="width:60px;height:60px;object-fit:contain;" alt="Armoiries" />`
           : ''
+        // Pré-sélectionner l'indicatif téléphone selon le pays de l'org
+        const MAP_IND = { CIV:'+225', BEN:'+229', MLI:'+223', NGA:'+234', MDG:'+261' }
+        const codePaysOrg = org.codePays || org.pays?.codePays
+        const adhIndEl = document.getElementById('adh-indicatif')
+        if (adhIndEl && codePaysOrg && MAP_IND[codePaysOrg]) { adhIndEl.value = MAP_IND[codePaysOrg]; adhIndEl.disabled = true }
+
         renderSteps(STEPS_REJOINDRE, 2)
         show('sec-form-adhesion')
         chargerDocsRequis(org.id)

@@ -159,17 +159,26 @@
         ${ligne('Email fondateur', o.createurEmail)}
         ${ligne('Date soumission', o.dateCreation ? new Date(o.dateCreation).toLocaleDateString('fr-FR') : '—')}
       </div>
-      ${o.documentUrl ? `
-        <div style="margin-top:16px;padding:12px;background:var(--bg-subtle,#f9fafb);border-radius:8px;border:1px solid var(--border);">
-          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Document agrément</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;">${o.documentNom || 'Document'}</span>
+      ${o.documentUrl ? (() => {
+        const isPdf = o.documentUrl.toLowerCase().includes('.pdf')
+        const previewUrl = isPdf
+          ? o.documentUrl.replace('/upload/', '/upload/pg_1,f_jpg,w_800/')
+          : o.documentUrl
+        return `
+        <div style="margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Document agrément</div>
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="badge badge-success">✓ Conforme IA</span>
-              <a href="${o.documentUrl}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;">Ouvrir ↗</a>
+              <a href="${o.documentUrl}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;">Ouvrir PDF ↗</a>
             </div>
           </div>
-        </div>` : `
+          <a href="${o.documentUrl}" target="_blank" title="Cliquer pour ouvrir le PDF complet">
+            <img src="${previewUrl}" style="width:100%;max-height:500px;object-fit:contain;border:1px solid var(--border);border-radius:8px;cursor:pointer;" alt="Aperçu du document agrément"/>
+          </a>
+          <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:6px;">Aperçu page 1 — Cliquez sur l'image pour ouvrir le PDF complet</div>
+        </div>`
+      })() : `
         <div style="margin-top:16px;padding:12px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e;">
           Aucun document d'agrément fourni.
         </div>`}
