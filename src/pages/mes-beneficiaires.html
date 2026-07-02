@@ -211,7 +211,7 @@
     return String.fromCodePoint(...[...c2].map(c => 127397 + c.charCodeAt(0)))
   }
 
-  window.imprimerCarte = function(btn) {
+  window.imprimerCarte = async function(btn) {
     const matricule = btn.dataset.mat
     const prenom    = btn.dataset.prenom
     const nom       = btn.dataset.nom
@@ -239,26 +239,59 @@
       ? `<img src="${ctx.urlLogo}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous"/>`
       : (ctx.nomOrganisation?.[0] || 'O')
 
-    // QR code
+    // QR code 512×512 : encode les infos de l'adhérent (pas du bénéficiaire)
+    let p = {}
+    try { p = await api.get('/moi/profil') } catch {}
+    const qrText = [
+      ctx.numAdherent ? String(ctx.numAdherent) : '',
+      `${(p.nom||'').toUpperCase()}|${p.prenom||''}`,
+      p.dateNaissance ? new Date(p.dateNaissance).toLocaleDateString('fr-FR') : '',
+      p.libSexe === 'MASCULIN' ? 'M' : p.libSexe === 'FEMININ' ? 'F' : '',
+      p.situationMatrimoniale ? String(p.situationMatrimoniale) : '',
+      p.tel || '',
+      p.email || '',
+      ctx.libelleGroupe || ctx.libelleFonction || '',
+      ctx.nomOrganisation || '',
+      ctx.orgId ? String(ctx.orgId) : '',
+      ctx.libPays || ctx.codePays || '',
+    ].filter(Boolean).join('|')
+
     const qrDiv = document.createElement('div')
     qrDiv.style.cssText = 'position:absolute;left:-9999px;'
     document.body.appendChild(qrDiv)
-    const qrText = [
-      `N° BENEFICIAIRE: ${matricule}`,
-      `NOM: ${nom.toUpperCase()} ${prenom}`,
-      `ADHERENT: ${ctx.numAdherent||''}`,
-      `ORGANISATION: ${ctx.nomOrganisation||''}`,
-      tel   ? `TEL: ${tel}`   : '',
-      since ? `DESIGNE LE: ${since}` : '',
-    ].filter(Boolean).join('\n')
     new QRCode(qrDiv, {
       text: qrText,
-      width: 256, height: 256,
+      width: 512, height: 512,
       colorDark: '#000000', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.L
     })
     const canvas = qrDiv.querySelector('canvas')
-    const qrSrc  = canvas ? canvas.toDataURL('image/png') : ''
+    let qrSrc = ''
+    if (canvas) {
+      if (ctx.urlLogo) {
+        await new Promise(resolve => {
+          const logo = new Image()
+          logo.crossOrigin = 'anonymous'
+          logo.onload = () => {
+            const size = canvas.width
+            const logoSize = Math.round(size * 0.18)
+            const padding  = Math.round(logoSize * 0.15)
+            const cx = Math.round((size - logoSize) / 2)
+            const cy = Math.round((size - logoSize) / 2)
+            const ctx2 = canvas.getContext('2d')
+            ctx2.fillStyle = '#ffffff'
+            ctx2.beginPath()
+            ctx2.roundRect(cx - padding, cy - padding, logoSize + padding*2, logoSize + padding*2, 8)
+            ctx2.fill()
+            ctx2.drawImage(logo, cx, cy, logoSize, logoSize)
+            resolve()
+          }
+          logo.onerror = resolve
+          logo.src = ctx.urlLogo
+        })
+      }
+      qrSrc = canvas.toDataURL('image/png')
+    }
     document.body.removeChild(qrDiv)
 
     const html = `<!DOCTYPE html>
@@ -292,17 +325,16 @@
   /* VERSO */
   .verso { background:${couleurFonce}; display:flex; }
   .v-bg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:120px; opacity:.13; user-select:none; }
-  .v-content { position:relative; z-index:1; display:flex; width:100%; }
-  .v-left { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border-right:1px solid rgba(255,255,255,.12); padding:12px; }
-  .v-logo { width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff; overflow:hidden; }
-  .v-orgname { font-size:8.5px; font-weight:700; color:rgba(255,255,255,.92); text-align:center; line-height:1.4; }
+  .v-content { position:relative; z-index:1; display:flex; width:100%; align-items:stretch; }
+  .v-qr-block { width:46mm; display:flex; align-items:center; justify-content:center; padding:5px; border-right:1px solid rgba(255,255,255,.12); }
+  .v-qr-block img { width:100%; height:auto; border-radius:4px; display:block; }
   .v-div { width:36px; height:1px; background:rgba(255,255,255,.2); }
   .v-title { font-size:7px; color:rgba(255,255,255,.45); letter-spacing:.14em; text-transform:uppercase; }
   .v-right { width:112px; display:flex; flex-direction:column; justify-content:space-between; gap:0; padding:8px 10px; }
   .v-row label { font-size:5.5px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.07em; display:block; margin-bottom:1px; }
   .v-row span { font-size:7.5px; color:rgba(255,255,255,.88); font-family:monospace; }
-  .v-qr { display:flex; justify-content:flex-end; margin-top:2px; }
-  .v-qr img { border-radius:3px; width:44px!important; height:44px!important; }
+  .v-qr { display:flex; justify-content:center; margin-top:4px; }
+  .v-qr img { border-radius:5px; width:72px!important; height:72px!important; }
 
   @media print {
     body { background:white; }
@@ -325,14 +357,14 @@
       </div>
       <div class="r-body">
         <div class="r-infos">
-          <div class="r-name">${nom.toUpperCase()} ${prenom}</div>
+          <div class="r-name">${matricule}</div>
           <div class="r-role">Bénéficiaire</div>
           <div class="r-grid">
             <div class="r-field"><label>Date de naissance</label><span>${ddn||'—'}</span></div>
             <div class="r-field"><label>Sexe</label><span>${sexe}</span></div>
-            <div class="r-field" style="grid-column:1/-1"><label>N° bénéficiaire</label><span>${matricule}</span></div>
-            ${tel ? `<div class="r-field"><label>Téléphone</label><span>${tel}</span></div>` : '<div></div>'}
-            ${since ? `<div class="r-field"><label>Désigné le</label><span>${since}</span></div>` : ''}
+            <div class="r-field"><label>Nom</label><span>${nom.toUpperCase()} ${prenom}</span></div>
+            ${tel ? `<div class="r-field"><label>Téléphone</label><span>${tel}</span></div>` : '<div class="r-field"></div>'}
+            ${since ? `<div class="r-field" style="grid-column:1/-1"><label>Désigné le</label><span>${since}</span></div>` : ''}
           </div>
         </div>
         <div class="r-photo">${photoHtml}</div>
@@ -349,20 +381,16 @@
     <div class="carte verso">
       <div class="v-bg">${versoBg}</div>
       <div class="v-content">
-        <div class="v-left">
-          <div class="v-logo">${logoHtml}</div>
-          <div class="v-orgname">${(ctx.nomOrganisation||'').replace(/ /g,'<br>')}</div>
-          <div class="v-div"></div>
-          <div class="v-title">Carte bénéficiaire</div>
-          ${since ? `<div style="font-size:6px;color:rgba(255,255,255,.4);letter-spacing:.07em;text-transform:uppercase;text-align:center;">Désigné le<br><span style="font-size:7.5px;color:rgba(255,255,255,.75);font-family:monospace;letter-spacing:0;">${since}</span></div>` : ''}
+        <div class="v-qr-block">
+          ${qrSrc ? `<img src="${qrSrc}" crossorigin="anonymous"/>` : ''}
         </div>
         <div class="v-right">
           <div class="v-row"><label>N° bénéficiaire</label><span>${matricule}</span></div>
-          <div class="v-row"><label>Adhérent</label><span>${ctx.numAdherent||'—'}</span></div>
-          <div class="v-row"><label>Organisation</label><span>${ctx.orgId||'—'}</span></div>
+          <div class="v-row"><label>N° adhérent</label><span>${ctx.numAdherent||'—'}</span></div>
+          <div class="v-row"><label>Organisation</label><span>${(ctx.nomOrganisation||'').substring(0,30)}</span></div>
           <div class="v-row"><label>Pays</label><span>${paysNom}</span></div>
-          <div class="v-qr">${qrSrc ? `<img src="${qrSrc}"/>` : ''}</div>
-          <div style="font-size:6px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;text-align:right;margin-top:2px;">${ctx.nomPlateforme||'Ataabo'}</div>
+          ${since ? `<div class="v-row"><label>Désigné le</label><span>${since}</span></div>` : ''}
+          <div style="font-size:6px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:6px;">${ctx.nomPlateforme||'Ataabo'}</div>
         </div>
       </div>
     </div>

@@ -22,7 +22,10 @@ export async function buildHistorique(containerId, limit = 50, module = null, op
         <label style="font-size:12px;color:var(--text-muted);">Au</label>
         <input type="date" id="${containerId}-fin" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);"/>
         <button id="${containerId}-filtrer" class="btn btn-secondary" style="font-size:12px;padding:4px 12px;">Filtrer</button>
-        <button id="${containerId}-imprimer" class="btn btn-secondary" style="font-size:12px;padding:4px 12px;">🖨 Imprimer</button>
+        <button id="${containerId}-imprimer" class="btn btn-secondary" style="font-size:12px;padding:4px 12px;display:inline-flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
       </div>
     </div>
     <div id="${containerId}-inner" style="font-size:12.5px;color:var(--text-muted);">Chargement…</div>`

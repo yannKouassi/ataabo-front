@@ -6,6 +6,21 @@
   <title>Ataabo — Dashboard système</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .graphique-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; cursor: pointer; user-select: none;
+      border-radius: 14px; transition: background .15s;
+    }
+    .graphique-header:hover { background: var(--bg-secondary); }
+    .graphique-bloc.ouvert .graphique-header { border-bottom: 1px solid var(--border); border-radius: 14px 14px 0 0; }
+    .chevron { color: var(--text-muted); transition: transform .25s; flex-shrink: 0; }
+    .graphique-bloc.ouvert .chevron { transform: rotate(180deg); }
+    .graphique-body { animation: slideDown .2s ease; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
 </head>
 <body>
 <div class="app-layout">
@@ -35,29 +50,140 @@
   </header>
 
   <main class="main-content">
-    <div style="margin-bottom:24px;">
-      <div class="page-title">Dashboard système</div>
-      <div class="page-subtitle">Vue globale de la plateforme Ataabo</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+      <div>
+        <div class="page-title">Dashboard système</div>
+        <div class="page-subtitle" id="periode-label">Vue globale de la plateforme Ataabo</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+        <svg width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <label style="font-size:12px;color:var(--text-muted);font-weight:600;">Du</label>
+        <input type="date" id="filtre-debut" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text);"/>
+        <label style="font-size:12px;color:var(--text-muted);font-weight:600;">Au</label>
+        <input type="date" id="filtre-fin" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text);"/>
+        <button class="btn btn-primary btn-sm" id="btn-filtrer" style="font-size:12px;padding:5px 14px;">Filtrer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-reset" style="font-size:12px;padding:5px 10px;display:none;">✕ Réinitialiser</button>
+      </div>
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:24px;" id="stats-grid">
       <div class="page-loader"><div class="spinner"></div></div>
     </div>
 
-    <!-- Graphiques -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
-      <div class="card" style="padding:20px;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Organisations par type</div>
-        <canvas id="chart-types" height="160"></canvas>
+    <!-- Graphiques accordéon -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;" id="section-graphiques">
+
+      <div class="card graphique-bloc" id="bloc-types">
+        <div class="graphique-header" data-target="body-types">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--primary-light,#ede9fe);display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Répartition par type d'organisation</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-types" style="display:none;padding:0 20px 20px;">
+          <div style="max-width:480px;height:300px;margin:0 auto;">
+            <canvas id="chart-types"></canvas>
+          </div>
+        </div>
       </div>
-      <div class="card" style="padding:20px;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Top 5 organisations (adhérents)</div>
-        <canvas id="chart-top" height="160"></canvas>
+
+      <div class="card graphique-bloc" id="bloc-top">
+        <div class="graphique-header" data-target="body-top">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Top 5 organisations par nombre d'adhérents</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-top" style="display:none;padding:0 20px 20px;">
+          <canvas id="chart-top" height="160"></canvas>
+        </div>
       </div>
-    </div>
-    <div class="card" style="padding:20px; margin-bottom:24px;">
-      <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Nouvelles organisations — 12 derniers mois</div>
-      <canvas id="chart-evolution" height="80"></canvas>
+
+      <div class="card graphique-bloc" id="bloc-evolution">
+        <div class="graphique-header" data-target="body-evolution">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Évolution des inscriptions — 12 derniers mois</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-evolution" style="display:none;padding:0 20px 20px;">
+          <canvas id="chart-evolution" height="80"></canvas>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-paiements-evo">
+        <div class="graphique-header" data-target="body-paiements-evo">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Évolution des paiements d'activation (montants confirmés)</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-paiements-evo" style="display:none;padding:0 20px 20px;">
+          <canvas id="chart-paiements-evo" height="80"></canvas>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-statuts-paiements">
+        <div class="graphique-header" data-target="body-statuts-paiements">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Répartition des statuts des paiements d'activation</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-statuts-paiements" style="display:none;padding:0 20px 20px;">
+          <div style="max-width:480px;height:300px;margin:0 auto;">
+            <canvas id="chart-statuts-paiements"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-pays">
+        <div class="graphique-header" data-target="body-pays">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#0284c7" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Répartition des organisations par pays</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-pays" style="display:none;padding:0 20px 20px;">
+          <div id="map-pays" style="height:380px;border-radius:10px;overflow:hidden;"></div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-validation">
+        <div class="graphique-header" data-target="body-validation">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#9333ea" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Taux de validation des organisations</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-validation" style="display:none;padding:0 20px 20px;">
+          <div style="max-width:480px;height:300px;margin:0 auto;">
+            <canvas id="chart-validation"></canvas>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="card">
@@ -100,7 +226,8 @@
     </div>`
   }
 
-  let chartTypes, chartTop, chartEvolution
+  let chartTypes, chartTop, chartEvolution, chartPaiementsEvo, chartStatutsPaiements, chartPays, chartValidation
+  let _toutesLesOrgs = []
 
   function dessinerGraphiques(stats) {
     const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
@@ -117,7 +244,7 @@
         labels: typesLabels.length ? typesLabels : ['Aucune donnée'],
         datasets: [{ data: typesData.length ? typesData : [1], backgroundColor: PALETTE.slice(0, Math.max(typesLabels.length, 1)), borderWidth: 0 }]
       },
-      options: { plugins: { legend: { position: 'right' } }, cutout: '60%' }
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '60%' }
     })
 
     // Graphique 2 — top 5 organisations par adhérents
@@ -165,18 +292,148 @@
         scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     })
+
+    // Graphique 4 — évolution montants paiements confirmés
+    const paiEvoData = stats.evolutionPaiementsData || []
+    if (chartPaiementsEvo) chartPaiementsEvo.destroy()
+    chartPaiementsEvo = new Chart(document.getElementById('chart-paiements-evo'), {
+      type: 'bar',
+      data: {
+        labels: evoLabels,
+        datasets: [{
+          label: 'Montant confirmé (XOF)',
+          data: paiEvoData,
+          backgroundColor: '#10b981bb',
+          borderRadius: 5
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: v => v.toLocaleString('fr-FR') }
+          }
+        }
+      }
+    })
+
+    // Graphique 5 — répartition statuts paiements (doughnut)
+    const statuts = stats.statutsPaiements || {}
+    if (chartStatutsPaiements) chartStatutsPaiements.destroy()
+    chartStatutsPaiements = new Chart(document.getElementById('chart-statuts-paiements'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Confirmés', 'En attente', 'Rejetés'],
+        datasets: [{
+          data: [statuts.ACCEPTED ?? 0, statuts.PENDING ?? 0, statuts.REFUSED ?? 0],
+          backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right' } },
+        cutout: '60%'
+      }
+    })
+
+    // Graphique 6 — cartes pays cliquables
+    const paysLabels = stats.orgParPaysLabels || []
+    const paysData   = stats.orgParPaysData   || []
+    if (chartPays) { if (chartPays.remove) chartPays.remove(); chartPays = null }
+    const conteneurPays = document.getElementById('map-pays')
+    conteneurPays.innerHTML = ''
+
+    if (!paysLabels.length) {
+      conteneurPays.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px 0;">Aucune donnée disponible.</p>'
+    } else {
+      const grille = document.createElement('div')
+      grille.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:8px 0;'
+      paysLabels.forEach((nom, i) => {
+        const count = paysData[i] || 0
+        const card = document.createElement('div')
+        card.style.cssText = 'border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;background:var(--surface);transition:box-shadow .15s,transform .15s;text-align:center;'
+        card.innerHTML = `
+          <div style="font-size:28px;margin-bottom:6px;">${drapeauEmoji(nom)}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">${nom}</div>
+          <div style="font-size:22px;font-weight:800;color:var(--primary);">${count}</div>
+          <div style="font-size:11px;color:var(--text-muted);">organisation${count>1?'s':''}</div>
+        `
+        card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,.12)'; card.style.transform = 'translateY(-2px)' })
+        card.addEventListener('mouseleave', () => { card.style.boxShadow = ''; card.style.transform = '' })
+        card.addEventListener('click', () => ouvrirCartePays(nom))
+        grille.appendChild(card)
+      })
+      conteneurPays.appendChild(grille)
+
+      // Zone carte (cachée par défaut)
+      const zoneMap = document.createElement('div')
+      zoneMap.id = 'zone-carte-pays'
+      zoneMap.style.cssText = 'display:none;margin-top:16px;border-radius:12px;overflow:hidden;border:1px solid var(--border);'
+      zoneMap.innerHTML = `<div id="leaflet-carte-pays" style="height:460px;border-radius:12px;"></div>`
+      conteneurPays.appendChild(zoneMap)
+    }
+
+    // Graphique 7 — taux de validation (barre empilée)
+    const valid = stats.validationOrgs || {}
+    if (chartValidation) chartValidation.destroy()
+    chartValidation = new Chart(document.getElementById('chart-validation'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Validées & actives', 'En attente', 'Inactives'],
+        datasets: [{
+          data: [valid.validees ?? 0, valid.enAttente ?? 0, valid.inactives ?? 0],
+          backgroundColor: ['#10b981', '#f59e0b', '#6b7280'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right' } },
+        cutout: '55%'
+      }
+    })
   }
 
   async function charger() {
+    const debut = document.getElementById('filtre-debut').value
+    const fin   = document.getElementById('filtre-fin').value
+    const params = []
+    if (debut) params.push(`debut=${debut}`)
+    if (fin)   params.push(`fin=${fin}`)
+    const url = '/admin/stats-plateforme' + (params.length ? '?' + params.join('&') : '')
+
+    // Mise à jour du label période et du bouton reset
+    const btnReset = document.getElementById('btn-reset')
+    const periodeLabel = document.getElementById('periode-label')
+    if (debut || fin) {
+      btnReset.style.display = ''
+      const parts = []
+      if (debut) parts.push('Du ' + new Date(debut).toLocaleDateString('fr-FR'))
+      if (fin)   parts.push('au ' + new Date(fin).toLocaleDateString('fr-FR'))
+      periodeLabel.textContent = 'Période filtrée : ' + parts.join(' ')
+      periodeLabel.style.color = 'var(--primary)'
+    } else {
+      btnReset.style.display = 'none'
+      periodeLabel.textContent = 'Vue globale de la plateforme Ataabo'
+      periodeLabel.style.color = ''
+    }
+
     try {
-      const stats = await api.get('/admin/stats-plateforme')
+      const stats = await api.get(url)
+      const filtre = stats.filtrePeriode === true
+      const suffixe = filtre ? ' (période)' : ''
       document.getElementById('stats-grid').innerHTML = [
-        statCard('Organisations actives', stats.totalOrganisations ?? 0, 'var(--primary)'),
+        filtre
+          ? statCard('Nouvelles organisations' + suffixe, stats.nouvellesOrgs ?? 0, 'var(--primary)')
+          : statCard('Organisations actives', stats.totalOrganisations ?? 0, 'var(--primary)'),
         statCard('Adhérents total', stats.totalAdherents ?? 0, 'var(--primary)'),
         statCard('Utilisateurs sans organisation', stats.utilisateursSansOrganisation ?? 0, '#d97706'),
         statCard('En attente de validation', stats.orgsEnAttente ?? 0, '#d97706'),
         statCard('Paiements en attente', stats.paiementsEnAttente ?? 0, '#d97706'),
-        statCard('Paiements confirmés', stats.paiementsConfirmes ?? 0, '#16a34a'),
+        statCard('Paiements confirmés' + suffixe, stats.paiementsConfirmes ?? 0, '#16a34a'),
+        statCard('Montant encaissé' + suffixe, (stats.montantTotalEncaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#16a34a'),
         statCard('Pays couverts', stats.totalPays ?? 0),
       ].join('')
       dessinerGraphiques(stats)
@@ -186,12 +443,13 @@
 
     try {
       const orgs = await api.get('/organisations/actives')
+      _toutesLesOrgs = orgs || []
       const tbody = document.getElementById('tbody-orgs')
-      if (!orgs || !orgs.length) {
+      if (!_toutesLesOrgs.length) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">Aucune organisation active</td></tr>`
         return
       }
-      tbody.innerHTML = orgs.map(o => `
+      tbody.innerHTML = _toutesLesOrgs.map(o => `
         <tr>
           <td style="font-weight:600;">${o.libAssociation || o.nomOrganisation || '—'}</td>
           <td><span class="badge badge-secondary">${o.typeOrganisation?.libelle || o.typeOrganisation || '—'}</span></td>
@@ -203,6 +461,219 @@
       document.getElementById('tbody-orgs').innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:20px;">Erreur : ${err.message}</td></tr>`
     }
   }
+
+  const COORDS_PAYS = {
+    'côte d\'ivoire':[7.54,-5.55],'cote d\'ivoire':[7.54,-5.55],'ivory coast':[7.54,-5.55],
+    'sénégal':[14.5,-14.4],'senegal':[14.5,-14.4],
+    'mali':[17.6,-3.99],
+    'burkina faso':[12.36,-1.53],
+    'guinée':[11.0,-10.9],'guinee':[11.0,-10.9],'guinea':[11.0,-10.9],
+    'ghana':[7.95,-1.02],
+    'togo':[8.62,0.82],
+    'bénin':[9.3,2.32],'benin':[9.3,2.32],
+    'niger':[17.6,8.08],
+    'cameroun':[3.85,11.5],'cameroon':[3.85,11.5],
+    'congo':[-4.03,21.76],
+    'gabon':[-0.8,11.6],
+    'mauritanie':[21.0,-10.9],'mauritania':[21.0,-10.9],
+    'nigeria':[9.08,8.67],
+    'france':[46.23,2.21],
+    'maroc':[31.79,-7.09],'morocco':[31.79,-7.09],
+    'algérie':[28.03,1.66],'algerie':[28.03,1.66],'algeria':[28.03,1.66],
+    'tunisie':[33.89,9.54],'tunisia':[33.89,9.54],
+  }
+
+  const ZOOM_PAYS = {
+    'côte d\'ivoire':7,'cote d\'ivoire':7,'sénégal':7,'senegal':7,
+    'mali':6,'burkina faso':7,'guinée':7,'guinee':7,'ghana':7,
+    'togo':8,'bénin':8,'benin':8,'niger':6,'cameroun':6,'cameroon':6,
+    'congo':5,'gabon':7,'mauritanie':5,'mauritania':5,'nigeria':6,
+    'france':6,'maroc':6,'morocco':6,'algérie':5,'algerie':5,'tunisie':7,
+  }
+
+  function drapeauEmoji(nom) {
+    const map = {
+      'côte d\'ivoire':'🇨🇮','cote d\'ivoire':'🇨🇮',
+      'sénégal':'🇸🇳','senegal':'🇸🇳',
+      'mali':'🇲🇱','burkina faso':'🇧🇫',
+      'guinée':'🇬🇳','guinee':'🇬🇳',
+      'ghana':'🇬🇭','togo':'🇹🇬',
+      'bénin':'🇧🇯','benin':'🇧🇯',
+      'niger':'🇳🇪','cameroun':'🇨🇲','cameroon':'🇨🇲',
+      'congo':'🇨🇬','gabon':'🇬🇦',
+      'mauritanie':'🇲🇷','mauritania':'🇲🇷',
+      'nigeria':'🇳🇬','france':'🇫🇷',
+      'maroc':'🇲🇦','morocco':'🇲🇦',
+      'algérie':'🇩🇿','algerie':'🇩🇿',
+      'tunisie':'🇹🇳','tunisia':'🇹🇳',
+    }
+    return map[nom.toLowerCase().trim()] || '🌍'
+  }
+
+  async function ouvrirCartePays(nomPays) {
+    const zoneMap = document.getElementById('zone-carte-pays')
+    if (!zoneMap) return
+
+    // Détruire proprement la carte précédente
+    if (chartPays) { try { chartPays.off(); chartPays.remove() } catch(_){} chartPays = null }
+    const leafletEl = document.getElementById('leaflet-carte-pays')
+    leafletEl.innerHTML = ''
+
+    zoneMap.style.display = 'block'
+    zoneMap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+
+    // Carte avec tuiles OSM (villes visibles) + zoom libre
+    const map = L.map(leafletEl, {
+      scrollWheelZoom: true,
+      zoomControl: true,
+      attributionControl: false
+    })
+    chartPays = map  // Assigné immédiatement pour éviter double init si clic rapide
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18
+    }).addTo(map)
+
+    // Titre + bouton Fermer en overlay fixe dans la carte (toujours visible même en zoom)
+    const headerControl = L.control({ position: 'topright' })
+    headerControl.onAdd = () => {
+      const div = L.DomUtil.create('div')
+      div.style.cssText = 'display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.95);padding:8px 12px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.2);pointer-events:auto;'
+      div.innerHTML = `
+        <span style="font-size:13px;font-weight:700;color:#1e293b;">${nomPays}</span>
+        <button id="btn-fermer-carte" style="background:#ef4444;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;white-space:nowrap;">✕ Fermer</button>
+      `
+      L.DomEvent.disableClickPropagation(div)
+      return div
+    }
+    headerControl.addTo(map)
+    setTimeout(() => {
+      const btn = document.getElementById('btn-fermer-carte')
+      if (btn) btn.addEventListener('click', () => {
+        if (chartPays) { try { chartPays.off(); chartPays.remove() } catch(_){} chartPays = null }
+        document.getElementById('leaflet-carte-pays').innerHTML = ''
+        zoneMap.style.display = 'none'
+      })
+    }, 100)
+
+    // Chargement de la vraie frontière depuis Nominatim
+    let geoLayer = null
+    let countryGeoJSON = null
+    try {
+      const q = encodeURIComponent(nomPays)
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&polygon_geojson=1&format=json&limit=1`)
+      const data = await res.json()
+      if (data && data[0] && data[0].geojson) {
+        countryGeoJSON = data[0].geojson
+
+        // Masque inversé : monde entier moins le pays → grise les voisins
+        const monde = {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[[-180,-90],[180,-90],[180,90],[-180,90],[-180,-90]]]
+          }
+        }
+        const trous = countryGeoJSON.type === 'Polygon'
+          ? [{ type: 'Feature', geometry: countryGeoJSON }]
+          : countryGeoJSON.coordinates.map(coords => ({
+              type: 'Feature',
+              geometry: { type: 'Polygon', coordinates: coords }
+            }))
+
+        // Masque blanc opaque sur tout sauf le pays (les voisins disparaissent)
+        const masqueCoords = [monde.geometry.coordinates[0]]
+        if (countryGeoJSON.type === 'Polygon') {
+          masqueCoords.push(countryGeoJSON.coordinates[0])
+        } else {
+          countryGeoJSON.coordinates.forEach(part => masqueCoords.push(part[0]))
+        }
+        L.geoJSON({
+          type: 'Feature',
+          geometry: { type: 'Polygon', coordinates: masqueCoords }
+        }, {
+          style: { color: '#ffffff', fillColor: '#ffffff', fillOpacity: 1, weight: 0 }
+        }).addTo(map)
+
+        // Bordure du pays en bleu
+        geoLayer = L.geoJSON(countryGeoJSON, {
+          style: { color: '#1d4ed8', weight: 2.5, fillOpacity: 0 }
+        }).addTo(map)
+
+        map.fitBounds(geoLayer.getBounds(), { padding: [40, 40] })
+      }
+    } catch (_) {}
+
+    // Fallback si pas de GeoJSON
+    if (!geoLayer) {
+      const c = COORDS_PAYS[nomPays.toLowerCase().trim()] || [10, 0]
+      const z = ZOOM_PAYS[nomPays.toLowerCase().trim()] || 6
+      map.setView(c, z)
+    }
+
+    // Orgs avec coordonnées GPS dans ce pays
+    const orgsGPS = _toutesLesOrgs.filter(o => {
+      const lib = (o.pays?.libPays || o.codePays || '').toLowerCase().trim()
+      return lib === nomPays.toLowerCase().trim()
+        && o.latitudeAssoc != null && o.longitudeAssoc != null
+    })
+
+    if (orgsGPS.length) {
+      orgsGPS.forEach(o => {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="width:34px;height:34px;border-radius:50%;background:#1d4ed8;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;">${(o.libAssociation||o.nomOrganisation||'?')[0].toUpperCase()}</div>`,
+          iconSize: [34, 34], iconAnchor: [17, 17]
+        })
+        L.marker([o.latitudeAssoc, o.longitudeAssoc], { icon }).addTo(map)
+          .bindPopup(`<div style="min-width:170px;"><b style="font-size:13px;">${o.libAssociation||o.nomOrganisation||'—'}</b><br><span style="font-size:12px;color:#6b7280;">${o.typeOrganisation?.libelle||o.typeOrganisation||'—'}</span><br><span style="background:#dcfce7;color:#166534;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block;margin-top:4px;">Active</span></div>`)
+      })
+    } else {
+      const info = L.control({ position: 'bottomleft' })
+      info.onAdd = () => {
+        const d = L.DomUtil.create('div')
+        d.style.cssText = 'background:rgba(255,255,255,.9);padding:8px 12px;border-radius:8px;font-size:12px;color:#6b7280;'
+        d.textContent = 'Aucune organisation avec coordonnées GPS enregistrées.'
+        return d
+      }
+      info.addTo(map)
+    }
+
+    setTimeout(() => map.invalidateSize(), 150)
+  }
+
+  document.getElementById('btn-filtrer').addEventListener('click', charger)
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('filtre-debut').value = ''
+    document.getElementById('filtre-fin').value = ''
+    charger()
+  })
+
+  // Accordéon graphiques
+  document.querySelectorAll('.graphique-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const bodyId = header.dataset.target
+      const body   = document.getElementById(bodyId)
+      const bloc   = header.closest('.graphique-bloc')
+      const estOuvert = bloc.classList.contains('ouvert')
+
+      if (estOuvert) {
+        body.style.display = 'none'
+        bloc.classList.remove('ouvert')
+      } else {
+        body.style.display = 'block'
+        bloc.classList.add('ouvert')
+        // Redessiner le graphique si Chart.js a perdu ses dimensions
+        if (bodyId === 'body-types'             && chartTypes)             chartTypes.resize()
+        if (bodyId === 'body-top'               && chartTop)               chartTop.resize()
+        if (bodyId === 'body-evolution'         && chartEvolution)         chartEvolution.resize()
+        if (bodyId === 'body-paiements-evo'     && chartPaiementsEvo)     chartPaiementsEvo.resize()
+        if (bodyId === 'body-statuts-paiements' && chartStatutsPaiements) chartStatutsPaiements.resize()
+        if (bodyId === 'body-pays'              && chartPays)              chartPays.invalidateSize()
+        if (bodyId === 'body-validation'        && chartValidation)        chartValidation.resize()
+      }
+    })
+  })
 
   charger()
 </script>

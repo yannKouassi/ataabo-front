@@ -6,17 +6,49 @@
   <title>Ataabo — Activation de votre organisation</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <style>
-    body { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
-    .activation-wrap { max-width: 560px; width: 100%; }
-    .activation-header { text-align: center; margin-bottom: 32px; }
-    .activation-header .logo-text { font-size: 28px; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
-    .activation-header .org-name { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 8px; }
-    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 16px; }
-    .step-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; margin-right: 10px; flex-shrink: 0; }
-    .step-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; margin-bottom: 12px; }
-    .amount-badge { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 22px; font-weight: 900; border-radius: 10px; padding: 10px 24px; margin: 12px 0; }
+    body { background: var(--bg-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px 16px; }
+    .wrap { width: 100%; max-width: 520px; }
+    .header { text-align: center; margin-bottom: 28px; }
+    .logo-text { font-size: 26px; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
+    .org-name  { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 6px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; }
+    .card-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .card-sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+
+    /* Montant */
+    .amount-box { background: #fef9c3; border: 1px solid #fde047; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; }
+    .amount-box .amount-val   { font-size: 24px; font-weight: 900; color: #854d0e; }
+    .amount-box .amount-label { font-size: 12px; color: #713f12; margin-top: 2px; }
+
+    /* Opérateurs */
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: .06em; }
+    .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .pay-method-card { border: 2px solid var(--border); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: border-color .15s, box-shadow .15s; background: var(--surface); user-select: none; }
+    .pay-method-card:hover { border-color: #9ca3af; }
+    .pay-method-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .pm-logo { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .pm-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .pm-name { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .pm-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .pm-radio { margin-left: auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+    .pay-method-card.selected .pm-radio { background: var(--primary); border-color: var(--primary); }
+    .pm-radio-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; display: none; }
+    .pay-method-card.selected .pm-radio-dot { display: block; }
+
+    /* Référence */
+    .ref-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; }
+
+    /* Historique */
     .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .history-item:last-child { border-bottom: none; }
+
+    /* États */
+    .state-card { text-align: center; padding: 32px 16px; }
+    .state-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .state-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+    .state-text  { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+
     .btn-logout-top { position: fixed; top: 16px; right: 16px; }
   </style>
 </head>
@@ -24,54 +56,167 @@
 
 <button class="btn btn-ghost btn-sm btn-logout-top" id="btn-logout">← Changer d'organisation</button>
 
-<div class="activation-wrap">
-  <div class="activation-header">
+<div class="wrap">
+
+  <div class="header">
     <div class="logo-text">ATAABO</div>
-    <div class="org-name" id="org-name">Votre organisation</div>
+    <div class="org-name" id="org-name-header">Votre organisation</div>
     <div style="margin-top:8px;">
-      <span style="font-size:12px;font-weight:700;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:20px;padding:3px 12px;">⚠️ En attente d'activation</span>
+      <span style="font-size:12px;font-weight:700;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:20px;padding:3px 12px;display:inline-flex;align-items:center;gap:5px;">
+        <svg width="13" height="13" fill="none" stroke="#854d0e" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        En attente d'activation
+      </span>
     </div>
   </div>
 
-  <!-- Étape 1 : montant à payer -->
-  <div class="step-card">
-    <div class="step-title"><span class="step-number">1</span> Frais d'activation</div>
-    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:8px;">
-      Votre dossier a été approuvé par l'équipe Ataabo. Pour activer votre espace et commencer à recevoir des adhésions, réglez les frais d'activation suivants :
-    </p>
-    <div id="montant-bloc">
-      <div class="amount-badge" id="montant-affiche">Chargement…</div>
+  <!-- Formulaire -->
+  <div id="card-form" style="display:none;">
+
+    <!-- Carte 1 : montant + opérateurs -->
+    <div class="card">
+      <div class="card-title">Frais d'activation</div>
+      <div class="card-sub">Votre dossier a été approuvé. Réglez les frais d'activation pour ouvrir votre espace.</div>
+
+      <div class="amount-box" id="amount-box" style="display:none;">
+        <div>
+          <div class="amount-val" id="montant-affiche">—</div>
+          <div class="amount-label">Frais d'activation à régler</div>
+        </div>
+      </div>
+
+      <div id="pay-instructions" style="display:none;">
+        <div class="section-label">Choisissez votre moyen de paiement</div>
+        <div class="pay-methods" role="radiogroup">
+
+          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
+               data-method="wave" data-placeholder="Ex: W241231ABCDEF" data-label="Référence Wave">
+            <div class="pm-logo" style="background:#f0f9ff;">
+              <img src="/logos/wave.png" alt=""/>
+            </div>
+            <div><div class="pm-name">Wave</div><div class="pm-sub" id="pays-label-wave">—</div></div>
+            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
+          </div>
+
+          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
+               data-method="orange" data-placeholder="Ex: CI241231ABCDEF" data-label="Référence Orange Money">
+            <div class="pm-logo" style="background:#fff7ed;">
+              <img src="/logos/orange-money.png" alt=""/>
+            </div>
+            <div><div class="pm-name">Orange Money</div><div class="pm-sub" id="pays-label-orange">—</div></div>
+            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
+          </div>
+
+          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
+               data-method="mtn" data-placeholder="Ex: MTN241231ABCDE" data-label="Référence MTN MoMo">
+            <div class="pm-logo" style="background:#fefce8;padding:5px;">
+              <img src="/logos/mtn-momo.svg" alt=""/>
+            </div>
+            <div><div class="pm-name">MTN MoMo</div><div class="pm-sub" id="pays-label-mtn">—</div></div>
+            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
+          </div>
+
+          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
+               data-method="moov" data-placeholder="Ex: MOOV241231ABCD" data-label="Référence Moov Money">
+            <div class="pm-logo" style="background:#eff6ff;">
+              <img src="/logos/moov-money.png" alt=""/>
+            </div>
+            <div><div class="pm-name">Moov Money</div><div class="pm-sub" id="pays-label-moov">—</div></div>
+            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
+          </div>
+
+        </div>
+
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:0;line-height:1.5;">
+          Envoyez exactement <strong id="montant-inline">ce montant</strong> via le moyen choisi, puis conservez votre référence de transaction.
+        </p>
+      </div>
+    </div><!-- /carte 1 -->
+
+    <!-- Carte 2 : référence -->
+    <form class="card" id="form-declaration" novalidate>
+      <div class="card-title" style="margin-bottom:4px;">Votre référence de transaction</div>
+      <div class="card-sub">Saisissez le numéro de transaction reçu après votre paiement.</div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label" id="ref-label" for="ref-input">Référence de paiement <span style="color:#b91c1c;">*</span></label>
+        <input type="text" class="form-input" id="ref-input" autocomplete="off"
+               placeholder="Choisissez d'abord un moyen de paiement" disabled
+               style="text-transform:uppercase;font-family:monospace;letter-spacing:.04em;"/>
+        <div class="ref-hint" id="ref-hint">Sélectionnez un moyen de paiement ci-dessus.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label" for="ref-confirm">Confirmer la référence <span style="color:#b91c1c;">*</span></label>
+        <input type="text" class="form-input" id="ref-confirm" autocomplete="off"
+               placeholder="Ressaisissez la même référence" disabled
+               style="text-transform:uppercase;font-family:monospace;letter-spacing:.04em;"/>
+        <div id="ref-match-hint" style="font-size:11.5px;margin-top:5px;display:none;"></div>
+      </div>
+
+      <div id="err-msg" style="color:#b91c1c;font-size:13px;margin-bottom:12px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;" id="btn-declarer">Soumettre ma déclaration</button>
+
+      <p style="font-size:11.5px;color:var(--text-muted);margin-top:14px;text-align:center;line-height:1.6;">
+        Après vérification par l'équipe Ataabo, vous recevrez un email de confirmation d'activation.
+      </p>
+    </form>
+
+    <!-- Historique des déclarations précédentes -->
+    <div class="card" id="card-historique" style="display:none;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Mes déclarations</div>
+      <div id="liste-paiements"></div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">
+        L'équipe Ataabo vérifie chaque déclaration manuellement. Vous serez notifié par email.
+      </p>
     </div>
-    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" id="instructions-paiement"></p>
+
+  </div><!-- /card-form -->
+
+  <!-- État : déjà déclaré, en attente -->
+  <div class="card" id="card-deja" style="display:none;">
+    <div class="state-card">
+      <div class="state-icon" style="background:#fef9c3;">
+        <svg width="28" height="28" fill="none" stroke="#854d0e" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="state-title" style="color:#854d0e;">En cours de vérification</div>
+      <div class="state-text">Votre déclaration a bien été transmise.<br/><br/>L'équipe Ataabo vérifie votre transaction. Vous recevrez un email dès confirmation de l'activation.</div>
+    </div>
   </div>
 
-  <!-- Étape 2 : déclarer le virement -->
-  <div class="step-card" id="card-declarer">
-    <div class="step-title"><span class="step-number">2</span> Déclarer votre paiement</div>
-    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">
-      Après avoir effectué votre virement, saisissez ci-dessous la référence de la transaction afin que l'équipe Ataabo puisse confirmer la réception.
-    </p>
-    <div class="form-group" style="margin-bottom:12px;">
-      <label class="form-label">Référence de paiement</label>
-      <input type="text" class="form-input" id="ref-activation" placeholder="Ex: TXN-20240601-ABC123"/>
+  <!-- État : paiement confirmé -->
+  <div class="card" id="card-confirme" style="display:none;">
+    <div class="state-card">
+      <div class="state-icon" style="background:#dcfce7;">
+        <svg width="28" height="28" fill="none" stroke="#166534" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="state-title" style="color:#166534;">Paiement confirmé !</div>
+      <div class="state-text">Votre organisation est maintenant active. Vous pouvez accéder à votre espace.</div>
+      <button class="btn btn-primary" style="margin-top:20px;width:100%;" id="btn-go-dashboard">Accéder à mon espace</button>
     </div>
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Montant versé</label>
-      <input type="number" class="form-input" id="montant-verse" min="0" placeholder="0"/>
-    </div>
-    <div id="err-declaration" style="color:#b91c1c;font-size:12px;margin-bottom:8px;display:none;"></div>
-    <div id="ok-declaration" style="color:#166534;font-size:12px;margin-bottom:8px;display:none;"></div>
-    <button class="btn btn-primary" id="btn-declarer">Soumettre ma déclaration</button>
   </div>
 
-  <!-- Historique des déclarations -->
-  <div class="step-card" id="card-historique" style="display:none;">
-    <div class="step-title"><span class="step-number">3</span> Suivi de vos déclarations</div>
-    <div id="liste-paiements"></div>
-    <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">
-      L'équipe Ataabo vérifie chaque déclaration manuellement. Vous recevrez un email dès que votre paiement sera confirmé.
-    </p>
+  <!-- Aucun frais requis -->
+  <div class="card" id="card-gratuit" style="display:none;">
+    <div class="state-card">
+      <div class="state-icon" style="background:#dcfce7;">
+        <svg width="28" height="28" fill="none" stroke="#166534" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="state-title" style="color:#166534;">Aucun frais requis</div>
+      <div class="state-text">Votre pays ne requiert pas de frais d'activation. Contactez l'équipe Ataabo pour finaliser l'activation de votre organisation.</div>
+    </div>
   </div>
+
+  <!-- Erreur -->
+  <div class="card" id="card-erreur" style="display:none;">
+    <div class="state-card">
+      <div class="state-icon" style="background:#fee2e2;">
+        <svg width="28" height="28" fill="none" stroke="#b91c1c" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <div class="state-title" style="color:#b91c1c;">Erreur de chargement</div>
+      <div class="state-text" id="msg-erreur">Impossible de charger les informations. Réessayez plus tard.</div>
+    </div>
+  </div>
+
 </div>
 
 <script type="module">
@@ -81,108 +226,172 @@
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
 
-  // Si l'org est déjà active, rediriger vers le dashboard
   if (!ctx.enAttenteActivation) {
     window.location.href = '/dashboard.html'
     throw new Error()
   }
 
-  document.getElementById('org-name').textContent = ctx.nomOrganisation || ''
+  document.getElementById('org-name-header').textContent = ctx.nomOrganisation || ''
   document.getElementById('btn-logout').addEventListener('click', () => {
+    window.location.href = '/choisir-org.html'
+  })
+  document.getElementById('btn-go-dashboard').addEventListener('click', () => {
     window.location.href = '/choisir-org.html'
   })
 
   let montantActivation = 0
   let devise = 'XOF'
+  let nomPays = ''
 
+  // --- Sélection moyen de paiement ---
+  const cards    = Array.from(document.querySelectorAll('.pay-method-card'))
+  const refInput   = document.getElementById('ref-input')
+  const refConfirm = document.getElementById('ref-confirm')
+  const refLabel   = document.getElementById('ref-label')
+  const refHint    = document.getElementById('ref-hint')
+  const matchHint  = document.getElementById('ref-match-hint')
+  const errEl      = document.getElementById('err-msg')
+
+  function selectMethod(card) {
+    cards.forEach(c => {
+      const isSel = c === card
+      c.classList.toggle('selected', isSel)
+      c.setAttribute('aria-checked', String(isSel))
+      c.setAttribute('tabindex', isSel ? '0' : '-1')
+    })
+    const placeholder = card.dataset.placeholder || 'Référence de transaction'
+    const label       = card.dataset.label       || 'Référence de paiement'
+    refInput.disabled     = false
+    refInput.placeholder  = placeholder
+    refConfirm.disabled   = false
+    refConfirm.placeholder = placeholder
+    matchHint.style.display = 'none'
+    refInput.focus()
+    refLabel.innerHTML  = label + ' <span style="color:#b91c1c;">*</span>'
+    refHint.textContent = 'Numéro de transaction reçu après votre paiement ' + card.querySelector('.pm-name').textContent + '.'
+  }
+
+  cards.forEach((card, i) => {
+    card.addEventListener('click', () => selectMethod(card))
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMethod(card) }
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); const n = cards[(i+1)%cards.length]; n.focus(); selectMethod(n) }
+      else if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); const n = cards[(i-1+cards.length)%cards.length]; n.focus(); selectMethod(n) }
+    })
+  })
+
+  function checkRefMatch() {
+    const v1 = refInput.value.trim().toUpperCase()
+    const v2 = refConfirm.value.trim().toUpperCase()
+    if (!v2) { matchHint.style.display = 'none'; return }
+    if (v1 === v2) {
+      matchHint.style.display = 'block'; matchHint.style.color = '#166534'
+      matchHint.textContent = '✓ Les deux références correspondent.'
+    } else {
+      matchHint.style.display = 'block'; matchHint.style.color = '#b91c1c'
+      matchHint.textContent = '✗ Les références ne correspondent pas.'
+    }
+  }
+
+  refInput.addEventListener('input',   function() { this.value = this.value.toUpperCase(); checkRefMatch() })
+  refConfirm.addEventListener('input', function() { this.value = this.value.toUpperCase(); checkRefMatch() })
+
+  function showOnly(id) {
+    ['card-form','card-deja','card-confirme','card-gratuit','card-erreur']
+      .forEach(c => document.getElementById(c).style.display = c === id ? '' : 'none')
+  }
+
+  // --- Chargement ---
   async function charger() {
     try {
       const listePays = await api.get('/referentiel/pays')
       const pays = listePays.find(p => p.codePays === ctx.codePays)
       if (pays) {
         montantActivation = pays.montantActivation || 0
-        devise = pays.monnaie ? pays.monnaie.codeIso : 'XOF'
+        devise  = pays.monnaie ? pays.monnaie.codeIso : 'XOF'
+        nomPays = pays.libPays || ''
       }
 
-      if (montantActivation > 0) {
-        document.getElementById('montant-affiche').textContent =
-          montantActivation.toLocaleString('fr-FR') + ' ' + devise
-        document.getElementById('montant-verse').value = montantActivation
-        document.getElementById('instructions-paiement').textContent =
-          'Effectuez un virement ou dépôt de ce montant et conservez votre référence de transaction.'
-      } else {
-        document.getElementById('montant-bloc').innerHTML =
-          '<p style="color:#166534;font-weight:600;">Aucun frais d\'activation requis — contactez l\'équipe Ataabo.</p>'
-        document.getElementById('card-declarer').style.display = 'none'
-      }
-    } catch(e) {
-      document.getElementById('montant-affiche').textContent = 'Erreur de chargement'
-    }
+      // Mettre à jour le sous-label pays sur chaque méthode
+      document.querySelectorAll('.pm-sub').forEach(el => { el.textContent = nomPays || 'International' })
 
-    await chargerHistorique()
-  }
-
-  async function chargerHistorique() {
-    try {
+      // Vérifier si un paiement existe déjà
       const paiements = await api.get(`/paiements/organisation/${ctx.orgId}`)
-      const liste = Array.isArray(paiements) ? paiements.filter(p => p.typePaiement === 'ACTIVATION') : []
-      if (liste.length > 0) {
+      const activation = Array.isArray(paiements) ? paiements.filter(p => p.typePaiement === 'ACTIVATION') : []
+
+      if (activation.some(p => p.statutPaiement === 'ACCEPTED')) {
+        showOnly('card-confirme'); return
+      }
+
+      if (montantActivation <= 0) {
+        showOnly('card-gratuit'); return
+      }
+
+      const montantFormate = montantActivation.toLocaleString('fr-FR') + ' ' + devise
+      document.getElementById('montant-affiche').textContent = montantFormate
+      document.getElementById('amount-box').style.display = 'flex'
+      document.getElementById('montant-inline').textContent = montantFormate
+      document.getElementById('pay-instructions').style.display = 'block'
+
+      // Afficher l'historique si des déclarations existent
+      if (activation.length > 0) {
         document.getElementById('card-historique').style.display = 'block'
-        document.getElementById('liste-paiements').innerHTML = liste.map(p => {
-          const statut = p.statutPaiement || 'PENDING'
-          const badgeCls = statut === 'ACCEPTED' ? '#dcfce7;color:#166534;border:1px solid #86efac'
-            : statut === 'REFUSED' ? '#fee2e2;color:#b91c1c;border:1px solid #fca5a5'
-            : '#fef9c3;color:#854d0e;border:1px solid #fde047'
-          const badgeTxt = statut === 'ACCEPTED' ? '✅ Confirmé' : statut === 'REFUSED' ? '❌ Rejeté' : '⏳ En attente'
+        document.getElementById('liste-paiements').innerHTML = activation.map(p => {
+          const s = p.statutPaiement || 'PENDING'
+          const badgeCls = s === 'ACCEPTED' ? 'background:#dcfce7;color:#166534;border:1px solid #86efac'
+            : s === 'REFUSED' ? 'background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5'
+            : 'background:#fef9c3;color:#854d0e;border:1px solid #fde047'
+          const iconOk  = `<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`
+          const iconX   = `<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+          const iconClock = `<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+          const badgeTxt = s === 'ACCEPTED' ? iconOk + ' Confirmé' : s === 'REFUSED' ? iconX + ' Rejeté' : iconClock + ' En attente'
+          const date = p.dateCreationPaiement ? new Date(p.dateCreationPaiement).toLocaleDateString('fr-FR') : ''
           return `<div class="history-item">
             <div>
-              <div style="font-weight:600;">${p.transactionId || '—'}</div>
-              <div style="color:var(--text-muted);font-size:12px;">${p.montantPaye ? p.montantPaye.toLocaleString('fr-FR') + ' ' + (p.devise || devise) : '—'} · ${p.dateCreationPaiement ? new Date(p.dateCreationPaiement).toLocaleDateString('fr-FR') : ''}</div>
+              <div style="font-weight:600;font-family:monospace;">${p.transactionId || '—'}</div>
+              <div style="color:var(--text-muted);font-size:12px;">${p.montantPaye ? p.montantPaye.toLocaleString('fr-FR') + ' ' + (p.devise || devise) : '—'}${date ? ' · ' + date : ''}</div>
             </div>
-            <span style="font-size:11px;font-weight:700;background:${badgeCls};border-radius:20px;padding:3px 10px;">${badgeTxt}</span>
+            <span style="font-size:11px;font-weight:700;${badgeCls};border-radius:20px;padding:3px 10px;">${badgeTxt}</span>
           </div>`
         }).join('')
 
-        // Si un paiement est accepté, l'org devrait être active — recharger
-        if (liste.some(p => p.statutPaiement === 'ACCEPTED')) {
-          document.getElementById('card-declarer').style.display = 'none'
-          const msg = document.createElement('div')
-          msg.style.cssText = 'background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:16px;text-align:center;margin-top:16px;font-weight:700;color:#166534;'
-          msg.textContent = '✅ Votre paiement a été confirmé. Votre espace sera actif dans quelques instants.'
-          document.querySelector('.activation-wrap').appendChild(msg)
-          const btnDash = document.createElement('button')
-          btnDash.className = 'btn btn-primary'
-          btnDash.style.cssText = 'width:100%;margin-top:12px;'
-          btnDash.textContent = 'Accéder à mon espace'
-          btnDash.onclick = () => window.location.href = '/choisir-org.html'
-          document.querySelector('.activation-wrap').appendChild(btnDash)
+        // S'il y a un paiement PENDING, aller sur l'état "en attente"
+        if (activation.some(p => p.statutPaiement === 'PENDING')) {
+          showOnly('card-deja'); return
         }
       }
-    } catch(e) { /* silencieux */ }
+
+      showOnly('card-form')
+
+    } catch(e) {
+      showOnly('card-erreur')
+      document.getElementById('msg-erreur').textContent = e.message || 'Erreur de chargement.'
+    }
   }
 
-  document.getElementById('btn-declarer').addEventListener('click', async () => {
-    const ref = document.getElementById('ref-activation').value.trim()
-    const montant = parseFloat(document.getElementById('montant-verse').value)
-    const errEl = document.getElementById('err-declaration')
-    const okEl = document.getElementById('ok-declaration')
-    errEl.style.display = 'none'; okEl.style.display = 'none'
+  // --- Soumission ---
+  document.getElementById('form-declaration').addEventListener('submit', async e => {
+    e.preventDefault()
+    errEl.style.display = 'none'
 
-    if (!ref) { errEl.textContent = 'La référence de paiement est obligatoire.'; errEl.style.display = 'block'; return }
-    if (isNaN(montant) || montant <= 0) { errEl.textContent = 'Veuillez saisir un montant valide.'; errEl.style.display = 'block'; return }
+    const selected = document.querySelector('.pay-method-card.selected')
+    const ref      = refInput.value.trim().toUpperCase()
+    const refConf  = refConfirm.value.trim().toUpperCase()
+
+    if (!selected)  { errEl.textContent = 'Veuillez choisir un moyen de paiement.'; errEl.style.display = 'block'; return }
+    if (!ref)       { errEl.textContent = 'La référence de paiement est obligatoire.'; errEl.style.display = 'block'; refInput.focus(); return }
+    if (ref.length < 4) { errEl.textContent = 'La référence semble trop courte.'; errEl.style.display = 'block'; refInput.focus(); return }
+    if (!refConf)   { errEl.textContent = 'Veuillez confirmer la référence.'; errEl.style.display = 'block'; refConfirm.focus(); return }
+    if (ref !== refConf) { errEl.textContent = 'Les deux références ne correspondent pas.'; errEl.style.display = 'block'; refConfirm.focus(); return }
 
     const btn = document.getElementById('btn-declarer')
-    btn.disabled = true; btn.textContent = 'Envoi…'
+    btn.disabled = true; btn.textContent = 'Envoi en cours…'
+
     try {
-      await api.post('/paiements/activation', { orgId: ctx.orgId, montant, reference: ref })
-      okEl.textContent = 'Déclaration enregistrée. L\'équipe Ataabo va vérifier votre virement et vous notifier par email.'
-      okEl.style.display = 'block'
-      btn.style.display = 'none'
-      document.getElementById('ref-activation').disabled = true
-      document.getElementById('montant-verse').disabled = true
-      await chargerHistorique()
-    } catch(e) {
-      errEl.textContent = e.message || 'Erreur lors de la déclaration.'
+      await api.post('/paiements/activation', { orgId: ctx.orgId, montant: montantActivation, reference: ref })
+      showOnly('card-deja')
+    } catch(err) {
+      errEl.textContent = err.message || 'Erreur lors de la déclaration.'
       errEl.style.display = 'block'
       btn.disabled = false; btn.textContent = 'Soumettre ma déclaration'
     }
