@@ -69,38 +69,27 @@
       <button class="btn btn-primary" id="btn-sauvegarder" style="margin-top:8px;">Sauvegarder</button>
     </div>
 
-    <!-- Montant d'activation -->
-    <div class="card" style="max-width:640px; margin-top:24px; padding:28px;" id="card-activation">
-      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Frais d'activation organisation</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Montant qu'une organisation doit payer pour être activée sur la plateforme.</div>
-      <div class="form-group" style="margin-bottom:16px;">
-        <label class="form-label">Montant (XOF)</label>
-        <input type="number" class="form-input" id="plat-montant-activation" min="0" placeholder="0"/>
-      </div>
-      <button class="btn btn-primary btn-sm" id="btn-sauvegarder-activation">Enregistrer</button>
-    </div>
-
-    <!-- Paiements d'activation en attente -->
-    <div class="card" style="max-width:900px; margin-top:24px;" id="card-paiements-activation">
-      <div style="padding:20px 24px 12px;font-size:15px;font-weight:700;">Paiements d'activation reçus</div>
+    <!-- Frais d'activation par pays -->
+    <div class="card" style="max-width:900px; margin-top:24px;" id="card-activation">
+      <div style="padding:20px 24px 4px;font-size:15px;font-weight:700;">Frais d'activation par pays</div>
+      <div style="padding:0 24px 16px;font-size:13px;color:var(--text-muted);">Définissez le montant d'activation pour chaque pays. La devise utilisée est celle associée au pays.</div>
       <div class="table-wrapper">
         <table>
           <thead>
             <tr>
-              <th>Organisation</th>
-              <th>Montant</th>
-              <th>Référence</th>
-              <th>Date déclaration</th>
-              <th>Statut</th>
+              <th>Pays</th>
+              <th>Devise</th>
+              <th>Montant d'activation</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="tbody-paiements-activation">
-            <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          <tbody id="tbody-frais-pays">
+            <tr><td colspan="4"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
     </div>
+
 
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
@@ -133,58 +122,62 @@
       document.getElementById('plat-nom').value = p.nomPlateforme || ''
       document.getElementById('plat-description').value = p.descriptionPlateforme || ''
       if (p.urlLogoPlateforme) afficherLogoPreview(p.urlLogoPlateforme)
-      document.getElementById('plat-montant-activation').value = p.montantActivation || ''
     } catch(err) {
       document.getElementById('err-plat').textContent = err.message
       document.getElementById('err-plat').style.display = 'block'
     }
-    chargerPaiements()
+    chargerFraisPays()
   }
 
-  async function chargerPaiements() {
-    const tbody = document.getElementById('tbody-paiements-activation')
+  async function chargerFraisPays() {
+    const tbody = document.getElementById('tbody-frais-pays')
     try {
-      const liste = await api.get('/paiements/activation')
-      if (!liste || !liste.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun paiement déclaré</p></div></td></tr>`
+      const pays = await api.get('/referentiel/pays')
+      if (!pays || !pays.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>Aucun pays configuré</p></div></td></tr>`
         return
       }
-      tbody.innerHTML = liste.map(p => {
-        const statut = p.statutPaiement || 'PENDING'
-        const badgeCls = statut === 'ACCEPTED' ? 'badge-success' : statut === 'REFUSED' ? 'badge-danger' : 'badge-warning'
-        const badgeTxt = statut === 'ACCEPTED' ? 'Confirmé' : statut === 'REFUSED' ? 'Rejeté' : 'En attente'
-        const actions = statut === 'PENDING' && perm.peutEcrire ? `
-          <button class="btn btn-ghost btn-sm" style="color:#166534;" onclick="confirmerPaiement('${p.idPaiement}')">Confirmer</button>
-          <button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="rejeterPaiement('${p.idPaiement}')">Rejeter</button>
-        ` : '—'
-        return `<tr>
-          <td style="font-weight:600;">${p.nomOrganisation || p.organisation?.nomOrganisation || '—'}</td>
-          <td>${p.montantPaiement ? p.montantPaiement.toLocaleString('fr-FR') + ' XOF' : '—'}</td>
-          <td style="font-size:12px;color:var(--text-muted);">${p.transactionId || '—'}</td>
-          <td style="font-size:13px;">${p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR') : '—'}</td>
-          <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
-          <td>${actions}</td>
+      tbody.innerHTML = pays.map(p => {
+        const devise = p.monnaie ? p.monnaie.codeIso : '—'
+        const montant = p.montantActivation != null ? p.montantActivation : ''
+        return `<tr id="row-pays-${p.codePays}" data-code="${p.codePays}">
+          <td style="font-weight:600;">${p.libPays || p.codePays}</td>
+          <td><span class="badge badge-secondary">${devise}</span></td>
+          <td>
+            <input type="number" min="0" value="${montant}" placeholder="0"
+              style="width:140px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"
+              id="input-montant-${p.codePays}"/>
+          </td>
+          <td>
+            <button class="btn btn-ghost btn-sm" data-action="sauvegarder-frais">Enregistrer</button>
+          </td>
         </tr>`
       }).join('')
+
+      tbody.querySelectorAll('[data-action="sauvegarder-frais"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const codePays = btn.closest('tr').dataset.code
+          const input = document.getElementById(`input-montant-${codePays}`)
+          const montantActivation = parseFloat(input.value)
+          if (isNaN(montantActivation) || montantActivation < 0) { alert('Montant invalide.'); return }
+          btn.disabled = true
+          btn.textContent = '…'
+          try {
+            await api.put(`/pays/${codePays}/frais-activation`, { montantActivation })
+            btn.textContent = '✓ Enregistré'
+            btn.style.color = '#166534'
+            setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
+          } catch(err) {
+            btn.textContent = 'Erreur'
+            btn.style.color = '#b91c1c'
+            setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
+            alert(err.message)
+          }
+        })
+      })
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:16px;">${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:16px;">${err.message}</td></tr>`
     }
-  }
-
-  window.confirmerPaiement = async (id) => {
-    if (!confirm('Confirmer ce paiement ? L\'organisation sera activée.')) return
-    try {
-      await api.put(`/paiements/${id}/confirmer`, {})
-      chargerPaiements()
-    } catch(err) { alert(err.message) }
-  }
-
-  window.rejeterPaiement = async (id) => {
-    if (!confirm('Rejeter ce paiement ?')) return
-    try {
-      await api.put(`/paiements/${id}/rejeter`, {})
-      chargerPaiements()
-    } catch(err) { alert(err.message) }
   }
 
   // Sélection fichier logo
@@ -232,22 +225,8 @@
     }
   })
 
-  document.getElementById('btn-sauvegarder-activation').addEventListener('click', async () => {
-    const montant = parseFloat(document.getElementById('plat-montant-activation').value)
-    if (isNaN(montant) || montant < 0) { alert('Montant invalide.'); return }
-    try {
-      await api.put('/plateforme/montant-activation', { montant })
-      document.getElementById('ok-plat').textContent = 'Montant d\'activation mis à jour.'
-      document.getElementById('ok-plat').style.display = 'block'
-      setTimeout(() => { document.getElementById('ok-plat').style.display = 'none' }, 3000)
-    } catch(err) {
-      document.getElementById('err-plat').textContent = err.message
-      document.getElementById('err-plat').style.display = 'block'
-    }
-  })
-
   charger()
-  buildHistorique('historique-container', 50, 'plateforme')
+  buildHistorique('historique-container', 50, 'plateforme', { orgId: 'PLATEFORME' })
 </script>
 </body>
 </html>

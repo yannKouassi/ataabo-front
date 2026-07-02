@@ -45,7 +45,7 @@
     </div>
 
     <!-- Graphiques -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
       <div class="card" style="padding:20px;">
         <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Organisations par type</div>
         <canvas id="chart-types" height="160"></canvas>
@@ -54,6 +54,10 @@
         <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Top 5 organisations (adhérents)</div>
         <canvas id="chart-top" height="160"></canvas>
       </div>
+    </div>
+    <div class="card" style="padding:20px; margin-bottom:24px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Nouvelles organisations — 12 derniers mois</div>
+      <canvas id="chart-evolution" height="80"></canvas>
     </div>
 
     <div class="card">
@@ -96,7 +100,7 @@
     </div>`
   }
 
-  let chartTypes, chartTop
+  let chartTypes, chartTop, chartEvolution
 
   function dessinerGraphiques(stats) {
     const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
@@ -110,8 +114,8 @@
     chartTypes = new Chart(document.getElementById('chart-types'), {
       type: 'doughnut',
       data: {
-        labels: typesLabels,
-        datasets: [{ data: typesData, backgroundColor: PALETTE.slice(0, typesLabels.length), borderWidth: 0 }]
+        labels: typesLabels.length ? typesLabels : ['Aucune donnée'],
+        datasets: [{ data: typesData.length ? typesData : [1], backgroundColor: PALETTE.slice(0, Math.max(typesLabels.length, 1)), borderWidth: 0 }]
       },
       options: { plugins: { legend: { position: 'right' } }, cutout: '60%' }
     })
@@ -125,17 +129,40 @@
       type: 'bar',
       data: {
         labels: topLabels,
-        datasets: [{
-          label: 'Adhérents',
-          data: topData,
-          backgroundColor: primary + 'bb',
-          borderRadius: 4
-        }]
+        datasets: [{ label: 'Adhérents', data: topData, backgroundColor: primary + 'bb', borderRadius: 4 }]
       },
       options: {
         indexAxis: 'y',
         plugins: { legend: { display: false } },
         scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    })
+
+    // Graphique 3 — évolution inscriptions 12 mois
+    const evoLabels = (stats.evolutionOrgsLabels || []).map(l => {
+      const [y, m] = l.split('-')
+      return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
+    })
+    const evoData = stats.evolutionOrgsData || []
+    if (chartEvolution) chartEvolution.destroy()
+    chartEvolution = new Chart(document.getElementById('chart-evolution'), {
+      type: 'line',
+      data: {
+        labels: evoLabels,
+        datasets: [{
+          label: 'Inscriptions',
+          data: evoData,
+          borderColor: primary,
+          backgroundColor: primary + '22',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: primary
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     })
   }
@@ -144,10 +171,13 @@
     try {
       const stats = await api.get('/admin/stats-plateforme')
       document.getElementById('stats-grid').innerHTML = [
-        statCard('Organisations actives', stats.totalOrganisations ?? '—', 'var(--primary)'),
-        statCard('Adhérents total', stats.totalAdherents ?? '—', 'var(--primary)'),
-        statCard('Utilisateurs sans org', stats.utilisateursSansOrganisation ?? '—', '#d97706'),
-        statCard('Pays couverts', stats.totalPays ?? '—'),
+        statCard('Organisations actives', stats.totalOrganisations ?? 0, 'var(--primary)'),
+        statCard('Adhérents total', stats.totalAdherents ?? 0, 'var(--primary)'),
+        statCard('Utilisateurs sans organisation', stats.utilisateursSansOrganisation ?? 0, '#d97706'),
+        statCard('En attente de validation', stats.orgsEnAttente ?? 0, '#d97706'),
+        statCard('Paiements en attente', stats.paiementsEnAttente ?? 0, '#d97706'),
+        statCard('Paiements confirmés', stats.paiementsConfirmes ?? 0, '#16a34a'),
+        statCard('Pays couverts', stats.totalPays ?? 0),
       ].join('')
       dessinerGraphiques(stats)
     } catch {

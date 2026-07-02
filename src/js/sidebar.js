@@ -111,7 +111,8 @@ export async function buildSidebar() {
 
   // Toujours récupérer le logo depuis le serveur pour garantir la fraîcheur
   if (ctx.orgId) {
-    api.get(`/contexte/${ctx.orgId}`).then(freshCtx => {
+    const ctxUrl = ctx.orgId === 'PLATEFORME' ? '/contexte/plateforme' : `/contexte/${ctx.orgId}`
+    api.get(ctxUrl).then(freshCtx => {
       if (freshCtx?.urlLogo) {
         if (freshCtx.urlLogo !== ctx.urlLogo) {
           saveContexte({ ...ctx, urlLogo: freshCtx.urlLogo })
@@ -242,6 +243,7 @@ const NAV_PAGES = {
     // Admin plateforme
     '/admin/organisations-en-attente': '/src/pages/admin-organisations-attente.html',
     '/admin/organisations':            '/src/pages/admin-organisations-attente.html',
+    '/admin/paiements-activation':     '/src/pages/admin-paiements-activation.html',
 }
 
 function navigate(url) {

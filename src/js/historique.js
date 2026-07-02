@@ -7,7 +7,7 @@ export function rafraichirHistorique(containerId) {
   if (_chargeurs[containerId]) _chargeurs[containerId]()
 }
 
-export async function buildHistorique(containerId, limit = 50, module = null) {
+export async function buildHistorique(containerId, limit = 50, module = null, options = {}) {
   const ctx = getContexte()
   if (!ctx) return
   const el = document.getElementById(containerId)
@@ -15,7 +15,7 @@ export async function buildHistorique(containerId, limit = 50, module = null) {
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">
-      <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Mes actions récentes</span>
+      <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">${options.titre || 'Mes actions récentes'}</span>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <label style="font-size:12px;color:var(--text-muted);">Du</label>
         <input type="date" id="${containerId}-debut" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);"/>
@@ -37,7 +37,8 @@ export async function buildHistorique(containerId, limit = 50, module = null) {
     try {
       const debut = document.getElementById(`${containerId}-debut`).value
       const fin   = document.getElementById(`${containerId}-fin`).value
-      let url = `/audit/moi`
+      const orgId = options.orgId || null
+      let url = orgId ? `/audit/organisation/${orgId}` : `/audit/moi`
       const params = []
       if (debut) params.push(`debut=${debut}`)
       if (fin)   params.push(`fin=${fin}`)

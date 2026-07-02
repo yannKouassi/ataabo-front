@@ -97,9 +97,12 @@
 
   async function charger() {
     try {
-      const pf = await api.get('/plateforme')
-      montantActivation = pf.montantActivation || 0
-      devise = pf.devise || 'XOF'
+      const listePays = await api.get('/referentiel/pays')
+      const pays = listePays.find(p => p.codePays === ctx.codePays)
+      if (pays) {
+        montantActivation = pays.montantActivation || 0
+        devise = pays.monnaie ? pays.monnaie.codeIso : 'XOF'
+      }
 
       if (montantActivation > 0) {
         document.getElementById('montant-affiche').textContent =
