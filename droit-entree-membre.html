@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Droit d'entrée</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    body { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .wrap { max-width: 520px; width: 100%; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .header .logo-text { font-size: 28px; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
+    .header .org-name { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 8px; }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 16px; }
+    .step-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; margin-bottom: 12px; }
+    .step-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; margin-right: 10px; flex-shrink: 0; }
+    .amount-badge { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 22px; font-weight: 900; border-radius: 10px; padding: 10px 24px; margin: 12px 0; }
+    .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .history-item:last-child { border-bottom: none; }
+    .btn-back { position: fixed; top: 16px; left: 16px; }
+  </style>
+</head>
+<body>
+
+<button class="btn btn-ghost btn-sm btn-back" id="btn-back">← Changer d'organisation</button>
+
+<div class="wrap">
+  <div class="header">
+    <div class="logo-text">ATAABO</div>
+    <div class="org-name" id="org-name">Votre organisation</div>
+    <div style="margin-top:8px;">
+      <span style="font-size:12px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:20px;padding:3px 12px;">💳 Droit d'entrée requis</span>
+    </div>
+  </div>
+
+  <!-- Étape 1 : montant -->
+  <div class="step-card">
+    <div class="step-title"><span class="step-number">1</span> Montant du droit d'entrée</div>
+    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:8px;">
+      Votre adhésion a été approuvée. Pour finaliser votre inscription et accéder à votre espace membre, veuillez régler le droit d'entrée suivant :
+    </p>
+    <div class="amount-badge" id="montant-affiche">Chargement…</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" id="instructions"></p>
+  </div>
+
+  <!-- Étape 2 : déclarer -->
+  <div class="step-card" id="card-declarer">
+    <div class="step-title"><span class="step-number">2</span> Déclarer votre paiement</div>
+    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">
+      Après votre virement ou dépôt, saisissez la référence de la transaction. L'administrateur de l'organisation confirmera la réception.
+    </p>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label">Référence de paiement</label>
+      <input type="text" class="form-input" id="ref-paiement" placeholder="Ex: WAVE-20240601-ABC123"/>
+    </div>
+    <div id="err-dec" style="color:#b91c1c;font-size:12px;margin-bottom:8px;display:none;"></div>
+    <div id="ok-dec" style="color:#166534;font-size:12px;margin-bottom:8px;display:none;"></div>
+    <button class="btn btn-primary" id="btn-declarer">Soumettre ma déclaration</button>
+  </div>
+
+  <!-- Historique -->
+  <div class="step-card" id="card-historique" style="display:none;">
+    <div class="step-title"><span class="step-number">3</span> Statut de votre paiement</div>
+    <div id="statut-paiement"></div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">
+      L'administrateur de l'organisation vérifie votre déclaration. Vous recevrez un email dès confirmation.
+    </p>
+  </div>
+</div>
+</body>
+</html>

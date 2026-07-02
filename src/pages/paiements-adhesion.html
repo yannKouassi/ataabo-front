@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Paiements d'adhésion</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+    .stat-label { font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+    .stat-value { font-size:26px; font-weight:800; line-height:1.1; }
+    .stat-sub   { font-size:12px; color:var(--text-muted); margin-top:4px; }
+    .stat-icon  { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+    .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+    .chart-title { font-size:14px; font-weight:700; margin-bottom:16px; }
+    canvas { display:block; width:100%; }
+    .filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+    .filter-row label { font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Rechercher un membre..."/>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar"></div>
+        <div class="topbar-user-info"><div class="topbar-user-name" id="topbar-name"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Titre + filtre date -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="page-title">Paiements d'adhésion</div>
+        <div class="page-subtitle">Droits d'entrée collectés par l'organisation</div>
+      </div>
+      <button class="btn btn-outline btn-print" onclick="window.print()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer
+      </button>
+    </div>
+
+    <!-- Filtres date -->
+    <div class="card" style="padding:16px; margin-bottom:20px;">
+      <div class="filter-row">
+        <div>
+          <label>Du</label>
+          <input type="date" class="form-input" id="filtre-debut" style="width:auto;"/>
+        </div>
+        <div>
+          <label>Au</label>
+          <input type="date" class="form-input" id="filtre-fin" style="width:auto;"/>
+        </div>
+        <div>
+          <label>Statut</label>
+          <select class="form-input" id="filtre-statut" style="width:auto; min-width:180px;">
+            <option value="">Tous</option>
+            <option value="CONFIRME">Paiement confirmé</option>
+            <option value="REF_DECLAREE">Référence déclarée</option>
+            <option value="EN_ATTENTE">En attente de paiement</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" id="btn-filtrer">Filtrer</button>
+        <button class="btn btn-ghost" id="btn-reset">Réinitialiser</button>
+      </div>
+    </div>
+
+    <!-- Stats 4 cartes -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px;" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#dcfce7;">
+          <svg width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="stat-label">Total collecté</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-sub" id="stat-total-sub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#dbeafe;">
+          <svg width="18" height="18" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="stat-label">Paiements confirmés</div>
+        <div class="stat-value" id="stat-confirmes">—</div>
+        <div class="stat-sub">membres activés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fef9c3;">
+          <svg width="18" height="18" fill="none" stroke="#ca8a04" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-label">Références à vérifier</div>
+        <div class="stat-value" id="stat-a-verifier">—</div>
+        <div class="stat-sub">en attente de confirmation</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fee2e2;">
+          <svg width="18" height="18" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-label">En attente de paiement</div>
+        <div class="stat-value" id="stat-en-attente">—</div>
+        <div class="stat-sub">approuvés, pas encore payés</div>
+      </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div style="display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px;" class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Évolution des confirmations de paiement</div>
+        <div style="position:relative; height:200px;">
+          <canvas id="chart-evolution"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Répartition des statuts</div>
+        <div style="position:relative; height:200px;">
+          <canvas id="chart-repartition"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card">
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span style="font-weight:700; font-size:14px;">Liste des paiements</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:13px; color:var(--text-muted);" id="table-count"></span>
+          <button class="btn btn-ghost btn-sm" id="btn-export-csv">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exporter CSV
+          </button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Membre</th>
+              <th>Email</th>
+              <th>Date demande</th>
+              <th>Date confirmation</th>
+              <th>Référence déclarée</th>
+              <th>Montant</th>
+              <th>Statut paiement</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-paiements">
+            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+          <tfoot id="tfoot-paiements"></tfoot>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-top:1px solid var(--border);">
+        <span class="text-muted" id="pagination-info" style="font-size:13px;"></span>
+        <div style="display:flex; gap:8px;" id="pagination-btns"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { buildHistorique } from '/src/js/historique.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  // Initialiser filtres sur l'année en cours
+  const now = new Date()
+  const debutAnnee = `${now.getFullYear()}-01-01`
+  const auj = now.toISOString().slice(0, 10)
+  document.getElementById('filtre-debut').value = debutAnnee
+  document.getElementById('filtre-fin').value = auj
+
+  let toutesLesDonnees = []
+  let itemsFiltres = []
+  let montantEntree = 0
+  let devise = 'XOF'
+  let page = 0
+  const PAGE_SIZE = 20
+  let chartEvo = null, chartDon = null
+
+  function getPrimary() { return ctx.couleurPrimaire || '#6366f1' }
+
+  // ─── Chargement ─────────────────────────────────────────────────────────
+  async function charger() {
+    try {
+      const [adhesions, orgInfos] = await Promise.all([
+        api.get(`/adhesions/organisation/${ctx.orgId}`),
+        api.get(`/organisations/${ctx.orgId}/infos`).catch(() => ({}))
+      ])
+      montantEntree = orgInfos.montantEntree || 0
+      devise = orgInfos.devise || 'XOF'
+      toutesLesDonnees = Array.isArray(adhesions) ? adhesions.filter(a => a.statut === 'APPROUVE') : []
+      appliquerFiltres()
+    } catch(err) {
+      document.getElementById('tbody-paiements').innerHTML =
+        `<tr><td colspan="7" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+    }
+  }
+
+  function appliquerFiltres() {
+    const debut  = document.getElementById('filtre-debut').value
+    const fin    = document.getElementById('filtre-fin').value
+    const statut = document.getElementById('filtre-statut').value
+    const q      = document.getElementById('search-input').value.toLowerCase()
+
+    let items = toutesLesDonnees
+
+    // Filtre date — normalisation en chaîne ISO pour comparaison fiable
+    if (debut || fin) {
+      items = items.filter(a => {
+        const refRaw = a.droitEntreePaye === true
+          ? (a.dateConfirmationPaiement || a.dateDemandeAdhesion)
+          : a.dateDemandeAdhesion
+        const ref = toISO(refRaw)
+        if (!ref) return true
+        if (debut && ref < debut) return false
+        if (fin   && ref > fin)   return false
+        return true
+      })
+    }
+
+    if (statut === 'CONFIRME')
+      items = items.filter(a => a.droitEntreePaye === true)
+    else if (statut === 'REF_DECLAREE')
+      items = items.filter(a => a.refPaiementEntree && a.droitEntreePaye !== true)
+    else if (statut === 'EN_ATTENTE')
+      items = items.filter(a => !a.refPaiementEntree && a.droitEntreePaye !== true)
+
+    if (q) items = items.filter(a => {
+      const nom = `${a.demandeur?.prenPersonne || ''} ${a.demandeur?.nomPersonne || ''}`.toLowerCase()
+      return nom.includes(q) || (a.demandeur?.emailPersonne || '').toLowerCase().includes(q)
+    })
+
+    itemsFiltres = items
+    page = 0
+    mettreAJourStats(items)
+    dessinerGraphiques(items, document.getElementById('filtre-debut').value, document.getElementById('filtre-fin').value)
+    afficherTableau(items)
+  }
+
+  // ─── Stats ───────────────────────────────────────────────────────────────
+  function mettreAJourStats(items) {
+    const confirmes = items.filter(a => a.droitEntreePaye === true).length
+    const aVerifier = items.filter(a => a.refPaiementEntree && a.droitEntreePaye !== true).length
+    const enAttente = items.filter(a => !a.refPaiementEntree && a.droitEntreePaye !== true).length
+    const total     = confirmes * montantEntree
+
+    document.getElementById('stat-total').textContent     = formaterMontant(total)
+    document.getElementById('stat-total-sub').textContent = `${confirmes} × ${formaterMontant(montantEntree)}`
+    document.getElementById('stat-confirmes').textContent = confirmes
+    document.getElementById('stat-a-verifier').textContent= aVerifier
+    document.getElementById('stat-en-attente').textContent= enAttente
+  }
+
+  // ─── Tableau ─────────────────────────────────────────────────────────────
+  function afficherTableau(items) {
+    const tbody = document.getElementById('tbody-paiements')
+    const tfoot = document.getElementById('tfoot-paiements')
+    document.getElementById('table-count').textContent = `${items.length} résultat${items.length > 1 ? 's' : ''}`
+
+    const totalPages = Math.ceil(items.length / PAGE_SIZE) || 1
+    const paginated  = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+    if (!paginated.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucun paiement</p></div></td></tr>`
+      tfoot.innerHTML = ''
+      document.getElementById('pagination-info').textContent = ''
+      document.getElementById('pagination-btns').innerHTML = ''
+      return
+    }
+
+    tbody.innerHTML = paginated.map(a => {
+      const nom     = `${a.demandeur?.prenPersonne || ''} ${a.demandeur?.nomPersonne || ''}`.trim() || '—'
+      const email   = a.demandeur?.emailPersonne || '—'
+      const dateDem  = afficherDate(a.dateDemandeAdhesion)
+      const dateConf = afficherDate(a.dateConfirmationPaiement)
+      const ref     = a.refPaiementEntree || '—'
+      const montant = montantEntree > 0 ? formaterMontant(montantEntree) : '—'
+      const badge   = a.droitEntreePaye === true
+        ? `<span class="badge badge-success" style="display:inline-flex;align-items:center;gap:4px;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Confirmé</span>`
+        : a.refPaiementEntree
+          ? `<span class="badge badge-warning">Réf. à vérifier</span>`
+          : `<span class="badge badge-secondary">En attente</span>`
+      return `<tr>
+        <td style="font-weight:600;">${nom}</td>
+        <td style="font-size:13px;color:var(--text-muted);">${email}</td>
+        <td style="font-size:13px;">${dateDem}</td>
+        <td style="font-size:13px;color:${a.dateConfirmationPaiement ? '#16a34a' : 'var(--text-muted)'};">${dateConf}</td>
+        <td style="font-size:13px;font-family:monospace;">${ref}</td>
+        <td style="font-weight:700;">${montant}</td>
+        <td>${badge}</td>
+      </tr>`
+    }).join('')
+
+    // Sous-total confirmés sur la période filtrée
+    const totalConfirmes = items.filter(a => a.droitEntreePaye === true).length
+    const sousTotalMontant = totalConfirmes * montantEntree
+    tfoot.innerHTML = `<tr style="background:var(--bg);font-weight:700;border-top:2px solid var(--border);">
+      <td colspan="4" style="padding:12px 16px;font-size:13px;color:var(--text-muted);">
+        Sous-total — ${totalConfirmes} paiement${totalConfirmes > 1 ? 's' : ''} confirmé${totalConfirmes > 1 ? 's' : ''} sur la période
+      </td>
+      <td style="padding:12px 16px;"></td>
+      <td style="padding:12px 16px;font-size:15px;color:#16a34a;">${formaterMontant(sousTotalMontant)}</td>
+      <td></td>
+    </tr>`
+
+    document.getElementById('pagination-info').textContent = `Page ${page + 1} / ${totalPages}`
+    document.getElementById('pagination-btns').innerHTML = `
+      <button class="btn btn-ghost btn-sm" ${page === 0 ? 'disabled' : ''} onclick="changerPage(${page - 1})">←</button>
+      <button class="btn btn-ghost btn-sm" ${page >= totalPages - 1 ? 'disabled' : ''} onclick="changerPage(${page + 1})">→</button>`
+  }
+
+  // ─── Graphiques ──────────────────────────────────────────────────────────
+  function dessinerGraphiques(items, debut, fin) {
+    const primary = getPrimary()
+
+    // Générer les mois couverts par la période filtrée
+    const moisLabels = []
+    const parMois    = {}
+    const d0 = debut ? new Date(debut) : (() => { const d = new Date(); d.setMonth(d.getMonth() - 5); return d })()
+    const d1 = fin   ? new Date(fin)   : new Date()
+    d0.setDate(1)
+    const cur = new Date(d0)
+    while (cur <= d1) {
+      const key   = cur.toISOString().slice(0, 7)
+      const label = cur.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
+      parMois[key] = 0
+      moisLabels.push({ key, label })
+      cur.setMonth(cur.getMonth() + 1)
+    }
+
+    // Compter confirmations par mois (sur dateConfirmationPaiement si dispo, sinon dateDemandeAdhesion)
+    items.filter(a => a.droitEntreePaye === true).forEach(a => {
+      const dateRef = toISO(a.dateConfirmationPaiement || a.dateDemandeAdhesion)
+      if (!dateRef) return
+      const key = dateRef.slice(0, 7)
+      if (parMois[key] !== undefined) parMois[key]++
+    })
+
+    // 1. Graphique barres — montants (pas comptages)
+    const labelsEvo = moisLabels.map(m => m.label)
+    const valuesEvo = moisLabels.map(m => parMois[m.key] * montantEntree)
+
+    if (chartEvo) chartEvo.destroy()
+    chartEvo = new Chart(document.getElementById('chart-evolution'), {
+      type: 'bar',
+      data: {
+        labels: labelsEvo,
+        datasets: [{
+          label: 'Montant collecté',
+          data: valuesEvo,
+          backgroundColor: primary + 'bb',
+          borderColor: primary,
+          borderWidth: 1.5,
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => ` ${new Intl.NumberFormat('fr-FR').format(c.raw)} ${devise}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11 },
+              callback: v => v === 0 ? '0' : new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v)
+            },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    })
+
+    // 2. Donut répartition
+    const confirmes = items.filter(a => a.droitEntreePaye === true).length
+    const aVerif    = items.filter(a => a.refPaiementEntree && a.droitEntreePaye !== true).length
+    const enAtt     = items.filter(a => !a.refPaiementEntree && a.droitEntreePaye !== true).length
+
+    if (chartDon) chartDon.destroy()
+    chartDon = new Chart(document.getElementById('chart-repartition'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Confirmés', 'À vérifier', 'En attente'],
+        datasets: [{
+          data: [confirmes, aVerif, enAtt],
+          backgroundColor: ['#16a34a', '#ca8a04', '#d1d5db'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { font: { size: 12 }, padding: 14, usePointStyle: true, pointStyleWidth: 10 }
+          },
+          tooltip: {
+            callbacks: { label: c => ` ${c.label} : ${c.raw}` }
+          }
+        }
+      }
+    })
+  }
+
+  // ─── Export CSV ──────────────────────────────────────────────────────────
+  function exporterCSV() {
+    const entete = ['Prénom', 'Nom', 'Email', 'Date demande', 'Date confirmation', 'Référence', 'Montant', 'Devise', 'Statut']
+    const lignes = itemsFiltres.map(a => {
+      const statut = a.droitEntreePaye === true ? 'Confirmé' : a.refPaiementEntree ? 'Réf. à vérifier' : 'En attente'
+      return [
+        a.demandeur?.prenPersonne || '',
+        a.demandeur?.nomPersonne  || '',
+        a.demandeur?.emailPersonne || '',
+        a.dateDemandeAdhesion || '',
+        a.dateConfirmationPaiement || '',
+        a.refPaiementEntree || '',
+        a.droitEntreePaye === true ? montantEntree : '',
+        a.droitEntreePaye === true ? devise : '',
+        statut,
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')
+    })
+    const csv  = '﻿' + [entete.join(';'), ...lignes].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `droits-entree-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // ─── Normalisation date API (tableau [2026,7,1] ou chaîne "2026-07-01") ──
+  function toISO(val) {
+    if (!val) return null
+    if (Array.isArray(val)) {
+      const [y, m, d] = val
+      return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    }
+    return String(val).slice(0, 10)
+  }
+
+  function afficherDate(val) {
+    const iso = toISO(val)
+    if (!iso) return '—'
+    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR')
+  }
+
+  // ─── Formatage ───────────────────────────────────────────────────────────
+  function formaterMontant(v) {
+    if (!v && v !== 0) return '—'
+    return new Intl.NumberFormat('fr-FR').format(v) + ' ' + devise
+  }
+
+  window.changerPage = n => { page = n; afficherTableau(itemsFiltres) }
+
+  document.getElementById('btn-filtrer').addEventListener('click', () => appliquerFiltres())
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('filtre-debut').value  = debutAnnee
+    document.getElementById('filtre-fin').value    = auj
+    document.getElementById('filtre-statut').value = ''
+    document.getElementById('search-input').value  = ''
+    appliquerFiltres()
+  })
+  document.getElementById('btn-export-csv').addEventListener('click', exporterCSV)
+  let t; document.getElementById('search-input').addEventListener('input', () => {
+    clearTimeout(t); t = setTimeout(() => appliquerFiltres(), 350)
+  })
+
+  charger()
+  buildHistorique('historique-container', 50, 'adhésion')
+</script>
+</body>
+</html>

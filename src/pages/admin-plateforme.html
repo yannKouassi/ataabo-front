@@ -68,6 +68,40 @@
 
       <button class="btn btn-primary" id="btn-sauvegarder" style="margin-top:8px;">Sauvegarder</button>
     </div>
+
+    <!-- Montant d'activation -->
+    <div class="card" style="max-width:640px; margin-top:24px; padding:28px;" id="card-activation">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Frais d'activation organisation</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Montant qu'une organisation doit payer pour être activée sur la plateforme.</div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Montant (XOF)</label>
+        <input type="number" class="form-input" id="plat-montant-activation" min="0" placeholder="0"/>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-sauvegarder-activation">Enregistrer</button>
+    </div>
+
+    <!-- Paiements d'activation en attente -->
+    <div class="card" style="max-width:900px; margin-top:24px;" id="card-paiements-activation">
+      <div style="padding:20px 24px 12px;font-size:15px;font-weight:700;">Paiements d'activation reçus</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Organisation</th>
+              <th>Montant</th>
+              <th>Référence</th>
+              <th>Date déclaration</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-paiements-activation">
+            <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
 </div>
@@ -99,10 +133,58 @@
       document.getElementById('plat-nom').value = p.nomPlateforme || ''
       document.getElementById('plat-description').value = p.descriptionPlateforme || ''
       if (p.urlLogoPlateforme) afficherLogoPreview(p.urlLogoPlateforme)
+      document.getElementById('plat-montant-activation').value = p.montantActivation || ''
     } catch(err) {
       document.getElementById('err-plat').textContent = err.message
       document.getElementById('err-plat').style.display = 'block'
     }
+    chargerPaiements()
+  }
+
+  async function chargerPaiements() {
+    const tbody = document.getElementById('tbody-paiements-activation')
+    try {
+      const liste = await api.get('/paiements/activation')
+      if (!liste || !liste.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun paiement déclaré</p></div></td></tr>`
+        return
+      }
+      tbody.innerHTML = liste.map(p => {
+        const statut = p.statutPaiement || 'PENDING'
+        const badgeCls = statut === 'ACCEPTED' ? 'badge-success' : statut === 'REFUSED' ? 'badge-danger' : 'badge-warning'
+        const badgeTxt = statut === 'ACCEPTED' ? 'Confirmé' : statut === 'REFUSED' ? 'Rejeté' : 'En attente'
+        const actions = statut === 'PENDING' && perm.peutEcrire ? `
+          <button class="btn btn-ghost btn-sm" style="color:#166534;" onclick="confirmerPaiement('${p.idPaiement}')">Confirmer</button>
+          <button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="rejeterPaiement('${p.idPaiement}')">Rejeter</button>
+        ` : '—'
+        return `<tr>
+          <td style="font-weight:600;">${p.nomOrganisation || p.organisation?.nomOrganisation || '—'}</td>
+          <td>${p.montantPaiement ? p.montantPaiement.toLocaleString('fr-FR') + ' XOF' : '—'}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${p.transactionId || '—'}</td>
+          <td style="font-size:13px;">${p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR') : '—'}</td>
+          <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
+          <td>${actions}</td>
+        </tr>`
+      }).join('')
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:16px;">${err.message}</td></tr>`
+    }
+  }
+
+  window.confirmerPaiement = async (id) => {
+    if (!confirm('Confirmer ce paiement ? L\'organisation sera activée.')) return
+    try {
+      await api.put(`/paiements/${id}/confirmer`, {})
+      chargerPaiements()
+    } catch(err) { alert(err.message) }
+  }
+
+  window.rejeterPaiement = async (id) => {
+    if (!confirm('Rejeter ce paiement ?')) return
+    try {
+      await api.put(`/paiements/${id}/rejeter`, {})
+      chargerPaiements()
+    } catch(err) { alert(err.message) }
   }
 
   // Sélection fichier logo
@@ -147,6 +229,20 @@
     } catch(err) {
       errEl.textContent = err.message
       errEl.style.display = 'block'
+    }
+  })
+
+  document.getElementById('btn-sauvegarder-activation').addEventListener('click', async () => {
+    const montant = parseFloat(document.getElementById('plat-montant-activation').value)
+    if (isNaN(montant) || montant < 0) { alert('Montant invalide.'); return }
+    try {
+      await api.put('/plateforme/montant-activation', { montant })
+      document.getElementById('ok-plat').textContent = 'Montant d\'activation mis à jour.'
+      document.getElementById('ok-plat').style.display = 'block'
+      setTimeout(() => { document.getElementById('ok-plat').style.display = 'none' }, 3000)
+    } catch(err) {
+      document.getElementById('err-plat').textContent = err.message
+      document.getElementById('err-plat').style.display = 'block'
     }
   })
 

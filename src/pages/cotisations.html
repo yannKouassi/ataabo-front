@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ataabo — Cotisations</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+    .chart-title { font-size:13px; font-weight:700; margin-bottom:14px; color:var(--text); }
+  </style>
 </head>
 <body>
 <div class="app-layout">
@@ -57,16 +62,41 @@
     <!-- Stats rapides -->
     <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
       <div class="card" style="padding:20px;">
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Total collecté (mois)</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;" id="lbl-stat-total">Total validé</div>
         <div style="font-size:22px; font-weight:800;" id="stat-total">—</div>
       </div>
       <div class="card" style="padding:20px;">
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Paiements ce mois</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;" id="lbl-stat-count">Paiements validés</div>
         <div style="font-size:22px; font-weight:800;" id="stat-count">—</div>
       </div>
       <div class="card" style="padding:20px;">
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">En retard</div>
-        <div style="font-size:22px; font-weight:800; color:#b91c1c;" id="stat-retard">—</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;" id="lbl-stat-retard">En attente de validation</div>
+        <div style="font-size:22px; font-weight:800; color:#b45309;" id="stat-retard">—</div>
+      </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div style="display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px;">
+      <div class="chart-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <div class="chart-title" style="margin-bottom:0;">Montant collecté par mois</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <label style="font-size:12px; color:var(--text-muted);">Du</label>
+            <input type="month" id="chart-debut" class="form-input" style="width:auto; font-size:12px; padding:4px 8px;"/>
+            <label style="font-size:12px; color:var(--text-muted);">Au</label>
+            <input type="month" id="chart-fin" class="form-input" style="width:auto; font-size:12px; padding:4px 8px;"/>
+            <button class="btn btn-secondary btn-sm" id="btn-chart-appliquer">Appliquer</button>
+          </div>
+        </div>
+        <div style="position:relative; height:200px;">
+          <canvas id="chart-evolution"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Répartition des statuts</div>
+        <div style="position:relative; height:200px;">
+          <canvas id="chart-repartition"></canvas>
+        </div>
       </div>
     </div>
 
@@ -75,7 +105,7 @@
       <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         <select class="form-input" id="filtre-statut" style="width:auto; min-width:150px;">
           <option value="">Tous les statuts</option>
-          <option value="PAYE">Payé</option>
+          <option value="VALIDE">Validé</option>
           <option value="EN_ATTENTE">En attente</option>
           <option value="EN_RETARD">En retard</option>
         </select>
@@ -91,10 +121,11 @@
             <tr>
               <th>Adhérent</th>
               <th>Montant</th>
-              <th>Période</th>
-              <th>Date paiement</th>
-              <th>Mode</th>
+              <th>Référence</th>
+              <th>Date déclaration</th>
+              <th>Moyen</th>
               <th>Statut</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-cotisations">
@@ -109,6 +140,57 @@
     </div>
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
+</div>
+
+<!-- Modal validation cotisation -->
+<div id="modal-validation" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:var(--surface,#fff); border-radius:16px; width:100%; max-width:460px; box-shadow:0 12px 48px rgba(0,0,0,.22); padding:28px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div style="font-size:16px; font-weight:800;">Confirmer la réception du paiement</div>
+      <button onclick="fermerModalValidation()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:22px;line-height:1;">×</button>
+    </div>
+
+    <!-- Détails de la cotisation -->
+    <div style="background:var(--bg,#f8fafc); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+        <span style="font-size:13px; color:var(--text-muted);">Membre</span>
+        <div style="text-align:right;">
+          <div id="vld-membre" style="font-weight:700; font-size:14px;">—</div>
+          <div id="vld-num" style="font-size:11px; color:var(--text-muted); font-family:monospace; margin-top:2px;"></div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+        <span style="font-size:13px; color:var(--text-muted);">Montant</span>
+        <span id="vld-montant" style="font-weight:800; font-size:18px; color:var(--primary);">—</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+        <span style="font-size:13px; color:var(--text-muted);">Moyen de paiement</span>
+        <span id="vld-moyen" style="font-weight:600;">—</span>
+      </div>
+      <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px;">
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Référence déclarée</div>
+        <div id="vld-ref" style="font-family:monospace; font-size:15px; font-weight:700; letter-spacing:.04em; color:var(--text);">—</div>
+      </div>
+    </div>
+
+    <!-- Checkbox de vérification -->
+    <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; background:#fef9c3; border:1px solid #fde047; border-radius:8px; padding:14px; margin-bottom:20px;">
+      <input type="checkbox" id="chk-validation" style="margin-top:2px; width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--primary);"
+        onchange="document.getElementById('btn-valider-confirm').disabled = !this.checked"/>
+      <span style="font-size:13px; color:#713f12; line-height:1.5;">
+        J'ai vérifié le paiement portant la référence <strong id="chk-ref-inline">—</strong> sur mon application <strong id="chk-moyen-inline">—</strong> et je confirme avoir reçu ce montant.
+      </span>
+    </label>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="fermerModalValidation()">Annuler</button>
+      <button class="btn btn-primary" id="btn-valider-confirm" disabled onclick="confirmerValidation()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirmer la réception
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal nouveau paiement -->
@@ -177,74 +259,315 @@
   const perm = getPermission('/paiements/cotisations')
   if (!perm.peutEcrire) document.getElementById('btn-nouvelle').style.display = 'none'
 
-  let page = 0, totalPages = 1
+  const PAGE_SIZE = 20
+  let page = 0
+  let toutesLesCotisations = []
+
+  function toISO(val) {
+    if (!val) return null
+    if (Array.isArray(val)) {
+      const [y, m, d] = val
+      return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    }
+    return String(val).slice(0, 10)
+  }
 
   async function charger() {
-    const params = new URLSearchParams({ page, size: 20 })
-    const s = document.getElementById('filtre-statut').value
-    const m = document.getElementById('filtre-mois').value
-    const q = document.getElementById('search-input').value
-    if (s) params.set('statut', s)
-    if (m) params.set('periode', m)
-    if (q) params.set('q', q)
-
     const tbody = document.getElementById('tbody-cotisations')
-    tbody.innerHTML = `<tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
-
+    tbody.innerHTML = `<tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
     try {
-      const data = await api.get(`/cotisations/organisation/${ctx.orgId}?${params}`)
-      totalPages = data.totalPages || 1
-      const items = data.content || []
-
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucune cotisation</p></div></td></tr>`
-        document.getElementById('pagination-info').textContent = ''
-        document.getElementById('pagination-btns').innerHTML = ''
-        return
-      }
-
-      tbody.innerHTML = items.map(c => `
-        <tr>
-          <td style="font-weight:600;">${c.prenomAdherent || ''} ${c.nomAdherent || ''}</td>
-          <td style="font-weight:700;">${formaterMontant(c.montant, ctx.devise)}</td>
-          <td style="font-size:13px;">${c.periode || '—'}</td>
-          <td style="font-size:13px; color:var(--text-muted);">${c.datePaiement ? new Date(c.datePaiement).toLocaleDateString('fr-FR') : '—'}</td>
-          <td style="font-size:12.5px;">${c.modePaiement || '—'}</td>
-          <td>${badge(c.statut)}</td>
-        </tr>
-      `).join('')
-
-      document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages}`
-      document.getElementById('pagination-btns').innerHTML = `
-        <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
-        <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
+      const data = await api.get(`/cotisations/organisation/${ctx.orgId}`)
+      toutesLesCotisations = Array.isArray(data) ? data : (data.content || [])
+      page = 0
+      afficher()
+      dessinerGraphiques()
+      chargerStats()
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="7" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
 
-  async function chargerStats() {
-    try {
-      const s = await api.get(`/cotisations/stats?orgId=${ctx.orgId}`)
-      document.getElementById('stat-total').textContent = formaterMontant(s.totalMois, ctx.devise)
-      document.getElementById('stat-count').textContent = s.nombreMois ?? '—'
-      document.getElementById('stat-retard').textContent = s.enRetard ?? '—'
-    } catch { /* stats optionnelles */ }
+  function afficher() {
+    const s = document.getElementById('filtre-statut').value
+    const m = document.getElementById('filtre-mois').value  // "2026-07"
+    const q = (document.getElementById('search-input').value || '').toLowerCase().trim()
+
+    let items = toutesLesCotisations.filter(c => {
+      if (s && c.statutPaiement !== s) return false
+      if (m) {
+        const iso = toISO(c.dateCotisation)
+        if (!iso || iso.slice(0, 7) !== m) return false
+      }
+      if (q) {
+        const prenom = (c.personne?.prenPersonne || '').toLowerCase()
+        const nom    = (c.personne?.nomPersonne  || '').toLowerCase()
+        const ref    = (c.referenceTransaction   || '').toLowerCase()
+        if (!prenom.includes(q) && !nom.includes(q) && !ref.includes(q)) return false
+      }
+      return true
+    })
+
+    const tbody = document.getElementById('tbody-cotisations')
+
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucune cotisation</p></div></td></tr>`
+      document.getElementById('pagination-info').textContent = ''
+      document.getElementById('pagination-btns').innerHTML = ''
+      return
+    }
+
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
+    if (page >= totalPages) page = totalPages - 1
+    const slice = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+    const peutValider = perm.peutEcrire
+    tbody.innerHTML = slice.map(c => {
+      const prenom = c.personne?.prenPersonne || ''
+      const nom    = c.personne?.nomPersonne  || ''
+      const montant = formaterMontant(c.montantCotisation, ctx.devise)
+      const ref    = c.referenceTransaction || '—'
+      const date   = formatDate(c.dateCotisation)
+      const moyen  = c.moyenPaye?.libMoyPaye ? moyenLabel[c.moyenPaye.libMoyPaye] || c.moyenPaye.libMoyPaye : '—'
+      const btnValider = (peutValider && c.statutPaiement === 'EN_ATTENTE')
+        ? `<button class="btn btn-sm btn-secondary" onclick="valider('${c.idCotisation}')">Valider</button>`
+        : ''
+      return `<tr>
+        <td style="font-weight:600;">${prenom} ${nom}</td>
+        <td style="font-weight:700; color:var(--primary);">${montant}</td>
+        <td style="font-size:12px; color:var(--text-muted); font-family:monospace;">${ref}</td>
+        <td style="font-size:13px; color:var(--text-muted);">${date}</td>
+        <td style="font-size:12.5px;">${moyen}</td>
+        <td>${badge(c.statutPaiement)}</td>
+        <td>${btnValider}</td>
+      </tr>`
+    }).join('')
+
+    document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages} (${items.length} résultat${items.length>1?'s':''})`
+    document.getElementById('pagination-btns').innerHTML = `
+      <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
+      <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
+  }
+
+  function chargerStats() {
+    const debutVal = document.getElementById('chart-debut').value
+    const finVal   = document.getElementById('chart-fin').value
+
+    const debut8 = debutVal || (() => { const d = new Date(); d.setMonth(d.getMonth() - 5); return d.toISOString().slice(0,7) })()
+    const fin8   = finVal   || new Date().toISOString().slice(0,7)
+
+    const dansPlage = toutesLesCotisations.filter(c => {
+      const k = toISO(c.dateCotisation)?.slice(0, 7)
+      return k && k >= debut8 && k <= fin8
+    })
+
+    const totalValide  = dansPlage.filter(c => c.statutPaiement === 'VALIDE').reduce((s, c) => s + (c.montantCotisation || 0), 0)
+    const countValide  = dansPlage.filter(c => c.statutPaiement === 'VALIDE').length
+    const enAttente    = toutesLesCotisations.filter(c => c.statutPaiement === 'EN_ATTENTE').length
+
+    const fmt = m => {
+      const d = new Date(m + '-01')
+      return d.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+    }
+    const periode = `${fmt(debut8)} — ${fmt(fin8)}`
+
+    document.getElementById('lbl-stat-total').textContent = `Total validé · ${periode}`
+    document.getElementById('lbl-stat-count').textContent = `Paiements validés · ${periode}`
+    document.getElementById('lbl-stat-retard').textContent = 'En attente de validation (tous)'
+    document.getElementById('stat-total').textContent   = formaterMontant(totalValide, ctx.devise)
+    document.getElementById('stat-count').textContent   = countValide
+    document.getElementById('stat-retard').textContent  = enAttente
+  }
+
+  const moyenLabel = {
+    WAVE: 'Wave', ORANGE_MONNEY: 'Orange Money', MTN_MONNEY: 'MTN MoMo', MOOV_MONNEY: 'Moov Money'
   }
 
   function badge(s) {
-    const m = { PAYE:'badge-success', EN_ATTENTE:'badge-warning', EN_RETARD:'badge-danger' }
-    return `<span class="badge ${m[s]||'badge-secondary'}">${s||'—'}</span>`
+    const m = { VALIDE:'badge-success', EN_ATTENTE:'badge-warning', ECHOUE:'badge-danger' }
+    const l = { VALIDE:'Validé', EN_ATTENTE:'En attente', ECHOUE:'Échoué' }
+    return `<span class="badge ${m[s]||'badge-secondary'}">${l[s]||s||'—'}</span>`
   }
 
   function formaterMontant(v, devise) {
     if (v == null) return '—'
-    return new Intl.NumberFormat('fr-FR').format(v) + ' ' + (devise || 'FCFA')
+    return new Intl.NumberFormat('fr-FR').format(v) + ' ' + (devise || 'XOF')
   }
 
-  window.changerPage = n => { page = n; charger() }
+  function formatDate(val) {
+    if (!val) return '—'
+    const iso = Array.isArray(val)
+      ? `${val[0]}-${String(val[1]).padStart(2,'0')}-${String(val[2]).padStart(2,'0')}`
+      : String(val).slice(0, 10)
+    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR')
+  }
 
-  document.getElementById('btn-filtrer').addEventListener('click', () => { page=0; charger() })
+  // ─── Graphiques ───────────────────────────────────────────────────────────
+  let chartEvo = null, chartDon = null
+
+  function getPrimary() { return ctx.couleurPrimaire || '#6366f1' }
+
+  function dessinerGraphiques() {
+    const primary = getPrimary()
+    const devise  = ctx.devise || 'XOF'
+
+    const debutVal = document.getElementById('chart-debut').value  // "2025-07"
+    const finVal   = document.getElementById('chart-fin').value
+
+    const d0 = debutVal ? new Date(debutVal + '-01') : (() => { const d = new Date(); d.setMonth(d.getMonth() - 5); d.setDate(1); return d })()
+    const d1 = finVal   ? new Date(finVal   + '-01') : new Date()
+    d1.setDate(1)
+
+    // Générer tous les mois couverts
+    const moisLabels = []
+    const parMois    = {}
+    const cur = new Date(d0)
+    while (cur <= d1) {
+      const key   = cur.toISOString().slice(0, 7)
+      const label = cur.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
+      parMois[key] = 0
+      moisLabels.push({ key, label })
+      cur.setMonth(cur.getMonth() + 1)
+    }
+
+    // Sommer les montants VALIDE par mois
+    toutesLesCotisations.filter(c => c.statutPaiement === 'VALIDE').forEach(c => {
+      const iso = toISO(c.dateCotisation)
+      if (!iso) return
+      const key = iso.slice(0, 7)
+      if (parMois[key] !== undefined) parMois[key] += (c.montantCotisation || 0)
+    })
+
+    // 1. Barres
+    if (chartEvo) chartEvo.destroy()
+    chartEvo = new Chart(document.getElementById('chart-evolution'), {
+      type: 'bar',
+      data: {
+        labels: moisLabels.map(m => m.label),
+        datasets: [{
+          label: 'Montant collecté',
+          data: moisLabels.map(m => parMois[m.key]),
+          backgroundColor: primary + 'bb',
+          borderColor: primary,
+          borderWidth: 1.5,
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${new Intl.NumberFormat('fr-FR').format(c.raw)} ${devise}` } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { font: { size: 11 }, callback: v => v === 0 ? '0' : new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v) },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    })
+
+    // 2. Donut répartition (sur toute la période sélectionnée)
+    const debut8 = d0.toISOString().slice(0, 7)
+    const fin8   = d1.toISOString().slice(0, 7)
+    const dansPlage = toutesLesCotisations.filter(c => {
+      const k = toISO(c.dateCotisation)?.slice(0, 7)
+      return k && k >= debut8 && k <= fin8
+    })
+    const valide   = dansPlage.filter(c => c.statutPaiement === 'VALIDE').length
+    const enAttente = dansPlage.filter(c => c.statutPaiement === 'EN_ATTENTE').length
+    const autres   = dansPlage.length - valide - enAttente
+
+    if (chartDon) chartDon.destroy()
+    chartDon = new Chart(document.getElementById('chart-repartition'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Validé', 'En attente', 'Autre'],
+        datasets: [{
+          data: [valide, enAttente, autres > 0 ? autres : 0],
+          backgroundColor: ['#16a34a', '#ca8a04', '#d1d5db'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 12 }, padding: 14, usePointStyle: true, pointStyleWidth: 10 } },
+          tooltip: { callbacks: { label: c => ` ${c.label} : ${c.raw}` } }
+        }
+      }
+    })
+  }
+
+  // Init dates graphique : 6 derniers mois
+  ;(() => {
+    const now  = new Date()
+    const fin  = now.toISOString().slice(0, 7)
+    const d0   = new Date(now); d0.setMonth(d0.getMonth() - 5); d0.setDate(1)
+    const debut = d0.toISOString().slice(0, 7)
+    document.getElementById('chart-debut').value = debut
+    document.getElementById('chart-fin').value   = fin
+  })()
+
+  document.getElementById('btn-chart-appliquer').addEventListener('click', () => { dessinerGraphiques(); chargerStats() })
+
+  let cotisationAValider = null
+
+  window.valider = (id) => {
+    const c = toutesLesCotisations.find(x => x.idCotisation === id)
+    if (!c) return
+    cotisationAValider = c
+    const prenom = c.personne?.prenPersonne || ''
+    const nom    = c.personne?.nomPersonne  || ''
+    const devise = ctx.devise || 'XOF'
+    const ref    = c.referenceTransaction || '—'
+    const moyen  = c.moyenPaye?.libMoyPaye ? (moyenLabel[c.moyenPaye.libMoyPaye] || c.moyenPaye.libMoyPaye) : '—'
+
+    document.getElementById('vld-membre').textContent  = `${prenom} ${nom}`.trim() || '—'
+    document.getElementById('vld-num').textContent     = c.numAdherent ? `N° ${c.numAdherent}` : ''
+    document.getElementById('vld-montant').textContent = formaterMontant(c.montantCotisation, devise)
+    document.getElementById('vld-moyen').textContent   = moyen
+    document.getElementById('vld-ref').textContent     = ref
+    document.getElementById('chk-ref-inline').textContent   = ref
+    document.getElementById('chk-moyen-inline').textContent = moyen
+    document.getElementById('chk-validation').checked  = false
+    document.getElementById('btn-valider-confirm').disabled = true
+    document.getElementById('modal-validation').style.display = 'flex'
+  }
+
+  window.fermerModalValidation = () => {
+    document.getElementById('modal-validation').style.display = 'none'
+    cotisationAValider = null
+  }
+
+  window.confirmerValidation = async () => {
+    if (!cotisationAValider) return
+    const btn = document.getElementById('btn-valider-confirm')
+    btn.disabled = true
+    btn.textContent = 'Validation…'
+    try {
+      await api.put(`/cotisations/${cotisationAValider.idCotisation}/valider`, {})
+      toast.success('Paiement validé avec succès !')
+      fermerModalValidation()
+      charger(); chargerStats()
+    } catch(err) {
+      toast.error(err.message || 'Erreur lors de la validation.')
+      btn.disabled = false
+      btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Confirmer la réception'
+    }
+  }
+
+  window.changerPage = n => { page = n; afficher() }
+
+  document.getElementById('btn-filtrer').addEventListener('click', () => { page=0; afficher() })
 
   // Modal paiement
   document.getElementById('btn-nouvelle').addEventListener('click', () => {
@@ -276,10 +599,10 @@
   })
 
   let t; document.getElementById('search-input').addEventListener('input', () => {
-    clearTimeout(t); t = setTimeout(() => { page=0; charger() }, 400)
+    clearTimeout(t); t = setTimeout(() => { page=0; afficher() }, 300)
   })
 
-  charger(); chargerStats()
+  charger()
   buildHistorique('historique-container', 50, 'cotisation')
 </script>
 </body>

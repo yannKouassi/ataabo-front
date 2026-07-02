@@ -55,10 +55,10 @@
 
     <!-- Filtres statut -->
     <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-      <button class="btn btn-secondary filtre-btn active" data-statut="">Toutes</button>
-      <button class="btn btn-ghost filtre-btn" data-statut="EN_ATTENTE">En attente</button>
-      <button class="btn btn-ghost filtre-btn" data-statut="APPROUVEE">Approuvées</button>
-      <button class="btn btn-ghost filtre-btn" data-statut="REJETEE">Rejetées</button>
+      <button class="btn btn-secondary filtre-btn active" data-filtre="">Toutes</button>
+      <button class="btn btn-ghost filtre-btn" data-filtre="EN_ATTENTE">En attente</button>
+      <button class="btn btn-ghost filtre-btn" data-filtre="APPROUVE">Approuvées</button>
+      <button class="btn btn-ghost filtre-btn" data-filtre="PAIEMENT_A_VERIFIER">Paiement à vérifier</button>
     </div>
 
     <div class="card">
@@ -119,53 +119,69 @@
   const navUrl = sessionStorage.getItem('lastNavUrl') || '/adherents/demandes'
   const perm = getPermission(navUrl)
 
-  let page = 0, totalPages = 1, filtreStatut = '', demandeActive = null
+  let toutesLesDemandes = [], filtreActif = '', demandeActive = null
 
   async function charger() {
-    const params = new URLSearchParams({ page, size: 15 })
-    if (filtreStatut) params.set('statut', filtreStatut)
-    const q = document.getElementById('search-input').value
-    if (q) params.set('q', q)
-
     const tbody = document.getElementById('tbody-demandes')
     tbody.innerHTML = `<tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
 
     try {
       const data = await api.get(`/adhesions/organisation/${ctx.orgId}`)
-      const items = Array.isArray(data) ? data : (data.content || [])
-      totalPages = data.totalPages || 1
-
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune demande</p></div></td></tr>`
-        document.getElementById('pagination-info').textContent = ''
-        document.getElementById('pagination-btns').innerHTML = ''
-        return
-      }
-
-      tbody.innerHTML = items.map(d => `
-        <tr>
-          <td>
-            <div style="font-weight:600;">${d.demandeur?.prenPersonne || ''} ${d.demandeur?.nomPersonne || ''}</div>
-          </td>
-          <td style="font-size:13px; color:var(--text-muted);">${d.demandeur?.emailPersonne || '—'}</td>
-          <td style="font-size:13px;">${d.dateDemandeAdhesion ? new Date(d.dateDemandeAdhesion).toLocaleDateString('fr-FR') : '—'}</td>
-          <td>${badge(d.statut)}</td>
-          <td>
-            <button class="btn btn-ghost btn-sm" onclick="voirDetail('${d.idAdhesion}', '${d.statut}')">Voir</button>
-          </td>
-        </tr>
-      `).join('')
-
-      document.getElementById('pagination-info').textContent = `Page ${page + 1} / ${totalPages}`
-      paginationBtns()
+      toutesLesDemandes = Array.isArray(data) ? data : (data.content || [])
+      afficher()
     } catch(err) {
       tbody.innerHTML = `<tr><td colspan="5" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
 
+  function afficher() {
+    const q = document.getElementById('search-input').value.toLowerCase()
+    let items = toutesLesDemandes
+    if (filtreActif === 'PAIEMENT_A_VERIFIER')
+      items = items.filter(d => d.statut === 'APPROUVE' && d.refPaiementEntree && d.droitEntreePaye !== true)
+    else if (filtreActif === 'APPROUVE')
+      items = items.filter(d => d.statut === 'APPROUVE')
+    else if (filtreActif)
+      items = items.filter(d => d.statut === filtreActif)
+    if (q) items = items.filter(d => {
+      const nom = `${d.demandeur?.prenPersonne || ''} ${d.demandeur?.nomPersonne || ''}`.toLowerCase()
+      const email = (d.demandeur?.emailPersonne || '').toLowerCase()
+      return nom.includes(q) || email.includes(q)
+    })
+
+    const tbody = document.getElementById('tbody-demandes')
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune demande</p></div></td></tr>`
+      document.getElementById('pagination-info').textContent = ''
+      document.getElementById('pagination-btns').innerHTML = ''
+      return
+    }
+
+    tbody.innerHTML = items.map(d => {
+      const refDeclaree = d.droitEntreePaye === true
+        ? `<div style="font-size:11px;color:#16a34a;margin-top:2px;display:flex;align-items:center;gap:3px;"><svg width="11" height="11" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Paiement confirmé</div>`
+        : d.refPaiementEntree
+          ? `<div style="font-size:11px;color:var(--primary);margin-top:2px;">Réf. déclarée</div>`
+          : ''
+      return `<tr>
+        <td>
+          <div style="font-weight:600;">${d.demandeur?.prenPersonne || ''} ${d.demandeur?.nomPersonne || ''}</div>
+        </td>
+        <td style="font-size:13px;color:var(--text-muted);">${d.demandeur?.emailPersonne || '—'}</td>
+        <td style="font-size:13px;">${d.dateDemandeAdhesion ? new Date(d.dateDemandeAdhesion).toLocaleDateString('fr-FR') : '—'}</td>
+        <td>${badge(d.statut)}${refDeclaree}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="voirDetail('${d.idAdhesion}', '${d.statut}')">Voir</button></td>
+      </tr>`
+    }).join('')
+
+    document.getElementById('pagination-info').textContent = `${items.length} demande${items.length > 1 ? 's' : ''}`
+    document.getElementById('pagination-btns').innerHTML = ''
+  }
+
   function badge(s) {
-    const m = { EN_ATTENTE: 'badge-warning', APPROUVEE: 'badge-success', REJETEE: 'badge-danger' }
-    return `<span class="badge ${m[s] || 'badge-secondary'}">${s || '—'}</span>`
+    const m = { EN_ATTENTE: 'badge-warning', APPROUVE: 'badge-success', REFUSE: 'badge-danger' }
+    const l = { EN_ATTENTE: 'En attente', APPROUVE: 'Approuvée', REFUSE: 'Refusée' }
+    return `<span class="badge ${m[s] || 'badge-secondary'}">${l[s] || s || '—'}</span>`
   }
 
   function paginationBtns() {
@@ -183,8 +199,35 @@
 
     try {
       const d = await api.get(`/adhesions/${id}`)
+      const orgInfos = await api.get(`/organisations/${ctx.orgId}/infos`).catch(() => ({}))
+      const montantEntree = orgInfos.montantEntree || 0
+      const devise = orgInfos.devise || 'XOF'
+      const droitPaye = d.droitEntreePaye === true
+      const refPaiement = d.refPaiementEntree || ''
+
+      const bandeauDroit = montantEntree > 0 ? `
+        <div style="background:${droitPaye ? '#dcfce7' : '#fef9c3'};border:1px solid ${droitPaye ? '#86efac' : '#fde047'};border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px;color:${droitPaye ? '#166534' : '#854d0e'};">
+            ${droitPaye
+            ? `<span style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Droit d'entrée confirmé</span>`
+            : `<span style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" fill="none" stroke="#854d0e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Droit d'entrée requis : ${montantEntree.toLocaleString('fr-FR')} ${devise}</span>`
+          }
+          </div>
+          ${refPaiement ? `<div style="font-size:12px;color:var(--text-muted);">Référence déclarée : <strong>${refPaiement}</strong></div>` : (!droitPaye ? `<div style="font-size:12px;color:var(--text-muted);">Aucune référence déclarée par le candidat.</div>` : '')}
+          ${!droitPaye && refPaiement && perm.peutEcrire ? `
+            <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;cursor:pointer;font-size:12.5px;color:var(--text);">
+              <input type="checkbox" id="chk-verif-${id}" style="margin-top:2px;width:15px;height:15px;cursor:pointer;accent-color:var(--primary);" onchange="document.getElementById('btn-confirmer-${id}').disabled=!this.checked"/>
+              <span>J'ai vérifié le paiement de <strong>${refPaiement}</strong> sur mon application et je confirme l'avoir reçu.</span>
+            </label>
+            <button class="btn btn-sm btn-primary" id="btn-confirmer-${id}" style="margin-top:8px;" disabled onclick="confirmerDroitEntree('${id}')">Confirmer réception du paiement</button>
+          ` : (!droitPaye && perm.peutEcrire ? `
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;font-style:italic;">En attente de la déclaration du candidat.</p>
+          ` : '')}
+        </div>` : ''
+
       document.getElementById('modal-body').innerHTML = `
         ${d.urlPhotoDemandeur ? `<div style="text-align:center;margin-bottom:16px;"><img src="${d.urlPhotoDemandeur}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--border);"></div>` : ''}
+        ${bandeauDroit}
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
           ${champ('Nom complet', `${d.prenomDemandeur || ''} ${d.nomDemandeur || ''}`)}
           ${champ('Email', d.emailDemandeur)}
@@ -195,6 +238,8 @@
       `
       if (statut === 'EN_ATTENTE' && perm.peutEcrire) {
         document.getElementById('modal-footer').style.display = 'flex'
+        document.getElementById('btn-approuver').disabled = false
+        document.getElementById('btn-approuver').title = ''
         document.getElementById('btn-approuver').onclick = () => {
           const btn = document.getElementById('btn-approuver')
           if (btn.disabled) return
@@ -221,6 +266,26 @@
     }
   }
 
+  window.confirmerDroitEntree = async (id) => {
+    if (!confirm('Confirmer la réception du paiement du droit d\'entrée pour ce candidat ?')) return
+    try {
+      await api.put(`/adhesions/${id}/confirmer-droit-entree`, {})
+      toast.success('Paiement confirmé.')
+      document.getElementById('modal-detail').style.display = 'none'
+      resetFiltre()
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    }
+  }
+
+  function resetFiltre() {
+    filtreActif = ''
+    document.querySelectorAll('.filtre-btn').forEach(b => { b.className = 'btn btn-ghost filtre-btn' })
+    const btnTous = document.querySelector('.filtre-btn[data-filtre=""]')
+    if (btnTous) btnTous.className = 'btn btn-secondary filtre-btn active'
+  }
+
   async function decider(action) {
     const endpoint = action === 'APPROUVER' ? 'approuver' : 'rejeter'
     const btnApprouver = document.getElementById('btn-approuver')
@@ -233,6 +298,7 @@
       await api.put(`/adhesions/${demandeActive.id}/${endpoint}`, {})
       toast.success(action === 'APPROUVER' ? 'Demande approuvée !' : 'Demande rejetée.')
       document.getElementById('modal-detail').style.display = 'none'
+      resetFiltre()
       charger()
     } catch(err) {
       toast.error(err.message)
@@ -255,8 +321,8 @@
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filtre-btn').forEach(b => { b.className = 'btn btn-ghost filtre-btn' })
       btn.className = 'btn btn-secondary filtre-btn active'
-      filtreStatut = btn.dataset.statut
-      page = 0; charger()
+      filtreActif = btn.dataset.filtre
+      afficher()
     })
   })
 
@@ -265,7 +331,7 @@
   })
 
   let t; document.getElementById('search-input').addEventListener('input', () => {
-    clearTimeout(t); t = setTimeout(() => { page=0; charger() }, 400)
+    clearTimeout(t); t = setTimeout(() => afficher(), 300)
   })
 
   charger()

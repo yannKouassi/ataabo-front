@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ataabo — Activation de votre organisation</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    body { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .activation-wrap { max-width: 560px; width: 100%; }
+    .activation-header { text-align: center; margin-bottom: 32px; }
+    .activation-header .logo-text { font-size: 28px; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
+    .activation-header .org-name { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 8px; }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 16px; }
+    .step-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; margin-right: 10px; flex-shrink: 0; }
+    .step-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; margin-bottom: 12px; }
+    .amount-badge { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 22px; font-weight: 900; border-radius: 10px; padding: 10px 24px; margin: 12px 0; }
+    .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .history-item:last-child { border-bottom: none; }
+    .btn-logout-top { position: fixed; top: 16px; right: 16px; }
+  </style>
+</head>
+<body>
+
+<button class="btn btn-ghost btn-sm btn-logout-top" id="btn-logout">← Changer d'organisation</button>
+
+<div class="activation-wrap">
+  <div class="activation-header">
+    <div class="logo-text">ATAABO</div>
+    <div class="org-name" id="org-name">Votre organisation</div>
+    <div style="margin-top:8px;">
+      <span style="font-size:12px;font-weight:700;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:20px;padding:3px 12px;">⚠️ En attente d'activation</span>
+    </div>
+  </div>
+
+  <!-- Étape 1 : montant à payer -->
+  <div class="step-card">
+    <div class="step-title"><span class="step-number">1</span> Frais d'activation</div>
+    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:8px;">
+      Votre dossier a été approuvé par l'équipe Ataabo. Pour activer votre espace et commencer à recevoir des adhésions, réglez les frais d'activation suivants :
+    </p>
+    <div id="montant-bloc">
+      <div class="amount-badge" id="montant-affiche">Chargement…</div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" id="instructions-paiement"></p>
+  </div>
+
+  <!-- Étape 2 : déclarer le virement -->
+  <div class="step-card" id="card-declarer">
+    <div class="step-title"><span class="step-number">2</span> Déclarer votre paiement</div>
+    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">
+      Après avoir effectué votre virement, saisissez ci-dessous la référence de la transaction afin que l'équipe Ataabo puisse confirmer la réception.
+    </p>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label">Référence de paiement</label>
+      <input type="text" class="form-input" id="ref-activation" placeholder="Ex: TXN-20240601-ABC123"/>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Montant versé</label>
+      <input type="number" class="form-input" id="montant-verse" min="0" placeholder="0"/>
+    </div>
+    <div id="err-declaration" style="color:#b91c1c;font-size:12px;margin-bottom:8px;display:none;"></div>
+    <div id="ok-declaration" style="color:#166534;font-size:12px;margin-bottom:8px;display:none;"></div>
+    <button class="btn btn-primary" id="btn-declarer">Soumettre ma déclaration</button>
+  </div>
+
+  <!-- Historique des déclarations -->
+  <div class="step-card" id="card-historique" style="display:none;">
+    <div class="step-title"><span class="step-number">3</span> Suivi de vos déclarations</div>
+    <div id="liste-paiements"></div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">
+      L'équipe Ataabo vérifie chaque déclaration manuellement. Vous recevrez un email dès que votre paiement sera confirmé.
+    </p>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, logout } from '/src/js/auth.js'
+  import { api } from '/src/js/api.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+
+  // Si l'org est déjà active, rediriger vers le dashboard
+  if (!ctx.enAttenteActivation) {
+    window.location.href = '/dashboard.html'
+    throw new Error()
+  }
+
+  document.getElementById('org-name').textContent = ctx.nomOrganisation || ''
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    window.location.href = '/choisir-org.html'
+  })
+
+  let montantActivation = 0
+  let devise = 'XOF'
+
+  async function charger() {
+    try {
+      const pf = await api.get('/plateforme')
+      montantActivation = pf.montantActivation || 0
+      devise = pf.devise || 'XOF'
+
+      if (montantActivation > 0) {
+        document.getElementById('montant-affiche').textContent =
+          montantActivation.toLocaleString('fr-FR') + ' ' + devise
+        document.getElementById('montant-verse').value = montantActivation
+        document.getElementById('instructions-paiement').textContent =
+          'Effectuez un virement ou dépôt de ce montant et conservez votre référence de transaction.'
+      } else {
+        document.getElementById('montant-bloc').innerHTML =
+          '<p style="color:#166534;font-weight:600;">Aucun frais d\'activation requis — contactez l\'équipe Ataabo.</p>'
+        document.getElementById('card-declarer').style.display = 'none'
+      }
+    } catch(e) {
+      document.getElementById('montant-affiche').textContent = 'Erreur de chargement'
+    }
+
+    await chargerHistorique()
+  }
+
+  async function chargerHistorique() {
+    try {
+      const paiements = await api.get(`/paiements/organisation/${ctx.orgId}`)
+      const liste = Array.isArray(paiements) ? paiements.filter(p => p.typePaiement === 'ACTIVATION') : []
+      if (liste.length > 0) {
+        document.getElementById('card-historique').style.display = 'block'
+        document.getElementById('liste-paiements').innerHTML = liste.map(p => {
+          const statut = p.statutPaiement || 'PENDING'
+          const badgeCls = statut === 'ACCEPTED' ? '#dcfce7;color:#166534;border:1px solid #86efac'
+            : statut === 'REFUSED' ? '#fee2e2;color:#b91c1c;border:1px solid #fca5a5'
+            : '#fef9c3;color:#854d0e;border:1px solid #fde047'
+          const badgeTxt = statut === 'ACCEPTED' ? '✅ Confirmé' : statut === 'REFUSED' ? '❌ Rejeté' : '⏳ En attente'
+          return `<div class="history-item">
+            <div>
+              <div style="font-weight:600;">${p.transactionId || '—'}</div>
+              <div style="color:var(--text-muted);font-size:12px;">${p.montantPaye ? p.montantPaye.toLocaleString('fr-FR') + ' ' + (p.devise || devise) : '—'} · ${p.dateCreationPaiement ? new Date(p.dateCreationPaiement).toLocaleDateString('fr-FR') : ''}</div>
+            </div>
+            <span style="font-size:11px;font-weight:700;background:${badgeCls};border-radius:20px;padding:3px 10px;">${badgeTxt}</span>
+          </div>`
+        }).join('')
+
+        // Si un paiement est accepté, l'org devrait être active — recharger
+        if (liste.some(p => p.statutPaiement === 'ACCEPTED')) {
+          document.getElementById('card-declarer').style.display = 'none'
+          const msg = document.createElement('div')
+          msg.style.cssText = 'background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:16px;text-align:center;margin-top:16px;font-weight:700;color:#166534;'
+          msg.textContent = '✅ Votre paiement a été confirmé. Votre espace sera actif dans quelques instants.'
+          document.querySelector('.activation-wrap').appendChild(msg)
+          const btnDash = document.createElement('button')
+          btnDash.className = 'btn btn-primary'
+          btnDash.style.cssText = 'width:100%;margin-top:12px;'
+          btnDash.textContent = 'Accéder à mon espace'
+          btnDash.onclick = () => window.location.href = '/choisir-org.html'
+          document.querySelector('.activation-wrap').appendChild(btnDash)
+        }
+      }
+    } catch(e) { /* silencieux */ }
+  }
+
+  document.getElementById('btn-declarer').addEventListener('click', async () => {
+    const ref = document.getElementById('ref-activation').value.trim()
+    const montant = parseFloat(document.getElementById('montant-verse').value)
+    const errEl = document.getElementById('err-declaration')
+    const okEl = document.getElementById('ok-declaration')
+    errEl.style.display = 'none'; okEl.style.display = 'none'
+
+    if (!ref) { errEl.textContent = 'La référence de paiement est obligatoire.'; errEl.style.display = 'block'; return }
+    if (isNaN(montant) || montant <= 0) { errEl.textContent = 'Veuillez saisir un montant valide.'; errEl.style.display = 'block'; return }
+
+    const btn = document.getElementById('btn-declarer')
+    btn.disabled = true; btn.textContent = 'Envoi…'
+    try {
+      await api.post('/paiements/activation', { orgId: ctx.orgId, montant, reference: ref })
+      okEl.textContent = 'Déclaration enregistrée. L\'équipe Ataabo va vérifier votre virement et vous notifier par email.'
+      okEl.style.display = 'block'
+      btn.style.display = 'none'
+      document.getElementById('ref-activation').disabled = true
+      document.getElementById('montant-verse').disabled = true
+      await chargerHistorique()
+    } catch(e) {
+      errEl.textContent = e.message || 'Erreur lors de la déclaration.'
+      errEl.style.display = 'block'
+      btn.disabled = false; btn.textContent = 'Soumettre ma déclaration'
+    }
+  })
+
+  charger()
+</script>
+</body>
+</html>

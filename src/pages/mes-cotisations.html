@@ -40,10 +40,59 @@
         <div class="page-title">Mes cotisations</div>
         <div class="page-subtitle">Historique de vos paiements de cotisation</div>
       </div>
-      <button class="btn btn-outline btn-print" onclick="window.print()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimer
-      </button>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-outline btn-print" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+        <button class="btn btn-primary" id="btn-payer" style="display:none;" onclick="ouvrirModal()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Payer ma cotisation
+        </button>
+      </div>
+    </div>
+
+    <!-- Bandeau infos cotisation org -->
+    <div id="bandeau-cotisation" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 18px; margin-bottom:20px; align-items:center; gap:16px; flex-wrap:wrap;">
+      <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <div>
+        <div style="font-size:13px; color:var(--text-muted);">Montant de cotisation</div>
+        <div id="info-montant" style="font-weight:700; font-size:16px; color:var(--primary);">—</div>
+      </div>
+      <div style="width:1px; height:32px; background:var(--border);"></div>
+      <div>
+        <div style="font-size:13px; color:var(--text-muted);">Fréquence</div>
+        <div id="info-frequence" style="font-weight:600; font-size:14px;">—</div>
+      </div>
+      <div style="width:1px; height:32px; background:var(--border);"></div>
+      <div>
+        <div style="font-size:13px; color:var(--text-muted);">Prochaine période</div>
+        <div id="info-periode" style="font-weight:600; font-size:14px;">—</div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card" style="padding:14px 16px; margin-bottom:16px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Du</div>
+          <input type="date" id="filtre-debut" class="form-input" style="width:auto;"/>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Au</div>
+          <input type="date" id="filtre-fin" class="form-input" style="width:auto;"/>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Statut</div>
+          <select id="filtre-statut" class="form-input" style="width:auto; min-width:160px;">
+            <option value="">Tous les statuts</option>
+            <option value="VALIDE">Validé</option>
+            <option value="EN_ATTENTE">En attente</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" onclick="appliquerFiltres()">Filtrer</button>
+        <button class="btn btn-ghost" onclick="reinitialiserFiltres()">Réinitialiser</button>
+      </div>
     </div>
 
     <div class="card">
@@ -51,11 +100,11 @@
         <table>
           <thead>
             <tr>
-              <th>Période</th>
+              <th>Référence</th>
               <th>Montant</th>
               <th>Moyen de paiement</th>
               <th>Statut</th>
-              <th>Date paiement</th>
+              <th>Date déclaration</th>
             </tr>
           </thead>
           <tbody id="tbody-cotisations">
@@ -65,16 +114,73 @@
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-top:1px solid var(--border);">
         <span style="font-size:13px; color:var(--text-muted);" id="pagination-info"></span>
-        <div style="display:flex; gap:8px;" id="pagination-btns"></div>
       </div>
     </div>
+
+    <!-- Historique -->
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
+</div>
+
+<!-- Modal paiement -->
+<div id="modal-paiement" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:flex-start; justify-content:center; padding:24px 16px; overflow-y:auto;">
+  <div style="background:var(--surface,#fff); border-radius:16px; width:100%; max-width:500px; box-shadow:0 12px 48px rgba(0,0,0,.22); margin:auto;">
+
+    <!-- En-tête -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px 0;">
+      <div style="font-size:16px; font-weight:800;">Déclarer un paiement de cotisation</div>
+      <button onclick="fermerModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:22px;line-height:1;padding:0 4px;">×</button>
+    </div>
+
+    <div style="padding:20px 24px 24px;">
+
+      <!-- Montant dû -->
+      <div style="background:#fef9c3; border:1px solid #fde047; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:14px;">
+        <svg width="22" height="22" fill="none" stroke="#854d0e" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <div>
+          <div id="modal-montant-info" style="font-size:22px; font-weight:900; color:#854d0e;">—</div>
+          <div style="font-size:12px; color:#713f12; margin-top:2px;">Cotisation <span id="modal-freq-info" style="font-weight:600;"></span> à régler</div>
+        </div>
+      </div>
+
+      <!-- Sélection moyen de paiement -->
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; letter-spacing:.06em;">Choisissez votre moyen de paiement</div>
+      <div id="pay-cards" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;"></div>
+
+      <!-- Référence -->
+      <div style="margin-bottom:12px;">
+        <label id="ref-label" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">
+          Référence de paiement <span style="color:#b91c1c;">*</span>
+        </label>
+        <input id="input-reference" class="form-input" style="width:100%; text-transform:uppercase; font-family:monospace; letter-spacing:.04em;" placeholder="Sélectionnez un moyen de paiement" disabled type="text"/>
+        <div id="ref-hint" style="font-size:11.5px; color:var(--text-muted); margin-top:5px;">Sélectionnez un moyen de paiement ci-dessus.</div>
+      </div>
+
+      <!-- Confirmation référence -->
+      <div style="margin-bottom:20px;">
+        <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">
+          Confirmer la référence <span style="color:#b91c1c;">*</span>
+        </label>
+        <input id="input-reference-confirm" class="form-input" style="width:100%; text-transform:uppercase; font-family:monospace; letter-spacing:.04em;" placeholder="Ressaisissez la même référence" disabled type="text"/>
+        <div id="ref-match-hint" style="font-size:11.5px; margin-top:5px; display:none;"></div>
+      </div>
+
+      <div id="modal-err" style="color:#b91c1c; font-size:13px; margin-bottom:12px; display:none;"></div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="fermerModal()">Annuler</button>
+        <button class="btn btn-primary" id="btn-submit-paiement" onclick="soumettrePaiement()">Soumettre ma déclaration</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="module">
   import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -84,56 +190,290 @@
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   let page = 0, totalPages = 1
+  let orgInfos = {}
+  let moyensPaiement = []
+
+  const freqLabelMin = { MENSUELLE: 'mensuelle', TRIMESTRIELLE: 'trimestrielle', SEMESTRIELLE: 'semestrielle', ANNUELLE: 'annuelle' }
+  const freqLabelCap = { MENSUELLE: 'Mensuelle', TRIMESTRIELLE: 'Trimestrielle', SEMESTRIELLE: 'Semestrielle', ANNUELLE: 'Annuelle' }
+  const moyenConfig = {
+    WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire", logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+    ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire", logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire", logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
+    MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire", logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+  }
+  let selectedMoyenId = null
+
+  async function init() {
+    try {
+      [orgInfos, moyensPaiement] = await Promise.all([
+        api.get(`/organisations/${ctx.orgId}/infos`),
+        api.get(`/cotisations/moyens-paiement`)
+      ])
+    } catch(e) { orgInfos = {}; moyensPaiement = [] }
+
+    const montant = orgInfos.montantCotisation || 0
+    const freq    = orgInfos.frequenceCotisation || ''
+    const devise  = orgInfos.devise || 'XOF'
+
+    if (montant > 0) {
+      document.getElementById('info-montant').textContent = new Intl.NumberFormat('fr-FR').format(montant) + ' ' + devise
+      document.getElementById('info-frequence').textContent = freqLabelCap[freq] || freq || '—'
+      document.getElementById('info-periode').textContent = periodeActuelle(freq)
+      document.getElementById('bandeau-cotisation').style.display = 'flex'
+      document.getElementById('btn-payer').style.display = 'inline-flex'
+      document.getElementById('modal-montant-info').textContent = new Intl.NumberFormat('fr-FR').format(montant) + ' ' + devise
+      document.getElementById('modal-freq-info').textContent = freqLabelMin[freq] || ''
+    }
+
+    // Cartes de moyen de paiement
+    const container = document.getElementById('pay-cards')
+    moyensPaiement.forEach(m => {
+      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, sub: '', logo: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
+      const card = document.createElement('div')
+      card.style.cssText = 'border:2px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s,box-shadow .15s;background:var(--surface);user-select:none;'
+      card.dataset.id = m.id
+      card.dataset.placeholder = cfg.placeholder
+      card.dataset.label = cfg.label
+      card.innerHTML = `
+        <div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:${cfg.bg};">
+          <img src="${cfg.logo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;"/>
+        </div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${cfg.label}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${cfg.sub}</div>
+        </div>
+        <div class="pm-radio" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <div class="pm-dot" style="width:6px;height:6px;border-radius:50%;background:#fff;display:none;"></div>
+        </div>`
+      card.addEventListener('click', () => selectionnerMoyen(card, m.id, cfg))
+      container.appendChild(card)
+    })
+
+    charger()
+    buildHistorique('historique-container', 20, ['cotisation enregistrée', 'cotisation validée'])
+  }
+
+  function selectionnerMoyen(card, id, cfg) {
+    selectedMoyenId = id
+    document.querySelectorAll('#pay-cards > div').forEach(c => {
+      const sel = c === card
+      c.style.borderColor = sel ? 'var(--primary)' : 'var(--border)'
+      c.style.boxShadow   = sel ? '0 0 0 3px rgba(37,99,235,.12)' : 'none'
+      const radio = c.querySelector('.pm-radio')
+      const dot   = c.querySelector('.pm-dot')
+      radio.style.background   = sel ? 'var(--primary)' : ''
+      radio.style.borderColor  = sel ? 'var(--primary)' : 'var(--border)'
+      dot.style.display        = sel ? 'block' : 'none'
+    })
+    const ref  = document.getElementById('input-reference')
+    const refC = document.getElementById('input-reference-confirm')
+    ref.disabled  = false
+    refC.disabled = false
+    ref.placeholder  = cfg.placeholder
+    refC.placeholder = cfg.placeholder
+    document.getElementById('ref-label').innerHTML = cfg.label + ' — Référence <span style="color:#b91c1c;">*</span>'
+    document.getElementById('ref-hint').textContent = 'Numéro de transaction reçu après votre paiement ' + cfg.label + '.'
+    document.getElementById('ref-match-hint').style.display = 'none'
+    ref.value = ''
+    refC.value = ''
+    ref.focus()
+  }
+
+  function periodeActuelle(freq) {
+    // Calcule la PROCHAINE période à venir
+    const now = new Date()
+
+    if (freq === 'MENSUELLE') {
+      const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      return next.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+    }
+
+    if (freq === 'TRIMESTRIELLE') {
+      const trimestre = Math.floor(now.getMonth() / 3)
+      const debutNext = (trimestre + 1) * 3  // mois de début du prochain trimestre
+      const d = new Date(now.getFullYear(), debutNext, 1)
+      const fin = new Date(d.getFullYear(), d.getMonth() + 2, 1)
+      const fmt = (date) => date.toLocaleString('fr-FR', { month: 'short' })
+      return `${fmt(d)} – ${fmt(fin)} ${fin.getFullYear()}`
+    }
+
+    if (freq === 'SEMESTRIELLE') {
+      const semestre = now.getMonth() < 6 ? 1 : 0
+      const debutNext = semestre === 0 ? 0 : 6
+      const an = semestre === 0 ? now.getFullYear() + 1 : now.getFullYear()
+      const d   = new Date(an, debutNext, 1)
+      const fin = new Date(an, debutNext + 5, 1)
+      const fmt = (date) => date.toLocaleString('fr-FR', { month: 'short' })
+      return `${fmt(d)} – ${fmt(fin)} ${an}`
+    }
+
+    if (freq === 'ANNUELLE') return `Année ${now.getFullYear() + 1}`
+
+    return '—'
+  }
+
+  let tousLesCotisations = []
 
   async function charger() {
-    const params = new URLSearchParams({ page, size: 20 })
     const tbody = document.getElementById('tbody-cotisations')
     tbody.innerHTML = `<tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
-
     try {
-      const data = await api.get(`/cotisations/mes-cotisations?${params}`)
-      const items = Array.isArray(data) ? data : (data.content || [])
-      totalPages = data.totalPages || 1
-
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune cotisation enregistrée</p></div></td></tr>`
-        document.getElementById('pagination-info').textContent = ''
-        document.getElementById('pagination-btns').innerHTML = ''
-        return
-      }
-
-      tbody.innerHTML = items.map(c => `
-        <tr>
-          <td style="font-weight:600;">${c.periodeCotisation || c.periode || '—'}</td>
-          <td style="font-weight:700; color:var(--primary);">${formatMontant(c.montant)}</td>
-          <td style="font-size:13px;">${c.libelleMoyenPaiement || c.moyenPaiement || '—'}</td>
-          <td>${badgeStatut(c.statut)}</td>
-          <td style="font-size:12.5px; color:var(--text-muted);">${c.datePaiement ? new Date(c.datePaiement).toLocaleDateString('fr-FR') : '—'}</td>
-        </tr>
-      `).join('')
-
-      document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages}`
-      document.getElementById('pagination-btns').innerHTML = `
-        <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
-        <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
+      const data = await api.get(`/cotisations/mes-cotisations`)
+      tousLesCotisations = Array.isArray(data) ? data : (data.content || [])
+      afficher()
     } catch(err) {
       tbody.innerHTML = `<tr><td colspan="5" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
 
+  function afficher() {
+    const tbody  = document.getElementById('tbody-cotisations')
+    const debut  = document.getElementById('filtre-debut').value
+    const fin    = document.getElementById('filtre-fin').value
+    const statut = document.getElementById('filtre-statut').value
+    const devise = orgInfos.devise || 'XOF'
+
+    let items = tousLesCotisations.filter(c => {
+      const date = toISO(c.dateCotisation)
+      if (debut && date && date < debut) return false
+      if (fin   && date && date > fin)   return false
+      if (statut && c.statutPaiement !== statut) return false
+      return true
+    })
+
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune cotisation pour ces critères</p></div></td></tr>`
+      document.getElementById('pagination-info').textContent = ''
+      return
+    }
+
+    tbody.innerHTML = items.map(c => `
+      <tr>
+        <td style="font-size:12px; color:var(--text-muted); font-family:monospace;">${c.referenceTransaction || '—'}</td>
+        <td style="font-weight:700; color:var(--primary);">${formatMontant(c.montantCotisation, devise)}</td>
+        <td style="font-size:13px;">${moyenConfig[c.moyenPaye?.libMoyPaye]?.label || c.moyenPaye?.libMoyPaye || '—'}</td>
+        <td>${badgeStatut(c.statutPaiement)}</td>
+        <td style="font-size:12.5px; color:var(--text-muted);">${formatDate(c.dateCotisation)}</td>
+      </tr>
+    `).join('')
+
+    document.getElementById('pagination-info').textContent = `${items.length} cotisation(s) affichée(s)`
+  }
+
+  function toISO(val) {
+    if (!val) return null
+    if (Array.isArray(val)) return `${val[0]}-${String(val[1]).padStart(2,'0')}-${String(val[2]).padStart(2,'0')}`
+    return String(val).slice(0, 10)
+  }
+
+  window.appliquerFiltres = () => afficher()
+  window.reinitialiserFiltres = () => {
+    document.getElementById('filtre-debut').value  = ''
+    document.getElementById('filtre-fin').value    = ''
+    document.getElementById('filtre-statut').value = ''
+    afficher()
+  }
+
   function badgeStatut(s) {
-    const m = { VALIDE: 'badge-success', EN_ATTENTE: 'badge-warning', RETARD: 'badge-danger' }
-    return `<span class="badge ${m[s]||'badge-secondary'}">${s||'—'}</span>`
+    const m = { VALIDE: 'badge-success', EN_ATTENTE: 'badge-warning', ECHOUE: 'badge-danger' }
+    const labels = { VALIDE: 'Validé', EN_ATTENTE: 'En attente', ECHOUE: 'Échoué' }
+    return `<span class="badge ${m[s]||'badge-secondary'}">${labels[s]||s||'—'}</span>`
   }
 
-  function formatMontant(m) {
+  function formatMontant(m, devise) {
     if (!m && m !== 0) return '—'
-    return new Intl.NumberFormat('fr-FR').format(m) + ' FCFA'
+    return new Intl.NumberFormat('fr-FR').format(m) + ' ' + (devise || 'XOF')
   }
 
-  window.changerPage = n => { page = n; charger() }
+  function formatDate(val) {
+    if (!val) return '—'
+    const iso = Array.isArray(val)
+      ? `${val[0]}-${String(val[1]).padStart(2,'0')}-${String(val[2]).padStart(2,'0')}`
+      : String(val).slice(0,10)
+    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR')
+  }
 
-  charger()
+  // Vérification correspondance en temps réel
+  document.getElementById('input-reference').addEventListener('input', function() {
+    this.value = this.value.toUpperCase()
+    checkMatch()
+  })
+  document.getElementById('input-reference-confirm').addEventListener('input', function() {
+    this.value = this.value.toUpperCase()
+    checkMatch()
+  })
+  function checkMatch() {
+    const v1 = document.getElementById('input-reference').value.trim()
+    const v2 = document.getElementById('input-reference-confirm').value.trim()
+    const hint = document.getElementById('ref-match-hint')
+    if (!v2) { hint.style.display = 'none'; return }
+    hint.style.display = 'block'
+    if (v1 === v2) { hint.style.color = '#166534'; hint.textContent = '✓ Les deux références correspondent.' }
+    else           { hint.style.color = '#b91c1c'; hint.textContent = '✗ Les références ne correspondent pas.' }
+  }
+
+  window.ouvrirModal = () => {
+    selectedMoyenId = null
+    document.getElementById('input-reference').value = ''
+    document.getElementById('input-reference-confirm').value = ''
+    document.getElementById('input-reference').disabled = true
+    document.getElementById('input-reference-confirm').disabled = true
+    document.getElementById('ref-label').innerHTML = 'Référence de paiement <span style="color:#b91c1c;">*</span>'
+    document.getElementById('ref-hint').textContent = 'Sélectionnez un moyen de paiement ci-dessus.'
+    document.getElementById('ref-match-hint').style.display = 'none'
+    document.getElementById('modal-err').style.display = 'none'
+    document.querySelectorAll('#pay-cards > div').forEach(c => {
+      c.style.borderColor = 'var(--border)'
+      c.style.boxShadow = 'none'
+      const radio = c.querySelector('.pm-radio')
+      const dot = c.querySelector('.pm-dot')
+      if (radio) { radio.style.background = ''; radio.style.borderColor = 'var(--border)' }
+      if (dot)   dot.style.display = 'none'
+    })
+    document.getElementById('modal-paiement').style.display = 'flex'
+  }
+
+  window.fermerModal = () => {
+    document.getElementById('modal-paiement').style.display = 'none'
+  }
+
+  window.soumettrePaiement = async () => {
+    const ref  = document.getElementById('input-reference').value.trim().toUpperCase()
+    const refC = document.getElementById('input-reference-confirm').value.trim().toUpperCase()
+    const err  = document.getElementById('modal-err')
+
+    const showErr = msg => { err.textContent = msg; err.style.display = 'block' }
+    err.style.display = 'none'
+
+    if (!selectedMoyenId) { showErr('Veuillez sélectionner un moyen de paiement.'); return }
+    if (!ref)             { showErr('La référence de paiement est obligatoire.'); return }
+    if (ref.length < 4)   { showErr('La référence semble trop courte. Vérifiez votre saisie.'); return }
+    if (!refC)            { showErr('Veuillez confirmer la référence de paiement.'); return }
+    if (ref !== refC)     { showErr('Les deux références ne correspondent pas. Vérifiez votre saisie.'); return }
+
+    const btn = document.getElementById('btn-submit-paiement')
+    btn.disabled = true
+    btn.textContent = 'Envoi en cours…'
+
+    try {
+      await api.post('/cotisations', {
+        orgId: ctx.orgId,
+        montant: orgInfos.montantCotisation,
+        idMoyenPaye: Number(selectedMoyenId),
+        reference: ref
+      })
+      fermerModal()
+      toast.success('Paiement déclaré ! Il sera validé par le trésorier.')
+      charger()
+    } catch(e) {
+      showErr(e.message || 'Une erreur est survenue. Réessayez.')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Soumettre ma déclaration'
+    }
+  }
+
+  init()
 </script>
 </body>
 </html>

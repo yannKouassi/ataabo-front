@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ataabo — Déclarer mon paiement</title>
+    <link rel="stylesheet" href="/src/css/main.css"/>
+    <style>
+        body { background: var(--bg-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px 16px; }
+        .wrap { width: 100%; max-width: 520px; }
+        .header { text-align: center; margin-bottom: 28px; }
+        .logo-text { font-size: 26px; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
+
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; }
+        .card-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+        .card-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+
+        /* Montant */
+        .amount-box { background: #fef9c3; border: 1px solid #fde047; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; }
+        .amount-box .amount-val { font-size: 24px; font-weight: 900; color: #854d0e; }
+        .amount-box .amount-label { font-size: 12px; color: #713f12; margin-top: 2px; }
+
+        /* Opérateurs */
+        .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: .06em; }
+        .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .pay-method-card { border: 2px solid var(--border); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: border-color .15s, box-shadow .15s; background: var(--surface); user-select: none; }
+        .pay-method-card:hover { border-color: #9ca3af; }
+        .pay-method-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+        .pay-method-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .pm-logo { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .pm-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .pm-name { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .pm-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .pm-radio { margin-left: auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+        .pay-method-card.selected .pm-radio { background: var(--primary); border-color: var(--primary); }
+        .pm-radio-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; display: none; }
+        .pay-method-card.selected .pm-radio-dot { display: block; }
+
+        /* Numéro */
+        .pay-number-block { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+        .pay-number { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: .02em; }
+        .pay-number-label { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+        /* Référence */
+        .ref-input-wrap input:disabled { opacity: .4; cursor: not-allowed; }
+        .ref-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; }
+
+        /* États */
+        .state-card { text-align: center; padding: 32px 16px; }
+        .state-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .state-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+        .state-text { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="header">
+        <div class="logo-text">ATAABO</div>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:4px;" id="org-name-header">Déclaration de paiement</p>
+    </div>
+
+    <!-- Formulaire principal -->
+    <div id="card-form" style="display:none;">
+
+        <!-- Carte 1 : montant + opérateurs + numéro -->
+        <div class="card">
+            <div class="card-title">Réglez votre droit d'entrée</div>
+            <div class="card-sub">Effectuez le virement puis déclarez votre référence ci-dessous.</div>
+
+            <!-- Montant -->
+            <div class="amount-box" id="amount-box" style="display:none;">
+                <div>
+                    <div class="amount-val" id="montant-affiche">—</div>
+                    <div class="amount-label">Droit d'entrée à régler</div>
+                </div>
+            </div>
+
+            <!-- Opérateurs -->
+            <div id="pay-instructions" style="display:none;">
+                <div class="section-label" id="pay-methods-label">Choisissez votre moyen de paiement</div>
+                <div class="pay-methods" role="radiogroup" aria-labelledby="pay-methods-label">
+
+                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="wave" data-placeholder="Ex: W241231ABCDEF" data-label="Référence Wave" aria-label="Wave, Côte d'Ivoire">
+                        <div class="pm-logo" style="background:#f0f9ff;">
+                            <img src="/logos/wave.png" alt="" aria-hidden="true"/>
+                        </div>
+                        <div style="min-width:0;">
+                            <div class="pm-name">Wave</div>
+                            <div class="pm-sub">Côte d'Ivoire</div>
+                        </div>
+                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
+                    </div>
+
+                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="orange" data-placeholder="Ex: CI241231ABCDEF" data-label="Référence Orange Money" aria-label="Orange Money, Côte d'Ivoire">
+                        <div class="pm-logo" style="background:#fff7ed;">
+                            <img src="/logos/orange-money.png" alt="" aria-hidden="true"/>
+                        </div>
+                        <div style="min-width:0;">
+                            <div class="pm-name">Orange Money</div>
+                            <div class="pm-sub">Côte d'Ivoire</div>
+                        </div>
+                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
+                    </div>
+
+                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="mtn" data-placeholder="Ex: MTN241231ABCDE" data-label="Référence MTN MoMo" aria-label="MTN MoMo, Côte d'Ivoire">
+                        <div class="pm-logo" style="background:#fefce8;padding:5px;">
+                            <img src="/logos/mtn-momo.svg" alt="" aria-hidden="true"/>
+                        </div>
+                        <div style="min-width:0;">
+                            <div class="pm-name">MTN MoMo</div>
+                            <div class="pm-sub">Côte d'Ivoire</div>
+                        </div>
+                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
+                    </div>
+
+                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="moov" data-placeholder="Ex: MOOV241231ABCD" data-label="Référence Moov Money" aria-label="Moov Money, Côte d'Ivoire">
+                        <div class="pm-logo" style="background:#eff6ff;">
+                            <img src="/logos/moov-money.png" alt="" aria-hidden="true"/>
+                        </div>
+                        <div style="min-width:0;">
+                            <div class="pm-name">Moov Money</div>
+                            <div class="pm-sub">Côte d'Ivoire</div>
+                        </div>
+                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
+                    </div>
+
+                </div>
+
+                <!-- Numéro -->
+                <div class="pay-number-block">
+                    <div>
+                        <div class="pay-number-label">Numéro de l'organisation</div>
+                        <div class="pay-number" id="tel-value">—</div>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-copier" style="flex-shrink:0;" aria-label="Copier le numéro de l'organisation">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copier
+                    </button>
+                </div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.5;">
+                    Envoyez exactement <strong id="montant-inline">ce montant</strong> à ce numéro, puis conservez la référence de transaction.
+                </p>
+            </div><!-- /pay-instructions -->
+        </div><!-- /carte 1 -->
+
+        <!-- Carte 2 : référence -->
+        <form class="card" id="form-declaration" novalidate>
+            <div class="card-title" style="margin-bottom:4px;">Votre référence de transaction</div>
+            <div class="card-sub">Saisissez le numéro de transaction reçu après votre paiement.</div>
+
+            <div class="form-group" style="margin-bottom:12px;">
+                <label class="form-label" id="ref-label" for="ref-input">Référence de paiement <span style="color:#b91c1c;">*</span></label>
+                <input type="text" class="form-input" id="ref-input" name="ref-input" autocomplete="off" aria-describedby="ref-hint" placeholder="Choisissez d'abord un moyen de paiement" disabled style="text-transform:uppercase;font-family:monospace;letter-spacing:.04em;"/>
+                <div class="ref-hint" id="ref-hint">Sélectionnez un moyen de paiement ci-dessus.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label" for="ref-confirm">Confirmer la référence <span style="color:#b91c1c;">*</span></label>
+                <input type="text" class="form-input" id="ref-confirm" name="ref-confirm" autocomplete="off" aria-describedby="ref-match-hint" placeholder="Ressaisissez la même référence" disabled style="text-transform:uppercase;font-family:monospace;letter-spacing:.04em;"/>
+                <div id="ref-match-hint" aria-live="polite" style="font-size:11.5px;margin-top:5px;display:none;"></div>
+            </div>
+
+            <div id="err-msg" role="alert" aria-live="assertive" style="color:#b91c1c;font-size:13px;margin-bottom:12px;display:none;"></div>
+            <button type="submit" class="btn btn-primary" style="width:100%;" id="btn-declarer">Soumettre ma déclaration</button>
+
+            <p style="font-size:11.5px;color:var(--text-muted);margin-top:14px;text-align:center;line-height:1.6;">
+                Après vérification par l'administrateur, vous recevrez un email pour créer votre mot de passe.
+            </p>
+        </form><!-- /carte 2 -->
+
+    </div><!-- /card-form -->
+
+    <!-- Succès -->
+    <div class="card" id="card-succes" style="display:none;">
+        <div class="state-card">
+            <div class="state-icon" style="background:#dcfce7;">
+              <svg width="28" height="28" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="state-title" style="color:#166534;" role="status">Déclaration enregistrée !</div>
+            <div class="state-text">Votre référence de paiement a bien été transmise à l'administrateur de l'organisation.<br/><br/>
+                Vous recevrez un email dès confirmation de votre paiement, avec un lien pour activer votre compte.</div>
+        </div>
+    </div>
+
+    <!-- Déjà déclaré / déjà payé -->
+    <div class="card" id="card-deja" style="display:none;">
+        <div class="state-card">
+            <div class="state-icon" style="background:#fef9c3;">
+              <svg width="28" height="28" fill="none" stroke="#854d0e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="state-title" style="color:#854d0e;" role="status">En cours de vérification</div>
+            <div class="state-text">Vous avez déjà soumis une déclaration de paiement.<br/><br/>
+                L'administrateur vérifie votre transaction. Vous recevrez un email dès confirmation.</div>
+        </div>
+    </div>
+
+    <!-- Erreur -->
+    <div class="card" id="card-erreur" style="display:none;">
+        <div class="state-card">
+            <div class="state-icon" style="background:#fee2e2;">
+              <svg width="28" height="28" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="state-title" style="color:#b91c1c;" role="alert">Lien invalide</div>
+            <div class="state-text" id="msg-erreur">Ce lien est invalide ou a expiré. Contactez l'administrateur de l'organisation.</div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { api } from '/src/js/api.js'
+
+    const params     = new URLSearchParams(window.location.search)
+    const adhesionId = params.get('adhesion')
+
+    // Références DOM
+    const cards       = Array.from(document.querySelectorAll('.pay-method-card'))
+    const refInput    = document.getElementById('ref-input')
+    const refConfirm  = document.getElementById('ref-confirm')
+    const refLabel    = document.getElementById('ref-label')
+    const refHint     = document.getElementById('ref-hint')
+    const matchHint   = document.getElementById('ref-match-hint')
+    const errEl       = document.getElementById('err-msg')
+    const form        = document.getElementById('form-declaration')
+    const btnDeclarer = document.getElementById('btn-declarer')
+
+    let amountExpected = false
+
+    function showCard(id) {
+        ['card-form', 'card-succes', 'card-deja', 'card-erreur']
+            .forEach(c => document.getElementById(c).style.display = c === id ? 'block' : 'none')
+    }
+
+    function showError(message) {
+        errEl.textContent = message
+        errEl.style.display = 'block'
+    }
+    function clearError() {
+        errEl.textContent = ''
+        errEl.style.display = 'none'
+    }
+
+    // --- Sélection d'un moyen de paiement (souris + clavier) ---
+    function selectMethod(card) {
+        cards.forEach(c => {
+            const isSel = c === card
+            c.classList.toggle('selected', isSel)
+            c.setAttribute('aria-checked', isSel ? 'true' : 'false')
+            c.setAttribute('tabindex', isSel ? '0' : '-1')
+        })
+
+        const placeholder = card.dataset.placeholder || 'Ex: REF-20240601-ABCDEF'
+        const label       = card.dataset.label       || 'Référence de paiement'
+        const methodName  = card.querySelector('.pm-name').textContent
+
+        refInput.disabled      = false
+        refInput.placeholder   = placeholder
+        refConfirm.disabled    = false
+        refConfirm.placeholder = placeholder
+        matchHint.style.display = 'none'
+        refInput.focus()
+
+        refLabel.innerHTML  = label + ' <span style="color:#b91c1c;">*</span>'
+        refHint.textContent = 'Numéro de transaction reçu après votre paiement ' + methodName + '.'
+    }
+
+    cards.forEach((card, index) => {
+        card.addEventListener('click', () => selectMethod(card))
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault()
+                selectMethod(card)
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault()
+                const next = cards[(index + 1) % cards.length]
+                next.focus(); selectMethod(next)
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault()
+                const prev = cards[(index - 1 + cards.length) % cards.length]
+                prev.focus(); selectMethod(prev)
+            }
+        })
+    })
+
+    // --- Vérification en temps réel de la correspondance ---
+    function checkRefMatch() {
+        const val1 = refInput.value.trim().toUpperCase()
+        const val2 = refConfirm.value.trim().toUpperCase()
+        if (!val2) { matchHint.style.display = 'none'; return }
+        if (val1 === val2) {
+            matchHint.style.display = 'block'
+            matchHint.style.color = '#166534'
+            matchHint.textContent = '✓ Les deux références correspondent.'
+        } else {
+            matchHint.style.display = 'block'
+            matchHint.style.color = '#b91c1c'
+            matchHint.textContent = '✗ Les références ne correspondent pas.'
+        }
+    }
+
+    refInput.addEventListener('input', function () {
+        this.value = this.value.toUpperCase()
+        checkRefMatch()
+    })
+    refConfirm.addEventListener('input', function () {
+        this.value = this.value.toUpperCase()
+        checkRefMatch()
+    })
+
+    // --- Chargement des infos de paiement ---
+    async function charger() {
+        if (!adhesionId) { showCard('card-erreur'); return }
+
+        try {
+            const data = await api.get(`/adhesions/${adhesionId}/infos-paiement`)
+
+            if (data.nomOrganisation)
+                document.getElementById('org-name-header').textContent = data.nomOrganisation
+
+            if (data.droitEntreePaye || data.refPaiementEntree) {
+                showCard('card-deja')
+                return
+            }
+
+            if (data.montantEntree && data.montantEntree > 0) {
+                amountExpected = true
+                const devise = data.devise || 'XOF'
+                const montantFormate = Number(data.montantEntree).toLocaleString('fr-FR') + ' ' + devise
+                document.getElementById('montant-affiche').textContent = montantFormate
+                document.getElementById('amount-box').style.display = 'flex'
+                const inline = document.getElementById('montant-inline')
+                if (inline) inline.textContent = montantFormate
+            }
+
+            if (data.telephone) {
+                document.getElementById('tel-value').textContent = data.telephone
+                document.getElementById('pay-instructions').style.display = 'block'
+                const btnCopier = document.getElementById('btn-copier')
+                btnCopier.addEventListener('click', () => {
+                    navigator.clipboard.writeText(data.telephone).then(() => {
+                        btnCopier.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Copié !`
+                        setTimeout(() => {
+                            btnCopier.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier`
+                        }, 2000)
+                    })
+                })
+            }
+
+            showCard('card-form')
+        } catch (e) {
+            showCard('card-erreur')
+            document.getElementById('msg-erreur').textContent = e.message || 'Lien invalide ou expiré.'
+        }
+    }
+
+    // --- Soumission ---
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        clearError()
+
+        const selected    = document.querySelector('.pay-method-card.selected')
+        const ref         = refInput.value.trim().toUpperCase()
+        const refConfirmV = refConfirm.value.trim().toUpperCase()
+
+        if (!selected) {
+            showError('Veuillez choisir un moyen de paiement.')
+            return
+        }
+        if (!ref) {
+            showError('La référence de paiement est obligatoire.')
+            refInput.focus()
+            return
+        }
+        if (ref.length < 4) {
+            showError('La référence semble trop courte. Vérifiez votre saisie.')
+            refInput.focus()
+            return
+        }
+        if (!refConfirmV) {
+            showError('Veuillez confirmer la référence de paiement.')
+            refConfirm.focus()
+            return
+        }
+        if (ref !== refConfirmV) {
+            showError('Les deux références ne correspondent pas. Vérifiez votre saisie.')
+            refConfirm.focus()
+            return
+        }
+        if (amountExpected && document.getElementById('amount-box').style.display === 'none') {
+            showError('Le montant à régler n\'a pas pu être chargé. Rechargez la page ou contactez l\'administrateur.')
+            return
+        }
+
+        btnDeclarer.disabled = true
+        btnDeclarer.textContent = 'Envoi en cours…'
+
+        try {
+            await api.put(`/adhesions/${adhesionId}/declarer-paiement`, { reference: ref })
+            showCard('card-succes')
+        } catch (e) {
+            showError(e.message || 'Une erreur est survenue. Réessayez.')
+            btnDeclarer.disabled = false
+            btnDeclarer.textContent = 'Soumettre ma déclaration'
+        }
+    })
+
+    charger()
+</script>
+</body>
+</html>

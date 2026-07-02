@@ -152,6 +152,17 @@
 
         <button class="btn btn-primary" id="btn-sauvegarder-cotisation">Sauvegarder</button>
       </div>
+
+      <!-- Droit d'entrée -->
+      <div class="card" style="padding:28px;">
+        <div style="font-weight:700; font-size:15px; margin-bottom:6px;">Droit d'entrée</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Montant unique payé par un candidat avant approbation de sa demande d'adhésion. Laissez 0 si aucun droit d'entrée n'est exigé.</div>
+        <div class="form-group">
+          <label class="form-label">Montant</label>
+          <input type="number" min="0" class="form-input" id="f-entree-montant" placeholder="0"/>
+        </div>
+        <button class="btn btn-primary" id="btn-sauvegarder-entree">Sauvegarder</button>
+      </div>
     </div>
     <!-- Localisation -->
     <div class="card" style="margin-top:20px; padding:28px; max-width:900px;">
@@ -231,6 +242,7 @@
       document.getElementById('f-devise').value = org.devise || 'FCFA'
       document.getElementById('f-cotisation-montant').value = org.montantCotisation || ''
       document.getElementById('f-cotisation-frequence').value = org.frequenceCotisation || 'MENSUELLE'
+      document.getElementById('f-entree-montant').value = org.montantEntree || ''
 
       const couleur = org.couleurPrimaire || '#2E7D32'
       document.getElementById('f-couleur').value = couleur
@@ -321,6 +333,14 @@
         frequenceCotisation: document.getElementById('f-cotisation-frequence').value,
       })
       toast.success('Paramètres de cotisation sauvegardés !')
+    } catch(err) { toast.error(err.message) }
+  })
+
+  document.getElementById('btn-sauvegarder-entree').addEventListener('click', async () => {
+    try {
+      const montant = parseFloat(document.getElementById('f-entree-montant').value) || 0
+      await api.put(`/organisations/${ctx.orgId}/montant-entree`, { montantEntree: montant })
+      toast.success('Droit d\'entrée sauvegardé !')
     } catch(err) { toast.error(err.message) }
   })
 

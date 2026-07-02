@@ -201,6 +201,7 @@ const NAV_PAGES = {
     '/adherents/beneficiaires':       '/src/pages/beneficiaires.html',
     // Paiements
     '/paiements/cotisations':         '/src/pages/cotisations.html',
+    '/paiements/droits-entree':       '/src/pages/paiements-adhesion.html',
     '/paiements/recouvrement':        '/src/pages/recouvrement.html',
     '/paiements/adhesion-plateforme': '/src/pages/cotisations.html',
     '/paiements/adhesion-organisation':'/src/pages/demandes-adhesion.html',

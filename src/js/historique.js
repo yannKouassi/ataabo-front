@@ -45,7 +45,14 @@ export async function buildHistorique(containerId, limit = 50, module = null) {
 
       const items = await api.get(url)
       let all = Array.isArray(items) ? items : []
-      if (module) all = all.filter(t => t.libelleTrait && t.libelleTrait.toLowerCase().includes(module.toLowerCase()))
+      if (module) {
+        if (Array.isArray(module)) {
+          const keys = module.map(m => m.toLowerCase())
+          all = all.filter(t => t.libelleTrait && keys.some(k => t.libelleTrait.toLowerCase().includes(k)))
+        } else {
+          all = all.filter(t => t.libelleTrait && t.libelleTrait.toLowerCase().includes(module.toLowerCase()))
+        }
+      }
       _cache = all.slice(0, limit)
 
       if (!_cache.length) {
