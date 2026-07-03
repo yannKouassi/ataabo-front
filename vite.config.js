@@ -15,9 +15,10 @@ function findHtmlFiles(dir, rootDir = dir) {
     if (statSync(full).isDirectory()) {
       Object.assign(entries, findHtmlFiles(full, rootDir))
     } else if (entry.endsWith('.html')) {
-      const key = full
-        .replace(rootDir + '/', '')
-        .replace(/\//g, '__')
+      const normalRoot = rootDir.replace(/\\/g, '/').replace(/\/$/, '')
+      const normalFull = full.replace(/\\/g, '/')
+      const key = normalFull
+        .replace(normalRoot + '/', '')
         .replace('.html', '')
       entries[key] = full
     }
