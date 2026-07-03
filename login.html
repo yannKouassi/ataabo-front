@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Connexion</title>
+  <title>UnioNova — Connexion</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <style>
     body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
@@ -106,6 +106,28 @@
       color: var(--text-muted);
     }
     .login-register a { color: var(--primary); font-weight: 600; }
+
+    /* ── RESPONSIVE MOBILE < 640px ── */
+    @media (max-width: 639px) {
+      body { align-items: flex-start; padding: 0; }
+      .login-wrapper {
+        flex-direction: column;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+      }
+      /* Panneau gauche : compact, réduit à une bande logo+titre */
+      .login-left {
+        padding: 24px 20px;
+        flex: none;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+      .login-tagline { font-size: 20px; }
+      .login-countries { display: none; }
+      /* Panneau droit : le formulaire prend le reste */
+      .login-right { flex: 1; padding: 28px 20px; }
+    }
   </style>
 </head>
 <body>
@@ -114,7 +136,7 @@
   <div class="login-left">
     <div class="login-brand">
       <div class="login-brand-icon">A</div>
-      <span class="login-brand-name">Ataabo</span>
+      <span class="login-brand-name">UnioNova</span>
     </div>
 
     <div>

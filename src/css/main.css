@@ -760,3 +760,140 @@ tr:hover td { background: var(--bg); }
    TEXT UTILITIES
    ============================================= */
 .text-muted { color: var(--text-muted); }
+
+/* =============================================
+   RESPONSIVE — HAMBURGER & OVERLAY
+   ============================================= */
+.topbar-hamburger {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.topbar-hamburger:hover { background: var(--bg); color: var(--text); }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 99;
+}
+body.sidebar-open .sidebar-backdrop { display: block; }
+
+/* =============================================
+   RESPONSIVE — TABLETTE (768px – 1199px)
+   ============================================= */
+@media (max-width: 1199px) {
+  :root { --sidebar-width: 220px; }
+
+  .main-content { padding: 20px; }
+
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
+
+/* =============================================
+   RESPONSIVE — MOBILE (< 768px)
+   ============================================= */
+@media (max-width: 767px) {
+  /* Sidebar : masquée par défaut, slide-in en overlay */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    z-index: 200;
+    width: 280px;
+  }
+  body.sidebar-open .sidebar { transform: translateX(0); }
+
+  /* Topbar : pleine largeur */
+  .topbar {
+    left: 0;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .topbar-hamburger { display: flex; }
+  .topbar-search { display: none; }
+  .topbar-user-info { display: none; }
+
+  /* Contenu : pleine largeur, padding réduit */
+  .main-content {
+    margin-left: 0;
+    padding: 16px 12px;
+  }
+
+  /* Stats : 2 colonnes sur mobile */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Grilles de formulaires : colonne unique */
+  .form-row,
+  .form-row-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modals : feuille montante depuis le bas */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal {
+    border-radius: var(--radius) var(--radius) 0 0;
+    max-height: 95vh;
+    max-width: 100%;
+  }
+
+  /* Toast : pleine largeur */
+  #toast-container { left: 12px; right: 12px; bottom: 12px; }
+  .toast { max-width: 100%; }
+
+  /* Tables : scroll horizontal natif */
+  .table-wrapper { -webkit-overflow-scrolling: touch; }
+}
+
+/* =============================================
+   RESPONSIVE — PETIT MOBILE (< 480px)
+   ============================================= */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+
+  .topbar { padding: 0 8px; }
+
+  .main-content { padding: 12px 8px; }
+
+  .card { padding: 16px; }
+
+  .modal-body { padding: 16px; }
+  .modal-header { padding: 16px; }
+  .modal-footer { padding: 12px 16px; }
+}
+
+/* =============================================
+   MODALS INLINE-STYLÉS — RESPONSIVE MOBILE
+   Classes injectées par responsive.js sur les
+   éléments [id^="modal"] à style inline fixed.
+   ============================================= */
+@media (max-width: 767px) {
+  .ataabo-modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .ataabo-modal-box {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}

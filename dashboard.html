@@ -3,9 +3,22 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Tableau de bord</title>
+  <title>UnioNova — Tableau de bord</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    @media (max-width: 767px) {
+      /* Grilles inline 1fr 1fr → 1 colonne */
+      .main-content [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+      /* Filtre période : empilé */
+      .main-content [style*="display:flex"][style*="align-items:center"][style*="gap:10px"] {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="app-layout">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Droit d'entrée</title>
+  <title>UnioNova — Droit d'entrée</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <style>
     body { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
@@ -18,6 +18,11 @@
     .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .history-item:last-child { border-bottom: none; }
     .btn-back { position: fixed; top: 16px; left: 16px; }
+
+    @media (max-width: 480px) {
+      body { padding: 12px; align-items: flex-start; }
+      .step-card { padding: 18px 14px; }
+    }
   </style>
 </head>
 <body>
@@ -26,7 +31,7 @@
 
 <div class="wrap">
   <div class="header">
-    <div class="logo-text">ATAABO</div>
+    <div class="logo-text">UnioNova</div>
     <div class="org-name" id="org-name">Votre organisation</div>
     <div style="margin-top:8px;">
       <span style="font-size:12px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:20px;padding:3px 12px;">💳 Droit d'entrée requis</span>

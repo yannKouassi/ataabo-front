@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Gérez vos organisations communautaires</title>
+  <title>UnioNova — Gérez vos organisations communautaires</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -166,6 +166,43 @@
       color: var(--text-muted);
       border-top: 1px solid var(--border);
     }
+
+    /* RESPONSIVE TABLETTE < 900px */
+    @media (max-width: 899px) {
+      .navbar { padding: 12px 24px; }
+      .navbar-brand-icon { width: 52px; height: 52px; font-size: 13px; }
+      .hero { padding: 56px 20px 40px; }
+    }
+
+    /* RESPONSIVE MOBILE < 640px */
+    @media (max-width: 639px) {
+      .navbar {
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .navbar-brand-icon { width: 40px; height: 40px; font-size: 12px; }
+      .navbar-brand { font-size: 17px; gap: 8px; }
+      /* Cacher les boutons de la navbar — déjà présents dans le hero */
+      .navbar-actions .btn-hero-outline,
+      .navbar-actions .btn-hero-primary { display: none; }
+      /* Garder uniquement le sélecteur de pays et le thème */
+      .navbar-actions { gap: 6px; }
+
+      .hero { padding: 36px 16px 28px; }
+      .hero h1 { font-size: clamp(26px, 7vw, 36px); }
+      .hero-sub { font-size: 14px; margin-bottom: 24px; }
+      .hero-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+      .hero-actions button { width: 100%; }
+
+      .pays-strip { gap: 8px; margin-top: 28px; }
+      .pays-chip { font-size: 12px; padding: 5px 12px; }
+
+      .features { grid-template-columns: 1fr; margin: 36px auto; gap: 14px; padding: 0 16px; }
+
+      .cta-bottom { padding: 40px 16px; }
+      .cta-bottom h2 { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -174,7 +211,7 @@
 <nav class="navbar">
   <div class="navbar-brand">
     <div class="navbar-brand-icon" id="navbar-brand-icon">A</div>
-    <span id="navbar-brand-nom">Ataabo</span>
+    <span id="navbar-brand-nom">UnioNova</span>
   </div>
   <div class="navbar-actions">
     <div id="pays-combobox-container"></div>
@@ -190,13 +227,13 @@
 <section class="hero">
   <div class="hero-badge">
     <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-    Plateforme SaaS multi-pays
+    Organisations sans frontières
   </div>
 
   <h1 data-i18n="ACCUEIL_TITRE" data-i18n-html>Gérez vos <span>organisations communautaires</span> simplement</h1>
 
   <p class="hero-sub" data-i18n="ACCUEIL_SOUS_TITRE">
-    Ataabo est la plateforme dédiée aux associations, mutuelles et ONG d'Afrique.
+    UnioNova est la plateforme dédiée aux associations, mutuelles et ONG d'Afrique.
     Adhésions, cotisations, événements — tout en un seul endroit.
   </p>
 
@@ -261,14 +298,14 @@
 <!-- CTA -->
 <section class="cta-bottom">
   <h2 data-i18n="ACCUEIL_CTA_TITRE">Prêt à simplifier la gestion de votre organisation ?</h2>
-  <p data-i18n="ACCUEIL_CTA_SOUS">Rejoignez les organisations qui font confiance à Ataabo</p>
+  <p data-i18n="ACCUEIL_CTA_SOUS">Rejoignez les organisations qui font confiance à UnioNova</p>
   <button class="btn-cta-white" data-i18n="ACCUEIL_CTA_BTN" onclick="window.location.href='/adhesion.html'">
     Commencer maintenant — c'est gratuit
   </button>
 </section>
 
 <footer>
-  © 2025 Ataabo · Plateforme de gestion d'organisations communautaires
+  © 2025 UnioNova — Organisations sans frontières
 </footer>
 
 <script type="module">

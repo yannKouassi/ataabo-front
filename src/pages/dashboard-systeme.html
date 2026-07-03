@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Dashboard système</title>
+  <title>UnioNova — Dashboard système</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -53,7 +53,7 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
       <div>
         <div class="page-title">Dashboard système</div>
-        <div class="page-subtitle" id="periode-label">Vue globale de la plateforme Ataabo</div>
+        <div class="page-subtitle" id="periode-label">Vue globale de la plateforme UnioNova</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
         <svg width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -63,10 +63,14 @@
         <input type="date" id="filtre-fin" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text);"/>
         <button class="btn btn-primary btn-sm" id="btn-filtrer" style="font-size:12px;padding:5px 14px;">Filtrer</button>
         <button class="btn btn-ghost btn-sm" id="btn-reset" style="font-size:12px;padding:5px 10px;display:none;">✕ Réinitialiser</button>
+        <button class="btn btn-secondary btn-sm" id="btn-exporter" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
       </div>
     </div>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:24px;" id="stats-grid">
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;" id="stats-grid">
       <div class="page-loader"><div class="spinner"></div></div>
     </div>
 
@@ -101,7 +105,7 @@
           <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="graphique-body" id="body-top" style="display:none;padding:0 20px 20px;">
-          <canvas id="chart-top" height="160"></canvas>
+          <div style="position:relative;height:260px;"><canvas id="chart-top"></canvas></div>
         </div>
       </div>
 
@@ -116,7 +120,7 @@
           <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="graphique-body" id="body-evolution" style="display:none;padding:0 20px 20px;">
-          <canvas id="chart-evolution" height="80"></canvas>
+          <div style="position:relative;height:260px;"><canvas id="chart-evolution"></canvas></div>
         </div>
       </div>
 
@@ -131,7 +135,22 @@
           <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="graphique-body" id="body-paiements-evo" style="display:none;padding:0 20px 20px;">
-          <canvas id="chart-paiements-evo" height="80"></canvas>
+          <div style="position:relative;height:260px;"><canvas id="chart-paiements-evo"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-abonnements-evo">
+        <div class="graphique-header" data-target="body-abonnements-evo">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Évolution des montants d'abonnements (confirmés)</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-abonnements-evo" style="display:none;padding:0 20px 20px;">
+          <div style="position:relative;height:260px;"><canvas id="chart-abonnements-evo"></canvas></div>
         </div>
       </div>
 
@@ -187,7 +206,10 @@
     </div>
 
     <div class="card">
-      <div style="padding:16px; border-bottom:1px solid var(--border); font-weight:700; font-size:14px;">Organisations actives</div>
+      <div style="padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-weight:700; font-size:14px;">Organisations actives</div>
+        <div id="orgs-pagination-info" style="font-size:12px;color:var(--text-muted);"></div>
+      </div>
       <div class="table-wrapper">
         <table>
           <thead><tr><th>Organisation</th><th>Type</th><th>Pays</th><th>Adhérents</th></tr></thead>
@@ -196,6 +218,7 @@
           </tbody>
         </table>
       </div>
+      <div id="orgs-pagination" style="display:none;padding:12px 16px;display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid var(--border);"></div>
     </div>
   </main>
 </div>
@@ -226,8 +249,9 @@
     </div>`
   }
 
-  let chartTypes, chartTop, chartEvolution, chartPaiementsEvo, chartStatutsPaiements, chartPays, chartValidation
+  let chartTypes, chartTop, chartEvolution, chartPaiementsEvo, chartAbonnementsEvo, chartStatutsPaiements, chartPays, chartValidation
   let _toutesLesOrgs = []
+  let _dernierStats = null
 
   function dessinerGraphiques(stats) {
     const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
@@ -259,6 +283,7 @@
         datasets: [{ label: 'Adhérents', data: topData, backgroundColor: primary + 'bb', borderRadius: 4 }]
       },
       options: {
+        maintainAspectRatio: false,
         indexAxis: 'y',
         plugins: { legend: { display: false } },
         scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
@@ -288,6 +313,7 @@
         }]
       },
       options: {
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
@@ -308,6 +334,7 @@
         }]
       },
       options: {
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           y: {
@@ -318,7 +345,32 @@
       }
     })
 
-    // Graphique 5 — répartition statuts paiements (doughnut)
+    // Graphique 5 — évolution montants abonnements confirmés par mois (mensuel vs annuel)
+    const abnEvoMensuel = stats.evolutionAbonnementsMensuelData || []
+    const abnEvoAnnuel  = stats.evolutionAbonnementsAnnuelData  || []
+    if (chartAbonnementsEvo) chartAbonnementsEvo.destroy()
+    chartAbonnementsEvo = new Chart(document.getElementById('chart-abonnements-evo'), {
+      type: 'bar',
+      data: {
+        labels: evoLabels,
+        datasets: [
+          { label: 'Mensuel (XOF)', data: abnEvoMensuel, backgroundColor: '#6366f1bb', borderRadius: 5 },
+          { label: 'Annuel (XOF)',  data: abnEvoAnnuel,  backgroundColor: '#22c55ebb', borderRadius: 5 }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top' } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: v => v.toLocaleString('fr-FR') }
+          }
+        }
+      }
+    })
+
+    // Graphique 6 — répartition statuts paiements (doughnut)
     const statuts = stats.statutsPaiements || {}
     if (chartStatutsPaiements) chartStatutsPaiements.destroy()
     chartStatutsPaiements = new Chart(document.getElementById('chart-statuts-paiements'), {
@@ -338,7 +390,7 @@
       }
     })
 
-    // Graphique 6 — cartes pays cliquables
+    // Graphique 7 — cartes pays cliquables
     const paysLabels = stats.orgParPaysLabels || []
     const paysData   = stats.orgParPaysData   || []
     if (chartPays) { if (chartPays.remove) chartPays.remove(); chartPays = null }
@@ -416,12 +468,13 @@
       periodeLabel.style.color = 'var(--primary)'
     } else {
       btnReset.style.display = 'none'
-      periodeLabel.textContent = 'Vue globale de la plateforme Ataabo'
+      periodeLabel.textContent = 'Vue globale de la plateforme UnioNova'
       periodeLabel.style.color = ''
     }
 
     try {
       const stats = await api.get(url)
+      _dernierStats = stats
       const filtre = stats.filtrePeriode === true
       const suffixe = filtre ? ' (période)' : ''
       document.getElementById('stats-grid').innerHTML = [
@@ -431,9 +484,13 @@
         statCard('Adhérents total', stats.totalAdherents ?? 0, 'var(--primary)'),
         statCard('Utilisateurs sans organisation', stats.utilisateursSansOrganisation ?? 0, '#d97706'),
         statCard('En attente de validation', stats.orgsEnAttente ?? 0, '#d97706'),
-        statCard('Paiements en attente', stats.paiementsEnAttente ?? 0, '#d97706'),
-        statCard('Paiements confirmés' + suffixe, stats.paiementsConfirmes ?? 0, '#16a34a'),
-        statCard('Montant encaissé' + suffixe, (stats.montantTotalEncaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#16a34a'),
+        statCard('Paiements activation en attente', stats.paiementsEnAttente ?? 0, '#d97706'),
+        statCard('Activations confirmées' + suffixe, stats.paiementsConfirmes ?? 0, '#16a34a'),
+        statCard('Droits d\'entrée encaissés' + suffixe, (stats.montantTotalEncaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#16a34a'),
+        statCard('Abonnements actifs', stats.abonnementsActifs ?? 0, '#6366f1'),
+        statCard('Abonnements en attente', stats.abonnementsEnAttente ?? 0, '#d97706'),
+        statCard('Montant abonnements' + suffixe, (stats.montantAbonnementsEncaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#6366f1'),
+        statCard('Total caisse' + suffixe, (stats.montantTotalCaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#0f172a'),
         statCard('Pays couverts', stats.totalPays ?? 0),
       ].join('')
       dessinerGraphiques(stats)
@@ -444,19 +501,7 @@
     try {
       const orgs = await api.get('/organisations/actives')
       _toutesLesOrgs = orgs || []
-      const tbody = document.getElementById('tbody-orgs')
-      if (!_toutesLesOrgs.length) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">Aucune organisation active</td></tr>`
-        return
-      }
-      tbody.innerHTML = _toutesLesOrgs.map(o => `
-        <tr>
-          <td style="font-weight:600;">${o.libAssociation || o.nomOrganisation || '—'}</td>
-          <td><span class="badge badge-secondary">${o.typeOrganisation?.libelle || o.typeOrganisation || '—'}</span></td>
-          <td style="font-size:13px;">${o.pays?.libPays || o.codePays || '—'}</td>
-          <td style="font-size:13px;">${o.nombreAdherents ?? '—'}</td>
-        </tr>
-      `).join('')
+      afficherOrgsPage(1)
     } catch(err) {
       document.getElementById('tbody-orgs').innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:20px;">Erreur : ${err.message}</td></tr>`
     }
@@ -642,11 +687,91 @@
     setTimeout(() => map.invalidateSize(), 150)
   }
 
+  const ORGS_PAR_PAGE = 10
+  function afficherOrgsPage(page) {
+    const tbody = document.getElementById('tbody-orgs')
+    const paginationEl = document.getElementById('orgs-pagination')
+    const infoEl = document.getElementById('orgs-pagination-info')
+    if (!_toutesLesOrgs.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">Aucune organisation active</td></tr>`
+      paginationEl.style.display = 'none'
+      infoEl.textContent = ''
+      return
+    }
+    const totalPages = Math.ceil(_toutesLesOrgs.length / ORGS_PAR_PAGE)
+    page = Math.max(1, Math.min(page, totalPages))
+    const debut = (page - 1) * ORGS_PAR_PAGE
+    const slice = _toutesLesOrgs.slice(debut, debut + ORGS_PAR_PAGE)
+    tbody.innerHTML = slice.map(o => `
+      <tr>
+        <td style="font-weight:600;">${o.libAssociation || o.nomOrganisation || '—'}</td>
+        <td><span class="badge badge-secondary">${o.typeOrganisation?.libelle || o.typeOrganisation || '—'}</span></td>
+        <td style="font-size:13px;">${o.pays?.libPays || o.codePays || '—'}</td>
+        <td style="font-size:13px;">${o.nombreAdherents ?? '—'}</td>
+      </tr>`).join('')
+    infoEl.textContent = `${debut + 1}–${Math.min(debut + ORGS_PAR_PAGE, _toutesLesOrgs.length)} sur ${_toutesLesOrgs.length}`
+    if (totalPages <= 1) { paginationEl.style.display = 'none'; return }
+    paginationEl.style.display = 'flex'
+    const btnStyle = (active) => `style="min-width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:${active ? 'var(--primary)' : 'var(--surface)'};color:${active ? '#fff' : 'var(--text)'};font-size:12px;font-weight:600;cursor:${active ? 'default' : 'pointer'};padding:0 8px;"`
+    let html = `<button ${btnStyle(false)} ${page === 1 ? 'disabled' : ''} data-p="${page-1}">‹</button>`
+    for (let p = 1; p <= totalPages; p++) {
+      if (totalPages > 7 && p > 2 && p < totalPages - 1 && Math.abs(p - page) > 1) {
+        if (p === 3 || p === totalPages - 2) html += `<span style="padding:0 4px;color:var(--text-muted);">…</span>`
+        continue
+      }
+      html += `<button ${btnStyle(p === page)} ${p === page ? 'disabled' : ''} data-p="${p}">${p}</button>`
+    }
+    html += `<button ${btnStyle(false)} ${page === totalPages ? 'disabled' : ''} data-p="${page+1}">›</button>`
+    paginationEl.innerHTML = html
+    paginationEl.querySelectorAll('button[data-p]').forEach(btn => {
+      btn.addEventListener('click', () => afficherOrgsPage(+btn.dataset.p))
+    })
+  }
+
   document.getElementById('btn-filtrer').addEventListener('click', charger)
   document.getElementById('btn-reset').addEventListener('click', () => {
     document.getElementById('filtre-debut').value = ''
     document.getElementById('filtre-fin').value = ''
     charger()
+  })
+
+  document.getElementById('btn-exporter').addEventListener('click', () => {
+    const s = _dernierStats
+    if (!s) return
+    const debut = document.getElementById('filtre-debut').value || 'tout'
+    const fin   = document.getElementById('filtre-fin').value   || 'tout'
+    const lignes = [
+      ['Indicateur', 'Valeur'],
+      ['Organisations actives', s.totalOrganisations ?? 0],
+      ['Nouvelles organisations (période)', s.nouvellesOrgs ?? 0],
+      ['Adhérents total', s.totalAdherents ?? 0],
+      ['Utilisateurs sans organisation', s.utilisateursSansOrganisation ?? 0],
+      ['En attente de validation', s.orgsEnAttente ?? 0],
+      ['Paiements activation en attente', s.paiementsEnAttente ?? 0],
+      ['Activations confirmées (période)', s.paiementsConfirmes ?? 0],
+      ['Droits d\'entrée encaissés (XOF)', s.montantTotalEncaisse ?? 0],
+      ['Abonnements actifs', s.abonnementsActifs ?? 0],
+      ['Abonnements en attente', s.abonnementsEnAttente ?? 0],
+      ['Montant abonnements (XOF)', s.montantAbonnementsEncaisse ?? 0],
+      ['Total caisse (XOF)', s.montantTotalCaisse ?? 0],
+      ['Pays couverts', s.totalPays ?? 0],
+    ]
+    if (_toutesLesOrgs.length) {
+      lignes.push([])
+      lignes.push(['Organisation', 'Type', 'Pays', 'Adhérents'])
+      _toutesLesOrgs.forEach(o => lignes.push([
+        o.libAssociation || o.nomOrganisation || '—',
+        o.typeOrganisation?.libelle || o.typeOrganisation || '—',
+        o.pays?.libPays || o.codePays || '—',
+        o.nombreAdherents ?? 0,
+      ]))
+    }
+    const csv = lignes.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `dashboard-UnioNova_${debut}_${fin}.csv`
+    a.click()
   })
 
   // Accordéon graphiques
@@ -663,14 +788,17 @@
       } else {
         body.style.display = 'block'
         bloc.classList.add('ouvert')
-        // Redessiner le graphique si Chart.js a perdu ses dimensions
-        if (bodyId === 'body-types'             && chartTypes)             chartTypes.resize()
-        if (bodyId === 'body-top'               && chartTop)               chartTop.resize()
-        if (bodyId === 'body-evolution'         && chartEvolution)         chartEvolution.resize()
-        if (bodyId === 'body-paiements-evo'     && chartPaiementsEvo)     chartPaiementsEvo.resize()
-        if (bodyId === 'body-statuts-paiements' && chartStatutsPaiements) chartStatutsPaiements.resize()
-        if (bodyId === 'body-pays'              && chartPays)              chartPays.invalidateSize()
-        if (bodyId === 'body-validation'        && chartValidation)        chartValidation.resize()
+        // Attendre que le navigateur ait calculé le layout avant de redimensionner
+        requestAnimationFrame(() => {
+          if (bodyId === 'body-types'             && chartTypes)             chartTypes.resize()
+          if (bodyId === 'body-top'               && chartTop)               chartTop.resize()
+          if (bodyId === 'body-evolution'         && chartEvolution)         chartEvolution.resize()
+          if (bodyId === 'body-paiements-evo'     && chartPaiementsEvo)     chartPaiementsEvo.resize()
+          if (bodyId === 'body-abonnements-evo'   && chartAbonnementsEvo)   chartAbonnementsEvo.resize()
+          if (bodyId === 'body-statuts-paiements' && chartStatutsPaiements) chartStatutsPaiements.resize()
+          if (bodyId === 'body-validation'        && chartValidation)        chartValidation.resize()
+          if (bodyId === 'body-pays'              && chartPays)              chartPays.invalidateSize()
+        })
       }
     })
   })

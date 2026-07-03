@@ -229,6 +229,7 @@ const NAV_PAGES = {
     // Organisation
     '/organisation/params/infos':     '/src/pages/params-organisation.html',
     '/organisation/params/groupes':   '/src/pages/groupes-organisation.html',
+    '/organisation/abonnement':       '/src/pages/mon-abonnement.html',
     // Utilisateurs & habilitations
     '/utilisateurs/liste':            '/src/pages/utilisateurs.html',
     '/utilisateurs/groupes':          '/src/pages/groupes-organisation.html',
@@ -244,6 +245,7 @@ const NAV_PAGES = {
     '/admin/organisations-en-attente': '/src/pages/admin-organisations-attente.html',
     '/admin/organisations':            '/src/pages/admin-organisations-attente.html',
     '/admin/paiements-activation':     '/src/pages/admin-paiements-activation.html',
+    '/admin/abonnements':              '/src/pages/admin-abonnements.html',
 }
 
 function navigate(url) {

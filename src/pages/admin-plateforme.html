@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Infos plateforme</title>
+  <title>UnioNova — Infos plateforme</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
 </head>
 <body>
@@ -36,7 +36,7 @@
   <main class="main-content">
     <div style="margin-bottom:24px;">
       <div class="page-title">Paramètres plateforme</div>
-      <div class="page-subtitle">Informations générales de la plateforme Ataabo</div>
+      <div class="page-subtitle">Informations générales de la plateforme UnioNova</div>
     </div>
 
     <div class="card" style="max-width:640px; padding:28px;">
@@ -45,7 +45,7 @@
 
       <div class="form-group">
         <label class="form-label">Nom de la plateforme</label>
-        <input type="text" class="form-input" id="plat-nom" placeholder="Ataabo"/>
+        <input type="text" class="form-input" id="plat-nom" placeholder="UnioNova"/>
       </div>
       <div class="form-group">
         <label class="form-label">Description</label>
@@ -85,6 +85,33 @@
           </thead>
           <tbody id="tbody-frais-pays">
             <tr><td colspan="4"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paliers d'abonnement par pays -->
+    <div class="card" style="max-width:900px; margin-top:24px;">
+      <div style="padding:20px 24px 4px;font-size:15px;font-weight:700;">Paliers d'abonnement mensuel par pays</div>
+      <div style="padding:0 24px 16px;font-size:13px;color:var(--text-muted);">
+        Définissez le montant mensuel d'abonnement selon le nombre d'adhérents actifs de chaque organisation.
+        La devise est celle du pays.
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Pays</th>
+              <th>Devise</th>
+              <th style="text-align:center;">1 – 100 adhérents</th>
+              <th style="text-align:center;">101 – 500</th>
+              <th style="text-align:center;">501 – 2 000</th>
+              <th style="text-align:center;">2 001+</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-paliers-pays">
+            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -179,6 +206,55 @@
       tbody.innerHTML = `<tr><td colspan="4" style="color:#b91c1c;padding:16px;">${err.message}</td></tr>`
     }
   }
+
+  async function chargerPaliersPays() {
+    const tbody = document.getElementById('tbody-paliers-pays')
+    try {
+      const pays = await api.get('/referentiel/pays')
+      if (!pays || !pays.length) { tbody.innerHTML = `<tr><td colspan="7" style="padding:16px;color:var(--text-muted);">Aucun pays configuré.</td></tr>`; return }
+      const inp = (code, tranche, val) =>
+        `<input type="number" min="0" value="${val ?? ''}" placeholder="0" id="abn-${code}-${tranche}"
+          style="width:110px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;"/>`
+      tbody.innerHTML = pays.map(p => {
+        const devise = p.monnaie ? p.monnaie.codeIso : '—'
+        return `<tr data-code="${p.codePays}">
+          <td style="font-weight:600;">${p.libPays || p.codePays}</td>
+          <td><span class="badge badge-secondary">${devise}</span></td>
+          <td style="text-align:center;">${inp(p.codePays, 't1', p.abonnementTranche1)}</td>
+          <td style="text-align:center;">${inp(p.codePays, 't2', p.abonnementTranche2)}</td>
+          <td style="text-align:center;">${inp(p.codePays, 't3', p.abonnementTranche3)}</td>
+          <td style="text-align:center;">${inp(p.codePays, 't4', p.abonnementTranche4)}</td>
+          <td><button class="btn btn-ghost btn-sm" data-action="sauvegarder-paliers">Enregistrer</button></td>
+        </tr>`
+      }).join('')
+
+      tbody.querySelectorAll('[data-action="sauvegarder-paliers"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const code = btn.closest('tr').dataset.code
+          const body = {
+            abonnementTranche1: parseFloat(document.getElementById(`abn-${code}-t1`).value) || 0,
+            abonnementTranche2: parseFloat(document.getElementById(`abn-${code}-t2`).value) || 0,
+            abonnementTranche3: parseFloat(document.getElementById(`abn-${code}-t3`).value) || 0,
+            abonnementTranche4: parseFloat(document.getElementById(`abn-${code}-t4`).value) || 0,
+          }
+          btn.disabled = true; btn.textContent = '…'
+          try {
+            await api.put(`/pays/${code}/paliers-abonnement`, body)
+            btn.textContent = '✓ Enregistré'; btn.style.color = '#166534'
+            setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
+          } catch(err) {
+            btn.textContent = 'Erreur'; btn.style.color = '#b91c1c'
+            setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
+            alert(err.message)
+          }
+        })
+      })
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="7" style="color:#b91c1c;padding:16px;">${err.message}</td></tr>`
+    }
+  }
+
+  chargerPaliersPays()
 
   // Sélection fichier logo
   document.getElementById('btn-choisir-logo').addEventListener('click', () => {

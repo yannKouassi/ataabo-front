@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UnioNova — Mon abonnement</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    .abn-status-card {
+      border-radius: 16px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      border: 2px solid transparent;
+    }
+    .abn-status-card.actif    { background: #f0fdf4; border-color: #86efac; }
+    .abn-status-card.retard   { background: #fff7ed; border-color: #fdba74; }
+    .abn-status-card.bloque   { background: #fef2f2; border-color: #fca5a5; }
+    .abn-status-card.attente  { background: #eff6ff; border-color: #93c5fd; }
+    .abn-status-card.aucun    { background: var(--bg); border-color: var(--border); }
+
+    .abn-status-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px; }
+    .abn-status-icon.actif  { background: #dcfce7; }
+    .abn-status-icon.retard { background: #ffedd5; }
+    .abn-status-icon.bloque { background: #fee2e2; }
+    .abn-status-icon.attente { background: #dbeafe; }
+    .abn-status-icon.aucun  { background: var(--border); }
+
+    .abn-status-title { font-size: 18px; font-weight: 800; margin-bottom: 2px; }
+    .abn-status-sub   { font-size: 13px; color: var(--text-muted); }
+
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .info-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+    .info-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; }
+    .info-val   { font-size: 20px; font-weight: 800; line-height: 1.1; }
+    .info-sub   { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+    .tranche-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+      background: var(--primary-light, #e0e7ff); color: var(--primary, #4f46e5);
+    }
+
+    /* Modal */
+    .period-card {
+      border: 2px solid var(--border); border-radius: 12px; padding: 14px 16px;
+      cursor: pointer; transition: border-color .15s, box-shadow .15s;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .period-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+    .period-card-radio {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .period-card-radio.selected { background: var(--primary); border-color: var(--primary); }
+    .period-card-radio.selected::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; display: block; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-search" style="visibility:hidden;"></div>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar"></div>
+        <div class="topbar-user-info"><div class="topbar-user-name" id="topbar-name"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="page-title">Mon abonnement</div>
+        <div class="page-subtitle">Gérez l'abonnement de votre organisation à la plateforme</div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn btn-ghost" id="btn-rafraichir">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Rafraîchir
+        </button>
+        <button class="btn btn-primary" id="btn-souscrire" style="display:none;">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Souscrire / Renouveler
+        </button>
+      </div>
+    </div>
+
+    <!-- Statut courant -->
+    <div id="status-card">
+      <div class="abn-status-card aucun">
+        <div class="abn-status-icon aucun">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div><div class="abn-status-title">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- Infos abonnement actuel -->
+    <div id="info-grid" class="info-grid" style="display:none;"></div>
+
+    <!-- Historique -->
+    <div class="card" style="padding:0;">
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:14px; font-weight:700;">Historique des abonnements</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <select class="form-input" id="hist-filtre-statut" style="width:190px; padding:5px 8px; font-size:12px;">
+            <option value="">Tous les statuts</option>
+            <option value="ACTIF">Actif</option>
+            <option value="EN_ATTENTE_PAIEMENT">En attente de paiement</option>
+            <option value="EN_RETARD">En retard</option>
+            <option value="RESILIE">Résilié</option>
+            <option value="SUSPENDU">Suspendu</option>
+          </select>
+          <select class="form-input" id="hist-filtre-periode" style="width:130px; padding:5px 8px; font-size:12px;">
+            <option value="">Toutes périodes</option>
+            <option value="MENSUEL">Mensuel</option>
+            <option value="ANNUEL">Annuel</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="hist-btn-reset" style="display:none; font-size:12px;">Réinitialiser</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Période</th>
+              <th>Montant</th>
+              <th>Tranche</th>
+              <th>Adhérents</th>
+              <th>Début</th>
+              <th>Prochaine échéance</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-historique">
+            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal souscription + paiement -->
+<div id="modal-abonnement" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:flex-start; justify-content:center; padding:24px 16px; overflow-y:auto;">
+  <div style="background:var(--surface,#fff); border-radius:16px; width:100%; max-width:520px; box-shadow:0 12px 48px rgba(0,0,0,.22); margin:auto;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px 0;">
+      <div style="font-size:16px; font-weight:800;">Souscrire à l'abonnement</div>
+      <button onclick="fermerModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:22px;line-height:1;padding:0 4px;">×</button>
+    </div>
+
+    <div style="padding:20px 24px 24px;">
+
+      <!-- Infos tarifaires -->
+      <div id="modal-tarif-info" style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:13px; color:#166534;">
+        Chargement des tarifs…
+      </div>
+
+      <!-- Choix période -->
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; letter-spacing:.06em;">Choisissez votre période</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+        <div class="period-card" id="card-mensuel" onclick="selPeriode('MENSUEL')">
+          <div class="period-card-radio selected" id="radio-mensuel"></div>
+          <div>
+            <div style="font-size:13px; font-weight:700;">Mensuel</div>
+            <div id="lbl-mensuel" style="font-size:12px; color:var(--text-muted);">—</div>
+          </div>
+        </div>
+        <div class="period-card" id="card-annuel" onclick="selPeriode('ANNUEL')">
+          <div class="period-card-radio" id="radio-annuel"></div>
+          <div>
+            <div style="font-size:13px; font-weight:700;">Annuel <span style="font-size:10px; background:#fef9c3; color:#854d0e; padding:1px 6px; border-radius:999px; font-weight:700;">×10 mois</span></div>
+            <div id="lbl-annuel" style="font-size:12px; color:var(--text-muted);">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Moyen de paiement -->
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; letter-spacing:.06em;">Moyen de paiement</div>
+      <div id="pay-cards" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;"></div>
+
+      <!-- Référence -->
+      <div style="margin-bottom:12px;">
+        <label id="ref-label" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">
+          Référence de paiement <span style="color:#b91c1c;">*</span>
+        </label>
+        <input id="input-reference" class="form-input" style="width:100%; text-transform:uppercase; font-family:monospace; letter-spacing:.04em;" placeholder="Sélectionnez un moyen de paiement" disabled type="text"/>
+        <div id="ref-hint" style="font-size:11.5px; color:var(--text-muted); margin-top:5px;">Sélectionnez un moyen de paiement ci-dessus.</div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">
+          Confirmer la référence <span style="color:#b91c1c;">*</span>
+        </label>
+        <input id="input-reference-confirm" class="form-input" style="width:100%; text-transform:uppercase; font-family:monospace; letter-spacing:.04em;" placeholder="Ressaisissez la même référence" disabled type="text"/>
+        <div id="ref-match-hint" style="font-size:11.5px; margin-top:5px; display:none;"></div>
+      </div>
+
+      <!-- Preuve de paiement (optionnelle) -->
+      <div style="margin-bottom:20px;">
+        <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">
+          Preuve de paiement <span style="font-size:11px; color:var(--text-muted); font-weight:400;">(optionnelle — capture d'écran, reçu)</span>
+        </label>
+        <label id="upload-zone" style="display:flex; align-items:center; gap:12px; border:2px dashed var(--border); border-radius:10px; padding:14px 16px; cursor:pointer; transition:border-color .2s;">
+          <svg width="22" height="22" fill="none" stroke="var(--text-muted)" stroke-width="1.7" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 12 12 8 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+          <div>
+            <div id="upload-label" style="font-size:13px; color:var(--text-muted);">Cliquez pour sélectionner un fichier</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">JPG, PNG, PDF — max 5 Mo</div>
+          </div>
+          <input id="input-preuve" type="file" accept="image/*,.pdf" style="display:none;" />
+        </label>
+        <div id="preuve-preview" style="display:none; margin-top:8px;">
+          <img id="preuve-img" style="max-height:120px; border-radius:8px; border:1px solid var(--border);" />
+        </div>
+      </div>
+
+      <div id="modal-err" style="color:#b91c1c; font-size:13px; margin-bottom:12px; display:none;"></div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="fermerModal()">Annuler</button>
+        <button class="btn btn-primary" id="btn-submit" onclick="soumettre()">Soumettre ma déclaration</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  const user = getUser()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  if (user) {
+    const av = document.getElementById('topbar-avatar')
+    const nm = document.getElementById('topbar-name')
+    if (av) av.textContent = (user.prenom?.[0] || '') + (user.nom?.[0] || '')
+    if (nm) nm.textContent = (user.prenom || '') + ' ' + (user.nom || '')
+  }
+
+  const perm = getPermission('/organisation/abonnement')
+  let infoTarif = null
+  let abonnement = null
+  let moyensPaiement = []
+  let selectedPeriode = 'MENSUEL'
+  let selectedMoyenId = null
+
+  const moyenConfig = {
+    WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire", logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+    ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire", logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire", logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
+    MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire", logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+  }
+
+  function fmt(n, d) {
+    if (n == null || n === '' ) return '—'
+    return new Intl.NumberFormat('fr-FR').format(n) + ' ' + (d || 'XOF')
+  }
+  function fmtDate(v) {
+    if (!v) return '—'
+    const iso = Array.isArray(v)
+      ? `${v[0]}-${String(v[1]).padStart(2,'0')}-${String(v[2]).padStart(2,'0')}`
+      : String(v).slice(0,10)
+    return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR')
+  }
+
+  function statutBadge(s, referenceTransaction) {
+    const m = { ACTIF:'badge-success', EN_RETARD:'badge-warning', SUSPENDU:'badge-danger', RESILIE:'badge-secondary', EN_ATTENTE_PAIEMENT:'badge-info' }
+    const l = {
+      ACTIF:'Actif', EN_RETARD:'En retard', SUSPENDU:'Suspendu', RESILIE:'Résilié',
+      EN_ATTENTE_PAIEMENT: referenceTransaction ? 'Vérification en cours' : 'En attente de paiement'
+    }
+    return `<span class="badge ${m[s]||'badge-secondary'}">${l[s]||s||'—'}</span>`
+  }
+
+  function periodeLabel(p) {
+    return p === 'ANNUEL' ? 'Annuel' : 'Mensuel'
+  }
+
+  function trancheLabel(t) {
+    const desc = { 1:'1 – 100', 2:'101 – 500', 3:'501 – 2 000', 4:'2 001+' }
+    return t ? `Tranche ${t} (${desc[t]||''} adhérents)` : '—'
+  }
+
+  function afficherStatut(abn) {
+    const card = document.getElementById('status-card')
+    if (!abn) {
+      card.innerHTML = `
+        <div class="abn-status-card aucun">
+          <div class="abn-status-icon aucun">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div class="abn-status-title">Aucun abonnement actif</div>
+            <div class="abn-status-sub">Souscrivez à un abonnement pour continuer à utiliser la plateforme.</div>
+          </div>
+        </div>`
+      return
+    }
+    const cls = { ACTIF:'actif', EN_RETARD:'retard', SUSPENDU:'bloque', RESILIE:'aucun', EN_ATTENTE_PAIEMENT:'attente' }
+    const ico = {
+      ACTIF:              `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`,
+      EN_RETARD:          `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      SUSPENDU:           `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+      RESILIE:            `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+      EN_ATTENTE_PAIEMENT:`<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    }
+    const paiementDeclare = !!(abn.referenceTransaction)
+    const msg = {
+      ACTIF: 'Votre abonnement est actif.',
+      EN_RETARD: 'Votre abonnement est en retard de paiement. Réglez-le pour éviter la suspension.',
+      SUSPENDU: 'Votre organisation est suspendue. Veuillez régulariser votre abonnement.',
+      RESILIE: 'Votre abonnement a été résilié. Souscrivez à nouveau pour réactiver.',
+      EN_ATTENTE_PAIEMENT: paiementDeclare
+        ? 'Votre déclaration de paiement a bien été enregistrée. Notre équipe va la vérifier et vous notifiera par e-mail dès que votre abonnement sera activé.'
+        : 'Abonnement créé. Déclarez votre paiement pour activer votre accès.',
+    }
+    const s = abn.statut || 'RESILIE'
+    const cl = cls[s] || 'aucun'
+    card.innerHTML = `
+      <div class="abn-status-card ${cl}">
+        <div class="abn-status-icon ${cl}">${ico[s]||'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'}</div>
+        <div style="flex:1;">
+          <div class="abn-status-title">${msg[s]||s}</div>
+          <div class="abn-status-sub">
+            ${periodeLabel(abn.periode)} · Échéance : ${fmtDate(abn.dateProchainEcheance)}
+          </div>
+        </div>
+        ${statutBadge(s, abn.referenceTransaction)}
+      </div>`
+  }
+
+  function afficherInfoGrid(abn) {
+    const grid = document.getElementById('info-grid')
+    if (!abn) { grid.style.display = 'none'; return }
+    const d = abn.devise || 'XOF'
+    grid.style.display = 'grid'
+    grid.innerHTML = `
+      <div class="info-item">
+        <div class="info-label">Montant</div>
+        <div class="info-val">${fmt(abn.montant, d)}</div>
+        <div class="info-sub">${periodeLabel(abn.periode)}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Prochaine échéance</div>
+        <div class="info-val" style="font-size:16px;">${fmtDate(abn.dateProchainEcheance)}</div>
+        <div class="info-sub">Début : ${fmtDate(abn.dateDebut)}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Tranche</div>
+        <div style="margin-top:4px;"><span class="tranche-badge">Tranche ${abn.tranche||'—'}</span></div>
+        <div class="info-sub">${trancheLabel(abn.tranche)}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Adhérents (à la souscription)</div>
+        <div class="info-val">${abn.nbAdherentsAuSouscription ?? '—'}</div>
+      </div>`
+  }
+
+  async function charger() {
+    try {
+      [infoTarif, abonnement, moyensPaiement] = await Promise.all([
+        api.get(`/abonnements/montant/${ctx.orgId}`),
+        api.get(`/abonnements/${ctx.orgId}`).catch(() => null),
+        api.get('/cotisations/moyens-paiement').catch(() => []),
+      ])
+    } catch(e) {
+      toast.error('Impossible de charger les informations d\'abonnement.')
+      return
+    }
+
+    afficherStatut(abonnement)
+    afficherInfoGrid(abonnement)
+    afficherHistorique()
+
+    // Bouton souscrire
+    const btnS = document.getElementById('btn-souscrire')
+    if (perm.peutEcrire) {
+      const s = abonnement?.statut
+      if (!s || s === 'RESILIE' || s === 'EN_RETARD' || s === 'SUSPENDU') {
+        btnS.style.display = 'inline-flex'
+      } else {
+        btnS.style.display = 'none'
+      }
+    }
+  }
+
+  let historiqueData = []
+
+  function renderHistorique() {
+    const tbody = document.getElementById('tbody-historique')
+    const filtreStatut  = document.getElementById('hist-filtre-statut').value
+    const filtrePeriode = document.getElementById('hist-filtre-periode').value
+    const liste = historiqueData.filter(a => {
+      if (filtreStatut  && a.statut  !== filtreStatut)  return false
+      if (filtrePeriode && a.periode !== filtrePeriode) return false
+      return true
+    })
+    document.getElementById('hist-btn-reset').style.display = (filtreStatut || filtrePeriode) ? '' : 'none'
+    if (!liste.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucun abonnement${filtreStatut || filtrePeriode ? ' pour cette sélection' : ' enregistré'}</p></div></td></tr>`
+      return
+    }
+    tbody.innerHTML = liste.map(a => `
+      <tr>
+        <td>${periodeLabel(a.periode)}</td>
+        <td style="font-weight:700;">${fmt(a.montant, a.devise)}</td>
+        <td><span class="tranche-badge" style="font-size:11px;">T${a.tranche}</span></td>
+        <td>${a.nbAdherentsAuSouscription ?? '—'}</td>
+        <td>${fmtDate(a.dateDebut)}</td>
+        <td>${fmtDate(a.dateProchainEcheance)}</td>
+        <td>${statutBadge(a.statut, a.referenceTransaction)}</td>
+      </tr>`).join('')
+  }
+
+  async function afficherHistorique() {
+    const tbody = document.getElementById('tbody-historique')
+    try {
+      const data = await api.get(`/abonnements/${ctx.orgId}/historique`)
+      historiqueData = Array.isArray(data) ? data : []
+      renderHistorique()
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="7" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${e.message}</td></tr>`
+    }
+  }
+
+  // ─── MODAL ────────────────────────────────────────────────────────────────
+
+  function construireCartesMoyens() {
+    const container = document.getElementById('pay-cards')
+    container.innerHTML = ''
+    const liste = Array.isArray(moyensPaiement) ? moyensPaiement : []
+    liste.forEach(m => {
+      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, sub: '', logo: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
+      const card = document.createElement('div')
+      card.style.cssText = 'border:2px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s,box-shadow .15s;background:var(--surface);user-select:none;'
+      card.dataset.id = m.id
+      card.dataset.placeholder = cfg.placeholder
+      card.dataset.label = cfg.label
+      card.innerHTML = `
+        <div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:${cfg.bg};">
+          <img src="${cfg.logo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'"/>
+        </div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${cfg.label}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${cfg.sub}</div>
+        </div>
+        <div class="pm-radio" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <div class="pm-dot" style="width:6px;height:6px;border-radius:50%;background:#fff;display:none;"></div>
+        </div>`
+      card.addEventListener('click', () => selMoyen(card, m.id, cfg))
+      container.appendChild(card)
+    })
+  }
+
+  function selMoyen(card, id, cfg) {
+    selectedMoyenId = id
+    document.querySelectorAll('#pay-cards > div').forEach(c => {
+      const sel = c === card
+      c.style.borderColor = sel ? 'var(--primary)' : 'var(--border)'
+      c.style.boxShadow   = sel ? '0 0 0 3px rgba(37,99,235,.12)' : 'none'
+      const radio = c.querySelector('.pm-radio')
+      const dot   = c.querySelector('.pm-dot')
+      radio.style.background  = sel ? 'var(--primary)' : ''
+      radio.style.borderColor = sel ? 'var(--primary)' : 'var(--border)'
+      dot.style.display       = sel ? 'block' : 'none'
+    })
+    const ref  = document.getElementById('input-reference')
+    const refC = document.getElementById('input-reference-confirm')
+    ref.disabled = false; refC.disabled = false
+    ref.placeholder = cfg.placeholder; refC.placeholder = cfg.placeholder
+    document.getElementById('ref-label').innerHTML = cfg.label + ' — Référence <span style="color:#b91c1c;">*</span>'
+    document.getElementById('ref-hint').textContent = 'Numéro de transaction reçu après votre paiement ' + cfg.label + '.'
+    document.getElementById('ref-match-hint').style.display = 'none'
+    ref.value = ''; refC.value = ''
+    ref.focus()
+  }
+
+  window.selPeriode = (p) => {
+    selectedPeriode = p
+    document.getElementById('card-mensuel').classList.toggle('selected', p === 'MENSUEL')
+    document.getElementById('card-annuel').classList.toggle('selected', p === 'ANNUEL')
+    document.getElementById('radio-mensuel').classList.toggle('selected', p === 'MENSUEL')
+    document.getElementById('radio-annuel').classList.toggle('selected', p === 'ANNUEL')
+  }
+
+  window.fermerModal = () => {
+    document.getElementById('modal-abonnement').style.display = 'none'
+    document.getElementById('input-preuve').value = ''
+    document.getElementById('upload-label').textContent = 'Cliquez pour sélectionner un fichier'
+    document.getElementById('upload-zone').style.borderColor = ''
+    document.getElementById('preuve-preview').style.display = 'none'
+  }
+
+  function ouvrirModal() {
+    selectedPeriode = 'MENSUEL'
+    selectedMoyenId = null
+    selPeriode('MENSUEL')
+
+    const d = infoTarif?.devise || 'XOF'
+    const m = infoTarif?.montantMensuel || 0
+    const a = infoTarif?.montantAnnuel  || 0
+    const nb = infoTarif?.nbAdherents ?? '—'
+    const t  = infoTarif?.tranche ?? '—'
+
+    document.getElementById('modal-tarif-info').innerHTML = `
+      <strong>${nb} adhérent(s)</strong> — Tranche ${t} (${trancheLabel(t).split('(')[1]?.replace(')','') || ''})<br/>
+      Vos tarifs : <strong>${fmt(m,d)} / mois</strong> ou <strong>${fmt(a,d)} / an</strong>`
+
+    document.getElementById('lbl-mensuel').textContent = fmt(m, d) + ' / mois'
+    document.getElementById('lbl-annuel').textContent  = fmt(a, d) + ' / an'
+
+    document.getElementById('input-reference').value = ''
+    document.getElementById('input-reference-confirm').value = ''
+    document.getElementById('input-reference').disabled = true
+    document.getElementById('input-reference-confirm').disabled = true
+    document.getElementById('ref-label').innerHTML = 'Référence de paiement <span style="color:#b91c1c;">*</span>'
+    document.getElementById('ref-hint').textContent = 'Sélectionnez un moyen de paiement ci-dessus.'
+    document.getElementById('ref-match-hint').style.display = 'none'
+    document.getElementById('modal-err').style.display = 'none'
+    construireCartesMoyens()
+    document.getElementById('modal-abonnement').style.display = 'flex'
+  }
+
+  document.getElementById('input-reference').addEventListener('input', function() {
+    this.value = this.value.toUpperCase(); checkMatch()
+  })
+  document.getElementById('input-reference-confirm').addEventListener('input', function() {
+    this.value = this.value.toUpperCase(); checkMatch()
+  })
+  function checkMatch() {
+    const v1 = document.getElementById('input-reference').value.trim()
+    const v2 = document.getElementById('input-reference-confirm').value.trim()
+    const hint = document.getElementById('ref-match-hint')
+    if (!v2) { hint.style.display = 'none'; return }
+    hint.style.display = 'block'
+    if (v1 === v2) { hint.style.color = '#166534'; hint.textContent = 'Les deux références correspondent.' }
+    else           { hint.style.color = '#b91c1c'; hint.textContent = 'Les références ne correspondent pas.' }
+  }
+
+  // Prévisualisation fichier preuve
+  document.getElementById('input-preuve').addEventListener('change', function() {
+    const file = this.files[0]
+    if (!file) return
+    document.getElementById('upload-label').textContent = file.name
+    document.getElementById('upload-zone').style.borderColor = 'var(--primary)'
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onload = e => {
+        document.getElementById('preuve-img').src = e.target.result
+        document.getElementById('preuve-preview').style.display = 'block'
+      }
+      reader.readAsDataURL(file)
+    } else {
+      document.getElementById('preuve-preview').style.display = 'none'
+    }
+  })
+
+  window.soumettre = async () => {
+    const ref  = document.getElementById('input-reference').value.trim().toUpperCase()
+    const refC = document.getElementById('input-reference-confirm').value.trim().toUpperCase()
+    const errEl = document.getElementById('modal-err')
+    const showErr = msg => { errEl.textContent = msg; errEl.style.display = 'block' }
+    errEl.style.display = 'none'
+
+    if (!selectedMoyenId) { showErr('Veuillez sélectionner un moyen de paiement.'); return }
+    if (!ref)              { showErr('La référence de paiement est obligatoire.'); return }
+    if (ref.length < 4)    { showErr('La référence semble trop courte.'); return }
+    if (!refC)             { showErr('Veuillez confirmer la référence.'); return }
+    if (ref !== refC)      { showErr('Les deux références ne correspondent pas.'); return }
+
+    const btn = document.getElementById('btn-submit')
+    btn.disabled = true; btn.textContent = 'Envoi en cours…'
+
+    try {
+      // 1. Souscrire (crée ou renouvelle l'abonnement)
+      await api.post(`/abonnements/souscrire/${ctx.orgId}`, { periode: selectedPeriode })
+
+      // 2. Déclarer le paiement (multipart pour inclure la preuve)
+      const fd = new FormData()
+      fd.append('reference', ref)
+      fd.append('idMoyenPaye', String(selectedMoyenId))
+      const preuveFichier = document.getElementById('input-preuve').files[0]
+      if (preuveFichier) fd.append('preuve', preuveFichier)
+
+      await api.upload(`/abonnements/declarer-paiement/${ctx.orgId}`, fd)
+
+      fermerModal()
+      toast.success('Déclaration de paiement envoyée ! Elle sera confirmée par la plateforme.')
+      charger()
+    } catch(e) {
+      showErr(e.message || 'Une erreur est survenue. Réessayez.')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Soumettre ma déclaration'
+    }
+  }
+
+  document.getElementById('btn-souscrire').addEventListener('click', ouvrirModal)
+  document.getElementById('btn-rafraichir').addEventListener('click', charger)
+  document.getElementById('hist-filtre-statut').addEventListener('change', renderHistorique)
+  document.getElementById('hist-filtre-periode').addEventListener('change', renderHistorique)
+  document.getElementById('hist-btn-reset').addEventListener('click', () => {
+    document.getElementById('hist-filtre-statut').value = ''
+    document.getElementById('hist-filtre-periode').value = ''
+    renderHistorique()
+  })
+
+  charger()
+</script>
+</body>
+</html>

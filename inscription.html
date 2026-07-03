@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Inscription</title>
+  <title>UnioNova — Inscription</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <style>
     body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); padding: 24px; }
@@ -56,12 +56,19 @@
     .reg-login a { color: var(--primary); font-weight: 600; }
 
     select.form-input { appearance: none; cursor: pointer; }
+
+    /* ── RESPONSIVE MOBILE < 640px ── */
+    @media (max-width: 639px) {
+      body { padding: 16px; align-items: flex-start; }
+      .reg-wrapper { padding: 24px 16px; border-radius: 14px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 <div class="reg-wrapper">
   <div class="reg-brand">
-    <span class="reg-brand-logo">Ataabo</span>
+    <span class="reg-brand-logo">UnioNova</span>
   </div>
 
   <div class="reg-title">Créer un compte</div>

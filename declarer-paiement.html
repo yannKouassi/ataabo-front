@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Ataabo — Déclarer mon paiement</title>
+    <title>UnioNova — Déclarer mon paiement</title>
     <link rel="stylesheet" href="/src/css/main.css"/>
     <style>
         body { background: var(--bg-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px 16px; }
@@ -52,13 +52,19 @@
         .state-text { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
 
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+        @media (max-width: 480px) {
+          body { padding: 12px; align-items: flex-start; }
+          .pay-methods { grid-template-columns: 1fr; }
+          .card { padding: 18px 14px; }
+        }
     </style>
 </head>
 <body>
 <div class="wrap">
 
     <div class="header">
-        <div class="logo-text">ATAABO</div>
+        <div class="logo-text">UnioNova</div>
         <p style="color:var(--text-muted);font-size:13px;margin-top:4px;" id="org-name-header">Déclaration de paiement</p>
     </div>
 

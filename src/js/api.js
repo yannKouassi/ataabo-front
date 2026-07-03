@@ -2,7 +2,9 @@
 // API — Client HTTP centralisé
 // =============================================
 
-const BASE = '/api'
+const BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? 'https://ataabo-api-production.up.railway.app/api'
+  : '/api'
 
 function getToken() {
   return localStorage.getItem('accessToken') || localStorage.getItem('_tmp_token')
@@ -91,6 +93,8 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Erreur upload' }))
       throw new Error(err.message || 'Erreur upload')
     }
-    return res.json()
+    if (res.status === 204) return null
+    const text = await res.text()
+    return text ? JSON.parse(text) : null
   }
 }

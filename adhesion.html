@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ataabo — Inscription</title>
+  <title>UnioNova — Inscription</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <style>
@@ -84,6 +84,46 @@
     .p-done { color:var(--primary); font-weight:600; }
     .p-wait { color:var(--text-muted); }
     .p-pending { color:#d97706; font-weight:600; }
+
+    /* ── RESPONSIVE TABLETTE < 768px ── */
+    @media (max-width: 767px) {
+      .navbar { padding: 12px 20px; }
+      .page-wrap { padding: 28px 16px; }
+      .form-card { padding: 20px 16px; }
+      .choice-card { padding: 24px 18px; }
+
+      /* Barre d'étapes : numéros seuls, libellés cachés */
+      .steps { overflow-x: auto; padding-bottom: 4px; }
+      .step span:last-child { display: none; }
+      .step-line { min-width: 14px; margin: 0 4px; }
+
+      /* Grilles → 1 colonne */
+      .choice-grid { grid-template-columns: 1fr; gap: 14px; }
+      .form-row,
+      .form-row-3 { grid-template-columns: 1fr !important; }
+
+      /* OTP inputs légèrement réduits */
+      .otp-input { gap: 7px; }
+      .otp-input input { width: 42px; height: 50px; font-size: 18px; }
+
+      /* Carte Leaflet moins haute */
+      #org-map { height: 200px; }
+
+      /* Bannière org dans le flux adhésion */
+      #org-detail-card { flex-direction: column; }
+      #org-detail-logo,
+      #org-detail-armoiries { width: 100%; min-height: 56px; }
+    }
+
+    /* ── RESPONSIVE MOBILE < 480px ── */
+    @media (max-width: 480px) {
+      .page-wrap { padding: 16px 12px; }
+      .form-card { padding: 16px 12px; }
+      .navbar { padding: 10px 14px; }
+      .navbar-brand-icon { width: 28px; height: 28px; font-size: 11px; }
+      .otp-input { gap: 6px; }
+      .otp-input input { width: 38px; height: 44px; font-size: 16px; border-radius: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -91,7 +131,7 @@
 <nav class="navbar">
   <div class="navbar-brand" onclick="window.location.href='/accueil.html'">
     <div class="navbar-brand-icon">A</div>
-    Ataabo
+    UnioNova
   </div>
   <a href="/login.html" style="font-size:13.5px;font-weight:600;color:var(--text-muted);">Déjà un compte ? Se connecter →</a>
 </nav>
@@ -106,7 +146,7 @@
   <!-- ════════════════════════════════════ -->
   <div class="section visible" id="sec-choix">
     <div style="text-align:center; margin-bottom:36px;">
-      <div style="font-size:26px; font-weight:800; margin-bottom:8px;">Bienvenue sur Ataabo</div>
+      <div style="font-size:26px; font-weight:800; margin-bottom:8px;">Bienvenue sur UnioNova</div>
       <div style="font-size:14px; color:var(--text-muted);">Que souhaitez-vous faire ?</div>
     </div>
     <div class="choice-grid">
@@ -262,6 +302,10 @@
         <div class="form-group">
           <label class="form-label">Pays *</label>
           <select class="form-input" id="org-pays" onchange="afficherArmoiriesPays(this)"><option value="">Chargement...</option></select>
+          <div id="frais-activation-pays" style="display:none;margin-top:8px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:13px;color:#78350f;">
+            <span style="font-weight:700;">Frais d'activation :</span> <span id="frais-activation-montant"></span>
+            <div style="font-size:11.5px;margin-top:3px;color:#92400e;">Ces frais sont à régler une fois votre dossier approuvé par l'équipe UnioNova.</div>
+          </div>
         </div>
       </div>
       <div class="form-group"><label class="form-label">N° agrément *</label><input type="text" class="form-input" id="org-agrement" placeholder="Ex: N°0234/MEIS/DGAT"/></div>
@@ -426,6 +470,12 @@
         display:flex;align-items:center;justify-content:center;
         padding:12px;
       "></div>
+    </div>
+
+    <!-- Bandeau droit d'entrée — affiché avant le formulaire si montantEntree > 0 -->
+    <div id="bandeau-droit-entree" style="display:none;background:#fef9c3;border:1px solid #fde047;border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:800;color:#854d0e;margin-bottom:4px;">Droit d'entrée requis</div>
+      <div id="bandeau-droit-entree-msg" style="font-size:13px;color:#78350f;line-height:1.5;"></div>
     </div>
 
     <div class="form-card">
@@ -766,7 +816,7 @@
     display.style.color = 'var(--primary)'
   }
 
-  // Quand le pays change → recentrer la carte + afficher armoiries
+  // Quand le pays change → recentrer la carte + afficher armoiries + frais d'activation
   document.getElementById('org-pays').addEventListener('change', (e) => {
     const code = e.target.value
     if (!code) return
@@ -777,7 +827,22 @@
     const MAP_IND = { CIV:'+225', BEN:'+229', MLI:'+223', NGA:'+234', MDG:'+261' }
     const indEl = document.getElementById('org-indicatif')
     if (indEl && MAP_IND[code]) indEl.value = MAP_IND[code]
+    afficherFraisActivation(code)
   })
+
+  function afficherFraisActivation(codePays) {
+    const paysData = _paysDataCache.find(p => p.codePays === codePays)
+    const fraisEl = document.getElementById('frais-activation-pays')
+    const montantEl = document.getElementById('frais-activation-montant')
+    if (!fraisEl || !montantEl) return
+    if (paysData && paysData.montantActivation > 0) {
+      const devise = paysData.monnaie?.codeIso || 'XOF'
+      montantEl.textContent = paysData.montantActivation.toLocaleString('fr-FR') + ' ' + devise
+      fraisEl.style.display = 'block'
+    } else {
+      fraisEl.style.display = 'none'
+    }
+  }
 
   // Pré-sélection automatique du pays depuis localStorage
   function preselecterPaysOrg() {
@@ -802,6 +867,9 @@
 
     // Armoiries
     afficherArmoiriesPays(paysSelect)
+
+    // Frais d'activation (le cache est peut-être pas encore chargé si on arrive très tôt)
+    afficherFraisActivation(codePays)
 
     // Carte — attendre que le DOM soit peint avant d'initialiser Leaflet
     setTimeout(() => {
@@ -1250,6 +1318,18 @@
         const codePaysOrg = org.codePays || org.pays?.codePays
         const adhIndEl = document.getElementById('adh-indicatif')
         if (adhIndEl && codePaysOrg && MAP_IND[codePaysOrg]) { adhIndEl.value = MAP_IND[codePaysOrg]; adhIndEl.disabled = true }
+
+        // Bandeau droit d'entrée AVANT le formulaire
+        const montantEntree = org.montantEntree || org.droitEntree || 0
+        const bandeauDE = document.getElementById('bandeau-droit-entree')
+        const bandeauDEMsg = document.getElementById('bandeau-droit-entree-msg')
+        if (montantEntree > 0) {
+          const devise = org.devise || org.monnaie || 'XOF'
+          bandeauDEMsg.textContent = `Pour rejoindre ${org.nomOrganisation || org.libAssociation}, vous devrez payer un droit d'entrée de ${montantEntree.toLocaleString('fr-FR')} ${devise} après acceptation de votre dossier.`
+          bandeauDE.style.display = 'block'
+        } else {
+          bandeauDE.style.display = 'none'
+        }
 
         renderSteps(STEPS_REJOINDRE, 2)
         show('sec-form-adhesion')
