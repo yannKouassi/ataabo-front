@@ -2,7 +2,9 @@
 // I18N — Gestion langue / pays
 // =============================================
 
-const BASE = '/api'
+const BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? 'https://ataabo-api-production.up.railway.app/api'
+  : '/api'
 
 // SVG icônes inline (style stroke du projet)
 const SVG_GLOBE = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -52,7 +54,7 @@ export async function chargerTraductions() {
   const langue = getLangue()
   // Fichiers JSON locaux (UI statique)
   try {
-    const resp = await fetch(`/src/i18n/${langue}.json`)
+    const resp = await fetch(`/i18n/${langue}.json`)
     _traductions = resp.ok ? await resp.json() : {}
   } catch { _traductions = {} }
   return _traductions
