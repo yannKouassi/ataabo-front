@@ -319,7 +319,8 @@
   initTraductionAuto()
 
   // Charger le logo et le nom de la plateforme depuis le serveur
-  fetch('/api/plateforme')
+  const API_BASE = window.location.hostname !== 'localhost' ? 'https://ataabo-api-production.up.railway.app/api' : '/api'
+  fetch(`${API_BASE}/plateforme`)
     .then(r => r.ok ? r.json() : null)
     .then(p => {
       if (!p) return
