@@ -211,7 +211,7 @@
 <nav class="navbar">
   <div class="navbar-brand">
     <div class="navbar-brand-icon" id="navbar-brand-icon">A</div>
-    <span id="navbar-brand-nom">UnioNova</span>
+    <span id="navbar-brand-nom"><span style="color:#2E7D32">Unio</span><span style="color:#1e2530">Nova</span></span>
   </div>
   <div class="navbar-actions">
     <div id="pays-combobox-container"></div>
@@ -329,7 +329,11 @@
       if (p.urlLogoPlateforme && iconEl) {
         iconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" onerror="this.parentElement.textContent='A'">`
       }
-      if (p.nomPlateforme && nomEl) nomEl.textContent = p.nomPlateforme
+      if (p.nomPlateforme && nomEl) {
+        const nom = p.nomPlateforme
+        const mid = Math.ceil(nom.length / 2)
+        nomEl.innerHTML = `<span style="color:#2E7D32">${nom.slice(0, mid)}</span><span style="color:#1e2530">${nom.slice(mid)}</span>`
+      }
     })
     .catch(() => {})
 
