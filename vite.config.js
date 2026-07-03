@@ -31,6 +31,7 @@ export default defineConfig({
 
   build: {
     outDir: 'dist',
+    target: 'es2022',
     rollupOptions: {
       input: findHtmlFiles(__dirname),
     },
