@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Cartes de visite — UnioNova</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f0f0f0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 32px;
+    }
+
+    h1 {
+      font-size: 15px;
+      color: #555;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .btn-print {
+      background: #2E7D32;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .btn-print:hover { background: #1b5e20; }
+
+    .note {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 24px;
+    }
+
+    /* Paire recto / verso */
+    .paire {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Carte standard 85mm × 54mm */
+    .carte {
+      width: 323px;   /* 85.6mm @ 96dpi */
+      height: 204px;  /* 54mm @ 96dpi */
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0,0,0,.18);
+      flex-shrink: 0;
+    }
+
+    /* ─── RECTO ─── */
+    .recto {
+      background: #1e2530;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 20px 14px;
+      position: relative;
+    }
+
+    .recto-accent {
+      position: absolute;
+      top: 0; left: 0;
+      width: 5px; height: 100%;
+      background: #2E7D32;
+    }
+
+    .recto-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .recto-logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: white;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .recto-marque {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .recto-nom-app {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .recto-nom-app .vert { color: #4caf50; }
+    .recto-nom-app .blanc { color: #ffffff; }
+
+    .recto-tagline {
+      font-size: 9px;
+      color: #9ca3af;
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    .recto-divider {
+      height: 1px;
+      background: rgba(255,255,255,.12);
+      margin: 10px 0 8px;
+    }
+
+    .recto-personne {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .recto-poste {
+      font-size: 10px;
+      color: #4caf50;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
+
+    .recto-contacts {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-top: 8px;
+    }
+
+    .recto-contact-ligne {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #d1d5db;
+    }
+
+    .recto-contact-ligne svg {
+      flex-shrink: 0;
+      opacity: .7;
+    }
+
+    .recto-site {
+      font-size: 9.5px;
+      color: #6ee7b7;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* ─── VERSO ─── */
+    .verso {
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+    }
+
+    .verso-gauche {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 170px;
+    }
+
+    .verso-logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .verso-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      object-fit: contain;
+    }
+
+    .verso-nom-app {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .verso-nom-app .vert { color: #2E7D32; }
+    .verso-nom-app .sombre { color: #1e2530; }
+
+    .verso-desc {
+      font-size: 9px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .verso-url {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #2E7D32;
+      margin-top: 4px;
+    }
+
+    .verso-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .verso-qr canvas,
+    .verso-qr img {
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .verso-scan-label {
+      font-size: 8.5px;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    /* ─── IMPRESSION ─── */
+    @media print {
+      body {
+        background: white;
+        padding: 10mm;
+      }
+      h1, .btn-print, .note { display: none; }
+      .paire { page-break-after: always; break-after: page; }
+      .paire:last-child { page-break-after: avoid; break-after: avoid; }
+      .carte { box-shadow: none; border: 1px solid #ddd; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Cartes de visite — UnioNova</h1>
+<button class="btn-print" onclick="window.print()">Imprimer les cartes</button>
+<div class="note">Impression recommandée : papier glacé, format A4, sans marges — puis découper</div>
+
+<!-- ══════════ YANNICK ══════════ -->
+<div class="paire">
+  <!-- RECTO -->
+  <div class="carte recto">
+    <div class="recto-accent"></div>
+    <div>
+      <div class="recto-top">
+        <img src="/img.png" class="recto-logo" alt="UnioNova"/>
+        <div class="recto-marque">
+          <div class="recto-nom-app">
+            <span class="vert">Unio</span><span class="blanc">Nova</span>
+          </div>
+          <div class="recto-tagline">ORGANISATIONS SANS FRONTIÈRES</div>
+        </div>
+      </div>
+      <div class="recto-divider"></div>
+      <div class="recto-personne">Yannick Kouassi</div>
+      <div class="recto-poste">Co-fondateur &amp; Développeur</div>
+      <div class="recto-contacts">
+        <div class="recto-contact-ligne">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.57 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6.29 6.29l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          +225 07 11 51 16 36
+        </div>
+        <div class="recto-contact-ligne">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          ynnkouassi@gmail.com
+        </div>
+      </div>
+    </div>
+    <div class="recto-site">unionova.vercel.app</div>
+  </div>
+
+  <!-- VERSO -->
+  <div class="carte verso">
+    <div class="verso-gauche">
+      <div class="verso-logo-wrap">
+        <img src="/img.png" class="verso-logo" alt="UnioNova"/>
+        <div class="verso-nom-app">
+          <span class="vert">Unio</span><span class="sombre">Nova</span>
+        </div>
+      </div>
+      <div class="verso-desc">
+        La plateforme dédiée aux associations, mutuelles et ONG d'Afrique.<br/>
+        Adhésions · Cotisations · Événements
+      </div>
+      <div class="verso-url">unionova.vercel.app</div>
+    </div>
+    <div class="verso-qr">
+      <div id="qr-yannick"></div>
+      <div class="verso-scan-label">Scanner pour visiter</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DEZAESLIE ══════════ -->
+<div class="paire">
+  <!-- RECTO -->
+  <div class="carte recto">
+    <div class="recto-accent"></div>
+    <div>
+      <div class="recto-top">
+        <img src="/img.png" class="recto-logo" alt="UnioNova"/>
+        <div class="recto-marque">
+          <div class="recto-nom-app">
+            <span class="vert">Unio</span><span class="blanc">Nova</span>
+          </div>
+          <div class="recto-tagline">ORGANISATIONS SANS FRONTIÈRES</div>
+        </div>
+      </div>
+      <div class="recto-divider"></div>
+      <div class="recto-personne">Dezaeslie</div>
+      <div class="recto-poste">Co-fondatrice &amp; Design</div>
+      <div class="recto-contacts">
+        <div class="recto-contact-ligne">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.57 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6.29 6.29l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          +225 07 05 25 98 66
+        </div>
+        <div class="recto-contact-ligne">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          dezaeslie@gmail.com
+        </div>
+      </div>
+    </div>
+    <div class="recto-site">unionova.vercel.app</div>
+  </div>
+
+  <!-- VERSO -->
+  <div class="carte verso">
+    <div class="verso-gauche">
+      <div class="verso-logo-wrap">
+        <img src="/img.png" class="verso-logo" alt="UnioNova"/>
+        <div class="verso-nom-app">
+          <span class="vert">Unio</span><span class="sombre">Nova</span>
+        </div>
+      </div>
+      <div class="verso-desc">
+        La plateforme dédiée aux associations, mutuelles et ONG d'Afrique.<br/>
+        Adhésions · Cotisations · Événements
+      </div>
+      <div class="verso-url">unionova.vercel.app</div>
+    </div>
+    <div class="verso-qr">
+      <div id="qr-dezaeslie"></div>
+      <div class="verso-scan-label">Scanner pour visiter</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const url = 'https://unionova.vercel.app'
+  const opts = { width: 100, height: 100, colorDark: '#1e2530', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }
+
+  new QRCode(document.getElementById('qr-yannick'), Object.assign({ text: url }, opts))
+  new QRCode(document.getElementById('qr-dezaeslie'), Object.assign({ text: url }, opts))
+</script>
+</body>
+</html>
