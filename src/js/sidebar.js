@@ -2,7 +2,7 @@
 // SIDEBAR — Construction dynamique depuis le contexte
 // =============================================
 
-import { getContexte, saveContexte, logout } from './auth.js'
+import { getContexte, saveContexte, logout, getPermission, hasMenu } from './auth.js'
 import { api } from './api.js'
 import { buildComboboxPays, chargerTraductions, appliquerTraductions } from './i18n.js'
 import { getTheme, appliquerTheme, initTheme } from './theme.js'
@@ -71,6 +71,112 @@ export async function buildSidebar() {
 
     // Bouton mode nuit
     initTheme()
+
+    // Notifications
+    if (ctx?.orgId && ctx.orgId !== 'PLATEFORME') {
+      const btnNotif = document.getElementById('btn-notif')
+      if (btnNotif) {
+        // Panneau notifications (inséré après le bouton)
+        const panel = document.createElement('div')
+        panel.id = 'notif-panel'
+        panel.style.cssText = `
+          display:none;position:absolute;top:52px;right:0;min-width:280px;
+          background:var(--surface);border:1px solid var(--border);border-radius:12px;
+          box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;overflow:hidden;
+        `
+        panel.innerHTML = `
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;">Notifications</div>
+          <div id="notif-list" style="padding:8px 0;max-height:320px;overflow-y:auto;"></div>
+        `
+        btnNotif.parentElement.style.position = 'relative'
+        btnNotif.parentElement.appendChild(panel)
+
+        // Toggle panneau
+        btnNotif.addEventListener('click', (e) => {
+          e.stopPropagation()
+          panel.style.display = panel.style.display === 'none' ? 'block' : 'none'
+        })
+        document.addEventListener('click', () => { panel.style.display = 'none' })
+
+        // Charger et afficher le badge
+        const peutVoirRecouvrement = hasMenu('/paiements/recouvrement')
+
+        async function chargerNotifications() {
+          try {
+            const data = await api.get(`/cotisations/notifications?orgId=${ctx.orgId}`)
+
+            // Ce que le membre voit : ses propres cotisations en attente
+            // Ce que l'admin/trésorier voit en plus : les membres en retard (s'il a accès au recouvrement)
+            const notifItems = []
+            if (peutVoirRecouvrement && data.cotisationsEnRetard > 0) {
+              notifItems.push({ type: 'org', count: data.cotisationsEnRetard })
+            }
+            if (data.mesCotisationsEnAttente > 0) {
+              notifItems.push({ type: 'perso', count: data.mesCotisationsEnAttente })
+            }
+            const total = notifItems.reduce((s, n) => s + n.count, 0)
+
+            // Badge
+            let badge = document.getElementById('notif-badge')
+            if (!badge) {
+              badge = document.createElement('span')
+              badge.id = 'notif-badge'
+              badge.style.cssText = `
+                position:absolute;top:-4px;right:-4px;
+                background:#ef4444;color:#fff;border-radius:50%;
+                width:17px;height:17px;font-size:10px;font-weight:700;
+                display:flex;align-items:center;justify-content:center;
+                line-height:1;
+              `
+              btnNotif.style.position = 'relative'
+              btnNotif.appendChild(badge)
+            }
+            badge.textContent = total > 99 ? '99+' : total
+            badge.style.display = total > 0 ? 'flex' : 'none'
+
+            // Contenu du panneau
+            const list = document.getElementById('notif-list')
+            if (!list) return
+            if (notifItems.length === 0) {
+              list.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">Aucune notification</div>`
+              return
+            }
+            list.innerHTML = ''
+            for (const n of notifItems) {
+              const item = document.createElement('a')
+              item.style.cssText = `display:flex;align-items:flex-start;gap:12px;padding:12px 16px;text-decoration:none;color:var(--text);transition:background .15s;cursor:pointer;`
+              item.onmouseenter = () => item.style.background = 'var(--bg)'
+              item.onmouseleave = () => item.style.background = ''
+              if (n.type === 'org') {
+                item.href = '/src/pages/recouvrement.html'
+                item.innerHTML = `
+                  <div style="width:36px;height:36px;border-radius:8px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;">${n.count} membre(s) en retard de cotisation</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Voir le recouvrement</div>
+                  </div>`
+              } else {
+                item.href = '/src/pages/mes-cotisations.html'
+                item.innerHTML = `
+                  <div style="width:36px;height:36px;border-radius:8px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;">Votre cotisation est en attente</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Régularisez votre situation</div>
+                  </div>`
+              }
+              list.appendChild(item)
+            }
+          } catch(_) {}
+        }
+
+        chargerNotifications()
+        setInterval(chargerNotifications, 60000)
+      }
+    }
 
     // Récupérer la photo depuis le serveur si pas encore dans localStorage
     if (!urlPhoto) {

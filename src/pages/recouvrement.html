@@ -44,10 +44,16 @@
         <div class="page-title">Recouvrement</div>
         <div class="page-subtitle">Adhérents en retard de cotisation</div>
       </div>
-      <button class="btn btn-outline btn-print" onclick="window.print()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimer
-      </button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="btn-relancer-tous">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Relancer tous
+        </button>
+        <button class="btn btn-outline btn-print" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
     </div>
 
     <div class="card">
@@ -120,7 +126,7 @@
           <td><span class="badge badge-danger">${r.nombrePeriodes||'?'} période(s)</span></td>
           <td style="font-weight:700;color:#b91c1c;">${fmt(r.montantDu)}</td>
           <td>
-            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" onclick="relancer('${r.numAdherent}')">Relancer</button>` : '—'}
+            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" onclick="relancer('${r.emailAdherent}')">Relancer</button>` : '—'}
           </td>
         </tr>
       `).join('')
@@ -136,12 +142,28 @@
   const fmt = m => m != null ? new Intl.NumberFormat('fr-FR').format(m) + ' FCFA' : '—'
   window.changerPage = n => { page = n; charger() }
 
-  window.relancer = async (num) => {
+  window.relancer = async (email) => {
     try {
-      await api.post(`/cotisations/recouvrement/relancer`, { numAdherent: num, orgId: ctx.orgId })
+      await api.post(`/cotisations/recouvrement/relancer`, { email, orgId: ctx.orgId })
       toast.success('Email de relance envoyé.')
     } catch(err) { toast.error(err.message) }
   }
+
+  document.getElementById('btn-relancer-tous').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-relancer-tous')
+    if (!confirm('Envoyer un email de rappel à tous les membres en retard ?')) return
+    btn.disabled = true
+    btn.textContent = 'Envoi en cours...'
+    try {
+      const res = await api.post(`/cotisations/recouvrement/relancer-tous`, { orgId: ctx.orgId })
+      toast.success(`${res.emailsEnvoyes} email(s) de rappel envoyé(s).`)
+    } catch(err) {
+      toast.error(err.message)
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Relancer tous`
+    }
+  })
 
   let t; document.getElementById('search-input').addEventListener('input', () => {
     clearTimeout(t); t = setTimeout(() => { page=0; charger() }, 400)

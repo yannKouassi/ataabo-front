@@ -92,6 +92,22 @@ export function getPermission(url) {
   return { peutLire: true, peutEcrire: false, peutSupprimer: false }
 }
 
+/**
+ * Vérifie si un menu (ou sous-menu) est présent dans les droits de l'utilisateur.
+ * Contrairement à getPermission, retourne false si le menu est absent (pas de fallback permissif).
+ */
+export function hasMenu(url) {
+  const ctx = getContexte()
+  if (!ctx || !ctx.menus) return false
+  for (const menu of ctx.menus) {
+    if (menu.url === url) return true
+    for (const sous of (menu.sousMenus || [])) {
+      if (sous.url === url) return true
+    }
+  }
+  return false
+}
+
 export function requireContexte() {
   if (!isLoggedIn()) {
     window.location.href = '/login.html'
