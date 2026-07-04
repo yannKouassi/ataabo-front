@@ -8,9 +8,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <style>
     body { min-height:100vh; background:var(--bg); }
-    .navbar { display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:var(--surface); border-bottom:1px solid var(--border); }
-    .navbar-brand { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800; color:var(--primary); cursor:pointer; }
-    .navbar-brand-icon { width:34px; height:34px; border-radius:8px; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; }
+    .navbar { display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+    .navbar-brand { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800; color:var(--primary); cursor:pointer; text-decoration:none; }
+    .navbar-brand-icon { width:34px; height:34px; border-radius:8px; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; overflow:hidden; }
+    .navbar-actions { display:flex; gap:10px; align-items:center; }
+    .nav-link-btn { padding:7px 16px; background:var(--surface); border:1.5px solid var(--border); color:var(--text); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s, color .15s; }
+    .nav-link-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .nav-primary-btn { padding:7px 16px; background:var(--primary); color:white; border-radius:8px; font-size:13px; font-weight:700; border:none; cursor:pointer; transition:background .15s; }
+    .nav-primary-btn:hover { background:var(--primary-dark); }
     .page-wrap { max-width:720px; margin:0 auto; padding:48px 24px; }
 
     /* STEPS */
@@ -121,6 +126,8 @@
       .form-card { padding: 16px 12px; }
       .navbar { padding: 10px 14px; }
       .navbar-brand-icon { width: 28px; height: 28px; font-size: 11px; }
+      .nav-link-btn { display: none; }
+      .nav-primary-btn { font-size: 12px; padding: 6px 12px; }
       .otp-input { gap: 6px; }
       .otp-input input { width: 38px; height: 44px; font-size: 16px; border-radius: 8px; }
     }
@@ -129,11 +136,17 @@
 <body>
 
 <nav class="navbar">
-  <div class="navbar-brand" onclick="window.location.href='/accueil.html'">
-    <div class="navbar-brand-icon">A</div>
-    UnioNova
+  <a class="navbar-brand" href="/accueil.html" style="text-decoration:none;">
+    <div class="navbar-brand-icon" id="nav-brand-icon">A</div>
+    <span id="nav-brand-nom">UnioNova</span>
+  </a>
+  <div class="navbar-actions">
+    <button id="btn-theme" class="topbar-icon-btn" title="Mode nuit">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="nav-link-btn" onclick="window.location.href='/accueil.html'">Accueil</button>
+    <button class="nav-primary-btn" onclick="window.location.href='/login.html'">Se connecter</button>
   </div>
-  <a href="/login.html" style="font-size:13.5px;font-weight:600;color:var(--text-muted);">Déjà un compte ? Se connecter →</a>
 </nav>
 
 <div class="page-wrap">
@@ -621,6 +634,15 @@
   initTheme()
   chargerTraductions().then(appliquerTraductions)
   initTraductionAuto()
+
+  const API_BASE = window.location.hostname !== 'localhost' ? 'https://ataabo-api-production.up.railway.app/api' : '/api'
+  fetch(`${API_BASE}/plateforme`).then(r => r.ok ? r.json() : null).then(p => {
+    if (!p) return
+    const iconEl = document.getElementById('nav-brand-icon')
+    const nomEl = document.getElementById('nav-brand-nom')
+    if (p.urlLogoPlateforme && iconEl) iconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" onerror="this.parentElement.textContent='A'">`
+    if (p.nomPlateforme && nomEl) { const nom = p.nomPlateforme; const mid = Math.ceil(nom.length / 2); nomEl.innerHTML = `<span style="color:#2E7D32">${nom.slice(0,mid)}</span><span style="color:#1e2530">${nom.slice(mid)}</span>` }
+  }).catch(() => {})
 
   // ─── STATE ───────────────────────────────────────────
   let mode = null
