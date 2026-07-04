@@ -187,6 +187,31 @@
         </div>
       </div>
 
+      <div class="card graphique-bloc" id="bloc-visites">
+        <div class="graphique-header" data-target="body-visites">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#0284c7" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Visiteurs de la plateforme</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-visites" style="display:none;padding:16px 20px 20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;" id="visites-totaux"></div>
+            <select id="visites-periode" style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);cursor:pointer;">
+              <option value="7">7 derniers jours</option>
+              <option value="14">14 derniers jours</option>
+              <option value="30" selected>30 derniers jours</option>
+              <option value="60">60 derniers jours</option>
+              <option value="90">90 derniers jours</option>
+            </select>
+          </div>
+          <div style="position:relative;height:220px;"><canvas id="chart-visites"></canvas></div>
+        </div>
+      </div>
+
       <div class="card graphique-bloc" id="bloc-validation">
         <div class="graphique-header" data-target="body-validation">
           <div style="display:flex;align-items:center;gap:10px;">
@@ -250,7 +275,7 @@
     </div>`
   }
 
-  let chartTypes, chartTop, chartEvolution, chartPaiementsEvo, chartAbonnementsEvo, chartStatutsPaiements, chartPays, chartValidation
+  let chartTypes, chartTop, chartEvolution, chartPaiementsEvo, chartAbonnementsEvo, chartStatutsPaiements, chartPays, chartValidation, chartVisites
   let _toutesLesOrgs = []
   let _dernierStats = null
 
@@ -728,6 +753,71 @@
       btn.addEventListener('click', () => afficherOrgsPage(+btn.dataset.p))
     })
   }
+
+  // ── Graphique visiteurs ──
+  async function chargerVisites() {
+    const jours = document.getElementById('visites-periode').value
+    try {
+      const data = await api.get(`/admin/stats-visites?jours=${jours}`)
+      const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2E7D32'
+      const mois = ['jan','fév','mar','avr','mai','juin','juil','aoû','sep','oct','nov','déc']
+      const aujourdhui = new Date().toISOString().slice(0, 10)
+      const hier = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+      const labels = data.map(d => {
+        if (d.date === aujourdhui) return "Auj."
+        if (d.date === hier) return "Hier"
+        // Parser sans décalage fuseau : YYYY-MM-DD → prendre les parties directement
+        const [, , jour] = d.date.split('-')
+        const moisIdx = parseInt(d.date.split('-')[1]) - 1
+        return `${parseInt(jour)} ${mois[moisIdx]}`
+      })
+      const accueil = data.map(d => d.accueil || 0)
+      const connexions = data.map(d => d.connexions || 0)
+      const totalA = accueil.reduce((a, b) => a + b, 0)
+      const totalC = connexions.reduce((a, b) => a + b, 0)
+
+      document.getElementById('visites-totaux').innerHTML = `
+        <div style="background:var(--bg-secondary,#f9fafb);border-radius:10px;padding:10px 18px;">
+          <div style="font-size:20px;font-weight:800;color:${primary};">${totalA}</div>
+          <div style="font-size:12px;color:var(--text-muted);">Visites accueil</div>
+        </div>
+        <div style="background:var(--bg-secondary,#f9fafb);border-radius:10px;padding:10px 18px;">
+          <div style="font-size:20px;font-weight:800;color:#2563eb;">${totalC}</div>
+          <div style="font-size:12px;color:var(--text-muted);">Connexions</div>
+        </div>
+        <div style="background:var(--bg-secondary,#f9fafb);border-radius:10px;padding:10px 18px;">
+          <div style="font-size:20px;font-weight:800;color:var(--text);">${totalA + totalC}</div>
+          <div style="font-size:12px;color:var(--text-muted);">Total interactions</div>
+        </div>`
+
+      if (chartVisites) chartVisites.destroy()
+      chartVisites = new Chart(document.getElementById('chart-visites'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Visites accueil', data: accueil, backgroundColor: primary + 'bb', borderRadius: 4 },
+            { label: 'Connexions', data: connexions, backgroundColor: '#2563ebbb', borderRadius: 4 }
+          ]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 12 } } } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 11 } } } }
+        }
+      })
+    } catch(_) {}
+  }
+
+  document.getElementById('visites-periode').addEventListener('change', chargerVisites)
+
+  // Charger les visites à l'ouverture de l'accordéon
+  document.querySelector('[data-target="body-visites"]').addEventListener('click', () => {
+    setTimeout(() => {
+      if (chartVisites) chartVisites.resize()
+      else chargerVisites()
+    }, 50)
+  })
 
   document.getElementById('btn-filtrer').addEventListener('click', charger)
   document.getElementById('btn-reset').addEventListener('click', () => {

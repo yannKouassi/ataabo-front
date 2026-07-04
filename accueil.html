@@ -338,6 +338,12 @@
     })
     .catch(() => {})
 
+  // Compter la visite (une seule fois par session navigateur)
+  if (!sessionStorage.getItem('ping_accueil')) {
+    fetch(`${API_BASE}/analytics/ping`, { method: 'POST' }).catch(() => {})
+    sessionStorage.setItem('ping_accueil', '1')
+  }
+
   await buildComboboxPays('pays-combobox-container')
 
   const paysList = await chargerPaysLangues()
