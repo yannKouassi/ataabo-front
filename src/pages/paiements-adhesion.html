@@ -383,34 +383,25 @@
         datasets: [{
           label: 'Montant collecté',
           data: valuesEvo,
-          backgroundColor: primary + 'bb',
-          borderColor: primary,
-          borderWidth: 1.5,
-          borderRadius: 6,
-          borderSkipped: false,
+          backgroundColor: primary + 'cc',
+          hoverBackgroundColor: primary,
+          borderRadius: 8, borderSkipped: false,
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 600, easing: 'easeInOutQuart' },
         plugins: {
           legend: { display: false },
           tooltip: {
-            callbacks: {
-              label: c => ` ${new Intl.NumberFormat('fr-FR').format(c.raw)} ${devise}`
-            }
+            backgroundColor: 'rgba(15,23,42,0.85)', titleColor: '#fff', bodyColor: '#cbd5e1',
+            padding: 12, cornerRadius: 10, borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+            callbacks: { label: c => ` ${new Intl.NumberFormat('fr-FR').format(c.raw)} ${devise}` }
           }
         },
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              font: { size: 11 },
-              callback: v => v === 0 ? '0' : new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v)
-            },
-            grid: { color: 'rgba(0,0,0,.06)' }
-          },
-          x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+          y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.12)', drawBorder: false }, border: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 }, callback: v => v === 0 ? '0' : new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v) } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
         }
       }
     })
@@ -428,9 +419,7 @@
         datasets: [{
           data: [confirmes, aVerif, enAtt],
           backgroundColor: ['#16a34a', '#ca8a04', '#d1d5db'],
-          borderWidth: 2,
-          borderColor: '#ffffff',
-          hoverOffset: 6,
+          borderWidth: 3, borderColor: 'var(--surface)', hoverOffset: 6,
         }]
       },
       options: {

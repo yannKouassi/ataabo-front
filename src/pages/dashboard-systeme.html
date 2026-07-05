@@ -71,6 +71,9 @@
       </div>
     </div>
 
+    <!-- Alertes intelligentes -->
+    <div id="section-alertes" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;"></div>
+
     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;" id="stats-grid">
       <div class="page-loader"><div class="spinner"></div></div>
     </div>
@@ -279,8 +282,78 @@
   let _toutesLesOrgs = []
   let _dernierStats = null
 
+  const _TOOLTIP_SYS = {
+    backgroundColor: 'rgba(15,23,42,0.85)', titleColor: '#fff', bodyColor: '#cbd5e1',
+    padding: 12, cornerRadius: 10, borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+    displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 4,
+  }
+  const _GRID_SYS  = { color: 'rgba(148,163,184,0.12)', drawBorder: false }
+  const _TICK_SYS  = { color: '#94a3b8', font: { size: 11 } }
+  const _ANIM_SYS  = { duration: 600, easing: 'easeInOutQuart' }
+
+  function _gradSys(canvas, hex, a1 = 0.22, a2 = 0.02) {
+    const g = canvas.getContext('2d').createLinearGradient(0, 0, 0, 260)
+    g.addColorStop(0, hex + Math.round(a1*255).toString(16).padStart(2,'0'))
+    g.addColorStop(1, hex + Math.round(a2*255).toString(16).padStart(2,'0'))
+    return g
+  }
+
+  function afficherAlertesSys(stats) {
+    const alertes = []
+    const COULEURS = {
+      danger:  { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', icon: '#ef4444' },
+      warning: { bg: '#fffbeb', border: '#fde68a', text: '#92400e', icon: '#f59e0b' },
+      info:    { bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af', icon: '#3b82f6' },
+    }
+
+    if ((stats.orgsEnAttente ?? 0) > 0) {
+      alertes.push({
+        type: 'warning',
+        icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+        titre: `${stats.orgsEnAttente} organisation${stats.orgsEnAttente > 1 ? 's' : ''} en attente de validation`,
+        texte: 'Des dossiers d\'organisations sont soumis et attendent votre examen.',
+        lien: '/src/pages/admin-organisations-attente.html', lienLabel: 'Examiner les dossiers'
+      })
+    }
+
+    if ((stats.paiementsEnAttente ?? 0) > 0) {
+      alertes.push({
+        type: 'warning',
+        icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+        titre: `${stats.paiementsEnAttente} paiement${stats.paiementsEnAttente > 1 ? 's' : ''} d'activation en attente`,
+        texte: 'Des organisations ont soumis une référence de paiement en attente de vérification.',
+        lien: '/src/pages/admin-paiements-activation.html', lienLabel: 'Vérifier les paiements'
+      })
+    }
+
+    if ((stats.abonnementsEnAttente ?? 0) > 0) {
+      alertes.push({
+        type: 'info',
+        icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>`,
+        titre: `${stats.abonnementsEnAttente} abonnement${stats.abonnementsEnAttente > 1 ? 's' : ''} en attente de paiement`,
+        texte: 'Certaines organisations n\'ont pas encore réglé leur abonnement plateforme.',
+        lien: '/src/pages/admin-abonnements.html', lienLabel: 'Voir les abonnements'
+      })
+    }
+
+    const conteneur = document.getElementById('section-alertes')
+    conteneur.innerHTML = alertes.map(a => {
+      const c = COULEURS[a.type]
+      return `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:${c.bg};border:1px solid ${c.border};border-radius:12px;">
+          <span style="color:${c.icon};flex-shrink:0;margin-top:1px;">${a.icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:${c.text};margin-bottom:2px;">${a.titre}</div>
+            <div style="font-size:12px;color:${c.text};opacity:.85;line-height:1.5;">${a.texte}</div>
+          </div>
+          ${a.lien ? `<a href="${a.lien}" style="flex-shrink:0;font-size:12px;font-weight:600;color:${c.icon};text-decoration:none;white-space:nowrap;padding:4px 10px;border:1px solid ${c.border};border-radius:6px;background:#fff;">${a.lienLabel}</a>` : ''}
+        </div>`
+    }).join('')
+  }
+
   function dessinerGraphiques(stats) {
     const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
+    const primaryHex = primary.startsWith('#') ? primary : '#6366f1'
     const PALETTE = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4']
 
     // Graphique 1 — répartition par type d'organisation
@@ -292,9 +365,9 @@
       type: 'doughnut',
       data: {
         labels: typesLabels.length ? typesLabels : ['Aucune donnée'],
-        datasets: [{ data: typesData.length ? typesData : [1], backgroundColor: PALETTE.slice(0, Math.max(typesLabels.length, 1)), borderWidth: 0 }]
+        datasets: [{ data: typesData.length ? typesData : [1], backgroundColor: PALETTE.slice(0, Math.max(typesLabels.length, 1)), borderWidth: 3, borderColor: 'var(--surface)', hoverOffset: 6 }]
       },
-      options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '60%' }
+      options: { maintainAspectRatio: false, animation: _ANIM_SYS, plugins: { tooltip: _TOOLTIP_SYS, legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, padding: 14, font: { size: 12 }, color: '#64748b' } } }, cutout: '65%' }
     })
 
     // Graphique 2 — top 5 organisations par adhérents
@@ -306,13 +379,12 @@
       type: 'bar',
       data: {
         labels: topLabels,
-        datasets: [{ label: 'Adhérents', data: topData, backgroundColor: primary + 'bb', borderRadius: 4 }]
+        datasets: [{ label: 'Adhérents', data: topData, backgroundColor: primaryHex + 'cc', hoverBackgroundColor: primaryHex, borderRadius: 8, borderSkipped: false }]
       },
       options: {
-        maintainAspectRatio: false,
-        indexAxis: 'y',
-        plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        maintainAspectRatio: false, animation: _ANIM_SYS, indexAxis: 'y',
+        plugins: { tooltip: _TOOLTIP_SYS, legend: { display: false } },
+        scales: { x: { grid: _GRID_SYS, ticks: { ..._TICK_SYS, precision: 0 }, border: { display: false }, beginAtZero: true }, y: { grid: { display: false }, ticks: _TICK_SYS, border: { display: false } } }
       }
     })
 
@@ -322,26 +394,23 @@
       return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
     })
     const evoData = stats.evolutionOrgsData || []
+    const ctxEvo = document.getElementById('chart-evolution')
     if (chartEvolution) chartEvolution.destroy()
-    chartEvolution = new Chart(document.getElementById('chart-evolution'), {
+    chartEvolution = new Chart(ctxEvo, {
       type: 'line',
       data: {
         labels: evoLabels,
         datasets: [{
-          label: 'Inscriptions',
-          data: evoData,
-          borderColor: primary,
-          backgroundColor: primary + '22',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointBackgroundColor: primary
+          label: 'Inscriptions', data: evoData,
+          borderColor: primaryHex, backgroundColor: _gradSys(ctxEvo, primaryHex),
+          fill: true, tension: 0.45, borderWidth: 2.5,
+          pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#fff', pointBorderColor: primaryHex, pointBorderWidth: 2
         }]
       },
       options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        maintainAspectRatio: false, animation: _ANIM_SYS,
+        plugins: { tooltip: _TOOLTIP_SYS, legend: { display: false } },
+        scales: { x: { grid: _GRID_SYS, ticks: _TICK_SYS, border: { display: false } }, y: { grid: _GRID_SYS, ticks: { ..._TICK_SYS, precision: 0 }, border: { display: false }, beginAtZero: true } }
       }
     })
 
@@ -352,22 +421,12 @@
       type: 'bar',
       data: {
         labels: evoLabels,
-        datasets: [{
-          label: 'Montant confirmé (XOF)',
-          data: paiEvoData,
-          backgroundColor: '#10b981bb',
-          borderRadius: 5
-        }]
+        datasets: [{ label: 'Montant confirmé (XOF)', data: paiEvoData, backgroundColor: '#10b981cc', hoverBackgroundColor: '#10b981', borderRadius: 8, borderSkipped: false }]
       },
       options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: v => v.toLocaleString('fr-FR') }
-          }
-        }
+        maintainAspectRatio: false, animation: _ANIM_SYS,
+        plugins: { tooltip: _TOOLTIP_SYS, legend: { display: false } },
+        scales: { x: { grid: { display: false }, ticks: _TICK_SYS, border: { display: false } }, y: { grid: _GRID_SYS, ticks: { ..._TICK_SYS, callback: v => v.toLocaleString('fr-FR') }, border: { display: false }, beginAtZero: true } }
       }
     })
 
@@ -380,19 +439,14 @@
       data: {
         labels: evoLabels,
         datasets: [
-          { label: 'Mensuel (XOF)', data: abnEvoMensuel, backgroundColor: '#6366f1bb', borderRadius: 5 },
-          { label: 'Annuel (XOF)',  data: abnEvoAnnuel,  backgroundColor: '#22c55ebb', borderRadius: 5 }
+          { label: 'Mensuel (XOF)', data: abnEvoMensuel, backgroundColor: '#6366f1cc', hoverBackgroundColor: '#6366f1', borderRadius: 8, borderSkipped: false },
+          { label: 'Annuel (XOF)',  data: abnEvoAnnuel,  backgroundColor: '#22c55ecc', hoverBackgroundColor: '#22c55e', borderRadius: 8, borderSkipped: false }
         ]
       },
       options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: true, position: 'top' } },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: v => v.toLocaleString('fr-FR') }
-          }
-        }
+        maintainAspectRatio: false, animation: _ANIM_SYS,
+        plugins: { tooltip: _TOOLTIP_SYS, legend: { position: 'top', labels: { boxWidth: 10, boxHeight: 10, padding: 14, font: { size: 11 }, color: '#64748b' } } },
+        scales: { x: { grid: { display: false }, ticks: _TICK_SYS, border: { display: false } }, y: { grid: _GRID_SYS, ticks: { ..._TICK_SYS, callback: v => v.toLocaleString('fr-FR') }, border: { display: false }, beginAtZero: true } }
       }
     })
 
@@ -406,13 +460,13 @@
         datasets: [{
           data: [statuts.ACCEPTED ?? 0, statuts.PENDING ?? 0, statuts.REFUSED ?? 0],
           backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-          borderWidth: 0
+          borderWidth: 3, borderColor: 'var(--surface)', hoverOffset: 6
         }]
       },
       options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'right' } },
-        cutout: '60%'
+        maintainAspectRatio: false, animation: _ANIM_SYS,
+        plugins: { tooltip: _TOOLTIP_SYS, legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, padding: 14, font: { size: 12 }, color: '#64748b' } } },
+        cutout: '65%'
       }
     })
 
@@ -520,6 +574,7 @@
         statCard('Pays couverts', stats.totalPays ?? 0),
       ].join('')
       dessinerGraphiques(stats)
+      afficherAlertesSys(stats)
     } catch {
       document.getElementById('stats-grid').innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Statistiques non disponibles</p>'
     }

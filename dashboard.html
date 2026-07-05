@@ -71,6 +71,9 @@
       </div>
     </div>
 
+    <!-- Alertes intelligentes -->
+    <div id="section-alertes" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;"></div>
+
     <!-- Grille KPI -->
     <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
       <div class="page-loader"><div class="spinner"></div></div>
@@ -211,6 +214,73 @@
   let _dernierStats = null
   let _dateCreationOrg = null
 
+  // ── Alertes intelligentes ────────────────────────────────────────────────
+  function afficherAlertes(stats) {
+    const alertes = []
+
+    if ((stats.soldeTresorerie ?? 0) < 0) {
+      alertes.push({
+        type: 'danger',
+        icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        titre: 'Solde trésorerie négatif',
+        texte: `Le solde est de ${(stats.soldeTresorerie ?? 0).toLocaleString('fr-FR')} XOF. Les décaissements dépassent les cotisations encaissées sur la période.`
+      })
+    }
+
+    if ((stats.declarationsEnAttente ?? 0) > 0) {
+      alertes.push({
+        type: 'warning',
+        icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="12" y1="9" x2="12.01" y2="9"/></svg>`,
+        titre: `${stats.declarationsEnAttente} déclaration${stats.declarationsEnAttente > 1 ? 's' : ''} d'événement${stats.declarationsEnAttente > 1 ? 's' : ''} en attente`,
+        texte: 'Des membres attendent une réponse sur leurs déclarations de vie. Traitez-les pour débloquer les décaissements.',
+        lien: '/src/pages/activites.html', lienLabel: 'Voir les déclarations'
+      })
+    }
+
+    if ((stats.demandesEnAttente ?? 0) > 0) {
+      alertes.push({
+        type: 'info',
+        icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>`,
+        titre: `${stats.demandesEnAttente} demande${stats.demandesEnAttente > 1 ? 's' : ''} d'adhésion en attente`,
+        texte: 'Des candidats attendent votre validation pour rejoindre l\'organisation.',
+        lien: '/src/pages/demandes-adhesion.html', lienLabel: 'Traiter les demandes'
+      })
+    }
+
+    if ((stats.membresInactifs ?? 0) > 0 && (stats.totalAdherents ?? 0) > 0) {
+      const pct = Math.round((stats.membresInactifs / stats.totalAdherents) * 100)
+      if (pct >= 20) {
+        alertes.push({
+          type: 'warning',
+          icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>`,
+          titre: `${pct}% de membres inactifs`,
+          texte: `${stats.membresInactifs} membre${stats.membresInactifs > 1 ? 's' : ''} sur ${stats.totalAdherents} sont inactifs. Envisagez une campagne de relance.`,
+          lien: '/src/pages/recouvrement.html', lienLabel: 'Voir le recouvrement'
+        })
+      }
+    }
+
+    const COULEURS = {
+      danger:  { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', icon: '#ef4444' },
+      warning: { bg: '#fffbeb', border: '#fde68a', text: '#92400e', icon: '#f59e0b' },
+      info:    { bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af', icon: '#3b82f6' },
+    }
+
+    const conteneur = document.getElementById('section-alertes')
+    conteneur.innerHTML = alertes.map(a => {
+      const c = COULEURS[a.type]
+      return `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:${c.bg};border:1px solid ${c.border};border-radius:12px;">
+          <span style="color:${c.icon};flex-shrink:0;margin-top:1px;">${a.icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:${c.text};margin-bottom:2px;">${a.titre}</div>
+            <div style="font-size:12px;color:${c.text};opacity:.85;line-height:1.5;">${a.texte}</div>
+          </div>
+          ${a.lien ? `<a href="${a.lien}" style="flex-shrink:0;font-size:12px;font-weight:600;color:${c.icon};text-decoration:none;white-space:nowrap;padding:4px 10px;border:1px solid ${c.border};border-radius:6px;background:#fff;">${a.lienLabel}</a>` : ''}
+        </div>`
+    }).join('')
+  }
+
   // ── KPI cards ────────────────────────────────────────────────────────────
   function kpiCard(label, value, color, href) {
     const inner = `
@@ -222,37 +292,100 @@
   }
 
   // ── Graphiques ────────────────────────────────────────────────────────────
+  const CHART_DEFAULTS = {
+    maintainAspectRatio: false,
+    animation: { duration: 600, easing: 'easeInOutQuart' },
+    plugins: {
+      tooltip: {
+        backgroundColor: 'rgba(15,23,42,0.85)',
+        titleColor: '#fff',
+        bodyColor: '#cbd5e1',
+        padding: 12,
+        cornerRadius: 10,
+        borderColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        displayColors: true,
+        boxWidth: 8,
+        boxHeight: 8,
+        boxPadding: 4,
+      }
+    }
+  }
+
+  const GRID_STYLE = {
+    color: 'rgba(148,163,184,0.12)',
+    drawBorder: false,
+  }
+
+  const TICK_STYLE = { color: '#94a3b8', font: { size: 11 } }
+
+  function makeGradient(ctx, color, alpha1 = 0.25, alpha2 = 0.02) {
+    const g = ctx.createLinearGradient(0, 0, 0, 260)
+    g.addColorStop(0, color + Math.round(alpha1 * 255).toString(16).padStart(2,'0'))
+    g.addColorStop(1, color + Math.round(alpha2 * 255).toString(16).padStart(2,'0'))
+    return g
+  }
+
   function dessinerGraphiques(stats) {
     const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
+    const primaryHex = primary.startsWith('#') ? primary : '#6366f1'
 
+    // ── Adhérents (line) ──
     const labelsAdh = (stats.graphAdherentsLabels || []).map(labelMois)
     if (chartAdherents) chartAdherents.destroy()
-    chartAdherents = new Chart(document.getElementById('chart-adherents'), {
+    const ctxAdh = document.getElementById('chart-adherents')
+    chartAdherents = new Chart(ctxAdh, {
       type: 'line',
       data: {
         labels: labelsAdh,
-        datasets: [{ label: 'Nouveaux adhérents', data: stats.graphAdherentsData || [],
-          borderColor: primary, backgroundColor: primary + '22', fill: true, tension: 0.4, pointRadius: 3 }]
+        datasets: [{
+          label: 'Nouveaux adhérents',
+          data: stats.graphAdherentsData || [],
+          borderColor: primaryHex,
+          backgroundColor: makeGradient(ctxAdh.getContext('2d'), primaryHex),
+          fill: true, tension: 0.45,
+          pointRadius: 4, pointHoverRadius: 7,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: primaryHex,
+          pointBorderWidth: 2,
+          borderWidth: 2.5,
+        }]
       },
-      options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      options: { ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+        scales: {
+          x: { grid: GRID_STYLE, ticks: TICK_STYLE, border: { display: false } },
+          y: { grid: GRID_STYLE, ticks: { ...TICK_STYLE, precision: 0 }, border: { display: false }, beginAtZero: true }
+        }
+      }
     })
 
+    // ── Cotisations (bar) ──
     const labelsCot = (stats.graphCotisationsLabels || []).map(labelMois)
     if (chartCotisations) chartCotisations.destroy()
     chartCotisations = new Chart(document.getElementById('chart-cotisations'), {
       type: 'bar',
       data: {
         labels: labelsCot,
-        datasets: [{ label: 'Montant (XOF)', data: stats.graphCotisationsData || [],
-          backgroundColor: '#10b981bb', borderRadius: 4 }]
+        datasets: [{
+          label: 'Montant (XOF)',
+          data: stats.graphCotisationsData || [],
+          backgroundColor: '#10b981cc',
+          hoverBackgroundColor: '#10b981',
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
       },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') } } }
+      options: { ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: TICK_STYLE, border: { display: false } },
+          y: { grid: GRID_STYLE, ticks: { ...TICK_STYLE, callback: v => v.toLocaleString('fr-FR') }, border: { display: false }, beginAtZero: true }
+        }
       }
     })
 
+    // ── Statuts (doughnut) ──
     const labelsStatuts = stats.graphStatutsLabels || []
     const COULEURS_STATUTS = { EN_ATTENTE: '#f59e0b', APPROUVE: '#10b981', REJETE: '#ef4444', ACTIF: '#10b981' }
     if (chartStatuts) chartStatuts.destroy()
@@ -260,13 +393,24 @@
       type: 'doughnut',
       data: {
         labels: labelsStatuts,
-        datasets: [{ data: stats.graphStatutsData || [],
-          backgroundColor: labelsStatuts.map(l => COULEURS_STATUTS[l] || '#94a3b8'), borderWidth: 0 }]
+        datasets: [{
+          data: stats.graphStatutsData || [],
+          backgroundColor: labelsStatuts.map(l => COULEURS_STATUTS[l] || '#94a3b8'),
+          borderWidth: 3,
+          borderColor: 'var(--surface)',
+          hoverOffset: 6,
+        }]
       },
-      options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '60%' }
+      options: { ...CHART_DEFAULTS,
+        plugins: {
+          ...CHART_DEFAULTS.plugins,
+          legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 12 }, color: '#64748b' } }
+        },
+        cutout: '65%'
+      }
     })
 
-    // Graphique 4 : déclarations par statut et par mois
+    // ── Déclarations (bar groupé) ──
     const labelsDecl = (stats.graphDeclLabels || []).map(labelMois)
     if (chartDeclarations) chartDeclarations.destroy()
     chartDeclarations = new Chart(document.getElementById('chart-declarations'), {
@@ -274,36 +418,57 @@
       data: {
         labels: labelsDecl,
         datasets: [
-          { label: 'En attente', data: stats.graphDeclEnAttente || [], backgroundColor: '#f59e0bbb', borderRadius: 3 },
-          { label: 'Traitées',   data: stats.graphDeclTraitees  || [], backgroundColor: '#10b981bb', borderRadius: 3 },
-          { label: 'Rejetées',   data: stats.graphDeclRejetees  || [], backgroundColor: '#ef4444bb', borderRadius: 3 },
+          { label: 'En attente', data: stats.graphDeclEnAttente || [], backgroundColor: '#f59e0bcc', hoverBackgroundColor: '#f59e0b', borderRadius: 6, borderSkipped: false },
+          { label: 'Traitées',   data: stats.graphDeclTraitees  || [], backgroundColor: '#10b981cc', hoverBackgroundColor: '#10b981', borderRadius: 6, borderSkipped: false },
+          { label: 'Rejetées',   data: stats.graphDeclRejetees  || [], backgroundColor: '#ef4444cc', hoverBackgroundColor: '#ef4444', borderRadius: 6, borderSkipped: false },
         ]
       },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
-        scales: { x: { stacked: false }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+      options: { ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { position: 'top', labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 11 }, color: '#64748b' } } },
+        scales: {
+          x: { grid: { display: false }, ticks: TICK_STYLE, border: { display: false } },
+          y: { grid: GRID_STYLE, ticks: { ...TICK_STYLE, precision: 0 }, border: { display: false }, beginAtZero: true }
+        }
       }
     })
 
-    // Graphique 5 : trésorerie entrées vs sorties
+    // ── Trésorerie (line double) ──
     const labelsTreso = (stats.graphTresoLabels || []).map(labelMois)
     if (chartTresorerie) chartTresorerie.destroy()
-    chartTresorerie = new Chart(document.getElementById('chart-tresorerie'), {
+    const ctxTreso = document.getElementById('chart-tresorerie')
+    chartTresorerie = new Chart(ctxTreso, {
       type: 'line',
       data: {
         labels: labelsTreso,
         datasets: [
-          { label: 'Entrées (cotisations)', data: stats.graphTresoEntrees || [],
-            borderColor: '#10b981', backgroundColor: '#10b98122', fill: true, tension: 0.4, pointRadius: 3 },
-          { label: 'Sorties (abonnements)', data: stats.graphTresoSorties || [],
-            borderColor: '#ef4444', backgroundColor: '#ef444422', fill: true, tension: 0.4, pointRadius: 3 },
+          {
+            label: 'Entrées (cotisations)',
+            data: stats.graphTresoEntrees || [],
+            borderColor: '#10b981',
+            backgroundColor: makeGradient(ctxTreso.getContext('2d'), '#10b981', 0.2, 0.01),
+            fill: true, tension: 0.45,
+            pointRadius: 4, pointHoverRadius: 7,
+            pointBackgroundColor: '#fff', pointBorderColor: '#10b981', pointBorderWidth: 2,
+            borderWidth: 2.5,
+          },
+          {
+            label: 'Sorties',
+            data: stats.graphTresoSorties || [],
+            borderColor: '#ef4444',
+            backgroundColor: makeGradient(ctxTreso.getContext('2d'), '#ef4444', 0.15, 0.01),
+            fill: true, tension: 0.45,
+            pointRadius: 4, pointHoverRadius: 7,
+            pointBackgroundColor: '#fff', pointBorderColor: '#ef4444', pointBorderWidth: 2,
+            borderWidth: 2.5,
+          },
         ]
       },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') } } }
+      options: { ...CHART_DEFAULTS,
+        plugins: { ...CHART_DEFAULTS.plugins, legend: { position: 'top', labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 11 }, color: '#64748b' } } },
+        scales: {
+          x: { grid: GRID_STYLE, ticks: TICK_STYLE, border: { display: false } },
+          y: { grid: GRID_STYLE, ticks: { ...TICK_STYLE, callback: v => v.toLocaleString('fr-FR') }, border: { display: false }, beginAtZero: true }
+        }
       }
     })
   }
@@ -371,6 +536,9 @@
       document.getElementById('titre-cotisations').textContent = 'Cotisations encaissées' + labelPeriode
       document.getElementById('titre-declarations').textContent = 'Déclarations d\'événements de vie' + labelPeriode
       document.getElementById('titre-tresorerie').textContent  = 'Trésorerie — Entrées et sorties' + labelPeriode
+
+      // Alertes
+      afficherAlertes(stats)
 
       // Graphiques
       dessinerGraphiques(stats)
