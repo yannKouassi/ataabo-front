@@ -622,13 +622,37 @@
 
     // Commentaire + boutons selon statut
     const peutAgir       = s === 'EN_ATTENTE_PAIEMENT' && perm.peutEcrire
-    const peutRenouveler = ['RESILIE', 'EN_RETARD', 'SUSPENDU'].includes(s) && perm.peutEcrire
+    const peutRenouveler = ['RESILIE', 'SUSPENDU'].includes(s) && perm.peutEcrire
+    const enRetard = s === 'EN_RETARD'
     const estBloqueeSys  = abn.organisation?.bloqueParSysteme === true && perm.peutEcrire
     document.getElementById('modal-commentaire-section').style.display = peutAgir ? 'block' : 'none'
     document.getElementById('modal-commentaire').value = ''
     document.getElementById('modal-actions').style.display = peutAgir ? 'flex' : 'none'
-    document.getElementById('modal-btn-fermer-seul').style.display = (!peutAgir && !peutRenouveler && !estBloqueeSys) ? 'flex' : 'none'
+    document.getElementById('modal-btn-fermer-seul').style.display = (!peutAgir && !peutRenouveler && !estBloqueeSys && !enRetard) ? 'flex' : 'none'
     document.getElementById('modal-renouveler-section').style.display = (peutRenouveler && !estBloqueeSys) ? 'flex' : 'none'
+    // Message informatif si EN_RETARD
+    let msgRetard = document.getElementById('modal-msg-retard')
+    if (!msgRetard) {
+      msgRetard = document.createElement('div')
+      msgRetard.id = 'modal-msg-retard'
+      document.getElementById('modal-renouveler-section').insertAdjacentElement('afterend', msgRetard)
+    }
+    if (enRetard) {
+      msgRetard.style.display = 'flex'
+      msgRetard.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;width:100%;">
+          <svg width="15" height="15" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#92400e;">En attente de paiement de l'organisation</div>
+            <div style="font-size:12px;color:#92400e;margin-top:2px;">L'organisation doit déclarer son paiement depuis son espace. Une fois la référence soumise, vous pourrez l'activer ici.</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;width:100%;">
+          <button class="btn btn-ghost" onclick="document.getElementById('modal-detail').style.display='none'">Fermer</button>
+        </div>`
+    } else {
+      msgRetard.style.display = 'none'
+    }
     const debloquerSection = document.getElementById('modal-debloquer-section')
     debloquerSection.style.display = estBloqueeSys ? 'flex' : 'none'
     if (estBloqueeSys) {
