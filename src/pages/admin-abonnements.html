@@ -135,6 +135,21 @@
             Renouveler
           </button>
         </div>
+        <!-- Déblocage manuel (visible si org bloquée par le système) -->
+        <div id="modal-debloquer-section" style="display:none;flex-direction:column;gap:10px;margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+            <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="modal-motif-blocage" style="font-size:12px;color:#991b1b;font-weight:600;"></span>
+          </div>
+          <input id="modal-input-debloquer" class="form-input" type="text" placeholder="Motif du déblocage (ex: arrangement de paiement accordé)" style="width:100%;font-size:13px;" />
+          <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button class="btn btn-ghost" onclick="document.getElementById('modal-detail').style.display='none'">Fermer</button>
+            <button id="modal-btn-debloquer" style="display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+              Débloquer l'organisation
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -608,11 +623,18 @@
     // Commentaire + boutons selon statut
     const peutAgir       = s === 'EN_ATTENTE_PAIEMENT' && perm.peutEcrire
     const peutRenouveler = ['RESILIE', 'EN_RETARD', 'SUSPENDU'].includes(s) && perm.peutEcrire
+    const estBloqueeSys  = abn.organisation?.bloqueParSysteme === true && perm.peutEcrire
     document.getElementById('modal-commentaire-section').style.display = peutAgir ? 'block' : 'none'
     document.getElementById('modal-commentaire').value = ''
     document.getElementById('modal-actions').style.display = peutAgir ? 'flex' : 'none'
-    document.getElementById('modal-btn-fermer-seul').style.display = (!peutAgir && !peutRenouveler) ? 'flex' : 'none'
-    document.getElementById('modal-renouveler-section').style.display = peutRenouveler ? 'flex' : 'none'
+    document.getElementById('modal-btn-fermer-seul').style.display = (!peutAgir && !peutRenouveler && !estBloqueeSys) ? 'flex' : 'none'
+    document.getElementById('modal-renouveler-section').style.display = (peutRenouveler && !estBloqueeSys) ? 'flex' : 'none'
+    const debloquerSection = document.getElementById('modal-debloquer-section')
+    debloquerSection.style.display = estBloqueeSys ? 'flex' : 'none'
+    if (estBloqueeSys) {
+      document.getElementById('modal-motif-blocage').textContent = abn.organisation?.motifBlocage || 'Organisation bloquée par le système'
+      document.getElementById('modal-input-debloquer').value = ''
+    }
 
     modal.style.display = 'flex'
   }
@@ -649,6 +671,25 @@
     } finally {
       btn.disabled = false
       btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter`
+    }
+  })
+
+  document.getElementById('modal-btn-debloquer').addEventListener('click', async () => {
+    const motif = document.getElementById('modal-input-debloquer').value.trim()
+    if (!motif) { toast.error('Veuillez saisir un motif de déblocage.'); return }
+    if (!confirm(`Débloquer cette organisation ?\nMotif : ${motif}`)) return
+    const btn = document.getElementById('modal-btn-debloquer')
+    btn.disabled = true; btn.textContent = '…'
+    try {
+      await api.put(`/organisations/${orgIdCourant}/debloquer`, { motif })
+      toast.success('Organisation débloquée.')
+      document.getElementById('modal-detail').style.display = 'none'
+      await charger()
+    } catch(err) {
+      toast.error(err.message)
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Débloquer l'organisation`
     }
   })
 
