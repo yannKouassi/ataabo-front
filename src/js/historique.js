@@ -41,7 +41,7 @@ export async function buildHistorique(containerId, limit = 50, module = null, op
       const debut = document.getElementById(`${containerId}-debut`).value
       const fin   = document.getElementById(`${containerId}-fin`).value
       const orgId = options.orgId || null
-      let url = orgId ? `/audit/organisation/${orgId}` : `/audit/moi`
+      let url = options.url || (orgId ? `/audit/organisation/${orgId}` : `/audit/moi`)
       const params = []
       if (debut) params.push(`debut=${debut}`)
       if (fin)   params.push(`fin=${fin}`)

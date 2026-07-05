@@ -179,6 +179,19 @@
       <button class="btn btn-primary" style="margin-top:14px;" id="btn-sauvegarder-localisation">Sauvegarder la localisation</button>
     </div>
 
+    <!-- Tarifs événements de vie -->
+    <div class="card" style="margin-top:20px; padding:20px 24px;">
+      <div style="font-weight:700; font-size:15px; margin-bottom:4px;">Tarifs événements de vie</div>
+      <div style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">
+        Définissez le montant à décaisser par l'organisation selon la nature de l'événement déclaré.
+        Laissez 0 si aucun décaissement n'est prévu pour ce type.
+      </div>
+      <div id="tarifs-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div class="page-loader"><div class="spinner"></div></div>
+      </div>
+      <button class="btn btn-primary" id="btn-save-tarifs" style="min-width:160px;">Enregistrer les tarifs</button>
+    </div>
+
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
 </div>
@@ -409,7 +422,52 @@
     } catch(err) { toast.error(err.message) }
   })
 
+  // ── Tarifs événements de vie ─────────────────────────────────────────────
+  const NATURES_LIBELLES = {
+    MARIAGE: 'Mariage', NAISSANCE: 'Naissance', DECES: 'Décès',
+    MALADIE: 'Maladie', ACCIDENT: 'Accident', PROMOTION: 'Promotion professionnelle',
+    RETRAITE: 'Retraite', AUTRE: 'Autre'
+  }
+  const devise = ctx.devise || 'XOF'
+
+  async function chargerTarifs() {
+    try {
+      const tarifs = await api.get(`/activites/${ctx.orgId}/tarifs`)
+      const grid = document.getElementById('tarifs-grid')
+      grid.innerHTML = tarifs.map(t => `
+        <div style="background:var(--bg-secondary,#f9fafb);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">${NATURES_LIBELLES[t.nature] || t.nature}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Décaissement</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" min="0" step="100"
+              data-nature="${t.nature}"
+              value="${t.montant || 0}"
+              class="form-input tarif-input"
+              style="width:130px;text-align:right;font-weight:700;"/>
+            <span style="font-size:12px;color:var(--text-muted);font-weight:600;">${devise}</span>
+          </div>
+        </div>`).join('')
+    } catch(e) {
+      document.getElementById('tarifs-grid').innerHTML = `<p style="color:var(--text-muted);font-size:13px;grid-column:1/-1;">Impossible de charger les tarifs.</p>`
+    }
+  }
+
+  document.getElementById('btn-save-tarifs').addEventListener('click', async () => {
+    const inputs = document.querySelectorAll('.tarif-input')
+    const tarifs = Array.from(inputs).map(inp => ({
+      nature: inp.dataset.nature,
+      montant: parseFloat(inp.value) || 0
+    }))
+    try {
+      await api.post(`/activites/${ctx.orgId}/tarifs`, tarifs)
+      toast.success('Tarifs enregistrés !')
+    } catch(e) { toast.error(e.message) }
+  })
+
   charger()
+  chargerTarifs()
   buildHistorique('historique-container', 50, 'organisation')
 </script>
 </body>

@@ -35,36 +35,263 @@
   </header>
 
   <main class="main-content">
-    <div style="margin-bottom:24px;">
-      <div class="page-title">Mes événements</div>
+
+    <!-- Section : Déclarations d'événements de vie -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="page-title">Mes événements de vie</div>
+        <div class="page-subtitle">Vos déclarations d'événements personnels (mariage, naissance, décès...)</div>
+      </div>
+      <button class="btn btn-primary" id="btn-declarer">+ Déclarer un événement</button>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Catégorie :</span>
+        <button class="btn btn-sm filtre-cat active" data-cat="">Tous</button>
+        <button class="btn btn-sm filtre-cat" data-cat="HEUREUX">Heureux</button>
+        <button class="btn btn-sm filtre-cat" data-cat="MALHEUREUX">Malheureux</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Du :</span>
+        <input type="date" id="filtre-date-debut" class="form-input" style="padding:6px 10px;font-size:13px;width:150px;"/>
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Au :</span>
+        <input type="date" id="filtre-date-fin" class="form-input" style="padding:6px 10px;font-size:13px;width:150px;"/>
+        <button class="btn btn-sm btn-outline" id="btn-reset-filtres">Réinitialiser</button>
+      </div>
+    </div>
+
+    <div id="liste-mes-declarations" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:40px;">
+      <div class="page-loader"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Section : Événements de l'organisation -->
+    <div style="margin-bottom:20px;">
+      <div class="page-title" style="font-size:18px;">Événements de l'organisation</div>
       <div class="page-subtitle">Les événements auxquels vous participez ou êtes inscrit</div>
     </div>
 
     <div id="liste-evts" style="display:flex; flex-direction:column; gap:16px;">
       <div class="page-loader"><div class="spinner"></div></div>
     </div>
+
+    <!-- Historique des actions -->
+    <div class="card" style="margin-top:32px; padding:16px 20px;" id="historique-container"></div>
+
   </main>
+</div>
+
+<!-- Modal déclaration -->
+<div id="modal-declaration" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="width:100%;max-width:540px;padding:28px;position:relative;max-height:90vh;overflow-y:auto;">
+    <button id="modal-close" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">Déclarer un événement de vie</div>
+
+    <form id="form-declaration">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Catégorie *</label>
+          <select id="f-categorie" class="form-input" required>
+            <option value="">Choisir...</option>
+            <option value="HEUREUX">Événement heureux</option>
+            <option value="MALHEUREUX">Événement malheureux</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Nature *</label>
+          <select id="f-nature" class="form-input" required>
+            <option value="">Choisir...</option>
+            <option value="MARIAGE">Mariage</option>
+            <option value="NAISSANCE">Naissance</option>
+            <option value="DECES">Décès</option>
+            <option value="MALADIE">Maladie</option>
+            <option value="ACCIDENT">Accident</option>
+            <option value="PROMOTION">Promotion professionnelle</option>
+            <option value="RETRAITE">Retraite</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Date de l'événement *</label>
+        <input type="date" id="f-date" class="form-input" required/>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Description</label>
+        <textarea id="f-description" class="form-input" rows="3" placeholder="Décrivez brièvement l'événement..."></textarea>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Document justificatif</label>
+        <input type="file" id="f-document" class="form-input" accept=".pdf,.jpg,.jpeg,.png"/>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">PDF, JPG ou PNG — ex: acte de mariage, certificat médical...</div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" id="btn-annuler">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="btn-soumettre">Soumettre</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal détail déclaration -->
+<div id="modal-detail-declaration" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="width:100%;max-width:540px;padding:28px;position:relative;max-height:90vh;overflow-y:auto;">
+    <button onclick="document.getElementById('modal-detail-declaration').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+    <div id="detail-content"><!-- rempli dynamiquement --></div>
+  </div>
 </div>
 
 <script type="module">
   import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
   const user = getUser()
+  const orgId = ctx.orgId
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
-  const container = document.getElementById('liste-evts')
+  // ── Déclarations de vie ────────────────────────────────────────────────
+  let toutesDeclarations = []
+  let filtreCategorie = ''
 
-  async function charger() {
+  async function chargerMesDeclarations() {
+    const el = document.getElementById('liste-mes-declarations')
+    try {
+      toutesDeclarations = await api.get(`/activites/${orgId}/mes-declarations`) || []
+      afficherDeclarations()
+    } catch(e) {
+      el.innerHTML = `<div class="card"><div class="empty-state"><p>${e.message}</p></div></div>`
+    }
+  }
+
+  function afficherDeclarations() {
+    const el = document.getElementById('liste-mes-declarations')
+    const dateDebut = document.getElementById('filtre-date-debut').value
+    const dateFin = document.getElementById('filtre-date-fin').value
+
+    const liste = toutesDeclarations.filter(d => {
+      if (filtreCategorie && d.categorie !== filtreCategorie) return false
+      if (dateDebut && d.dateEvenement < dateDebut) return false
+      if (dateFin && d.dateEvenement > dateFin) return false
+      return true
+    })
+
+    if (!liste.length) {
+      el.innerHTML = `<div class="card"><div class="empty-state"><p>${toutesDeclarations.length === 0 ? 'Vous n\'avez pas encore fait de déclaration.<br>Cliquez sur "Déclarer un événement" pour commencer.' : 'Aucune déclaration ne correspond aux filtres sélectionnés.'}</p></div></div>`
+      return
+    }
+    el.innerHTML = liste.map(d => {
+      const heureux  = d.categorie === 'HEUREUX'
+      const accent   = heureux ? '#2e7d32' : '#c62828'
+      const accentBg = heureux ? '#f1f8f1' : '#fdf3f3'
+      const statutMap = {
+        EN_ATTENTE: ['#fff8e1','#f57f17','En attente'],
+        TRAITE:     ['#e8f5e9','#2e7d32','Traité'],
+        REJETE:     ['#fce4ec','#c62828','Rejeté'],
+      }
+      const [sBg, sColor, sLabel] = statutMap[d.statut] || ['#f5f5f5','#666', d.statut]
+      return `
+      <div class="card" style="padding:0;overflow:hidden;border-left:4px solid ${accent};cursor:pointer;" onclick="voirDeclaration('${d.id}')">
+        <div style="background:${accentBg};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span style="font-size:14px;font-weight:700;color:var(--text-primary);">${libelleNature(d.nature)}</span>
+          <span style="background:${accent};color:#fff;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;">${heureux ? 'Heureux' : 'Malheureux'}</span>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+            <div>Événement du <strong style="color:var(--text-primary);">${formatDate(d.dateEvenement)}</strong></div>
+            <div style="margin-top:3px;">Déclaré le ${formatDateHeure(d.dateDeclaration)}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="background:${sBg};color:${sColor};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">${sLabel}</span>
+            <span style="font-size:12px;color:var(--primary);font-weight:600;">Voir →</span>
+          </div>
+        </div>
+      </div>`
+    }).join('')
+  }
+
+  // Filtres catégorie
+  document.querySelectorAll('.filtre-cat').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filtre-cat').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      filtreCategorie = btn.dataset.cat
+      afficherDeclarations()
+    })
+  })
+
+  // Filtres date
+  document.getElementById('filtre-date-debut').addEventListener('change', afficherDeclarations)
+  document.getElementById('filtre-date-fin').addEventListener('change', afficherDeclarations)
+
+  // Réinitialiser
+  document.getElementById('btn-reset-filtres').addEventListener('click', () => {
+    document.getElementById('filtre-date-debut').value = ''
+    document.getElementById('filtre-date-fin').value = ''
+    filtreCategorie = ''
+    document.querySelectorAll('.filtre-cat').forEach(b => b.classList.remove('active'))
+    document.querySelector('.filtre-cat[data-cat=""]').classList.add('active')
+    afficherDeclarations()
+  })
+
+  // ── Modal déclaration ─────────────────────────────────────────────────
+  document.getElementById('btn-declarer').addEventListener('click', () => {
+    document.getElementById('modal-declaration').style.display = 'flex'
+    document.getElementById('form-declaration').reset()
+  })
+
+  function fermerModal() {
+    document.getElementById('modal-declaration').style.display = 'none'
+  }
+  document.getElementById('modal-close').addEventListener('click', fermerModal)
+  document.getElementById('btn-annuler').addEventListener('click', fermerModal)
+
+  document.getElementById('form-declaration').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('btn-soumettre')
+    btn.disabled = true
+    btn.textContent = 'Envoi...'
+    try {
+      const fd = new FormData()
+      fd.append('categorie', document.getElementById('f-categorie').value)
+      fd.append('nature', document.getElementById('f-nature').value)
+      fd.append('dateEvenement', document.getElementById('f-date').value)
+      const desc = document.getElementById('f-description').value
+      if (desc) fd.append('description', desc)
+      const file = document.getElementById('f-document').files[0]
+      if (file) fd.append('document', file)
+
+      await api.upload(`/activites/${orgId}/declarer`, fd)
+      fermerModal()
+      toast.success('Déclaration envoyée avec succès.')
+      await chargerMesDeclarations()
+      rafraichirHistorique('historique-container')
+    } catch(e) {
+      toast.error(e.message)
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Soumettre'
+    }
+  })
+
+  // ── Événements organisationnels ────────────────────────────────────────
+  async function chargerEvtsOrg() {
+    const container = document.getElementById('liste-evts')
     try {
       const items = await api.get(`/evenements/mes-evenements`)
       if (!items || !items.length) {
-        container.innerHTML = `<div class="card"><div class="empty-state"><p>Aucun événement pour le moment</p></div></div>`
+        container.innerHTML = `<div class="card"><div class="empty-state"><p>Aucun événement organisationnel pour le moment</p></div></div>`
         return
       }
       container.innerHTML = items.map(e => `
@@ -74,12 +301,12 @@
               <div style="font-size:16px; font-weight:700; margin-bottom:4px;">${e.titre||e.libelle||'—'}</div>
               <div style="font-size:13px; color:var(--text-muted);">${e.description||''}</div>
               <div style="margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; font-size:13px;">
-                ${e.dateDebut ? `<span>📅 ${new Date(e.dateDebut).toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}</span>` : ''}
-                ${e.lieu ? `<span>📍 ${e.lieu}</span>` : ''}
+                ${e.dateDebut ? `<span>${new Date(e.dateDebut).toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}</span>` : ''}
+                ${e.lieu ? `<span>${e.lieu}</span>` : ''}
               </div>
             </div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-              <span class="badge ${badgeClass(e.statut)}">${e.statut||'—'}</span>
+              <span class="badge ${badgeEvtClass(e.statut)}">${e.statut||'—'}</span>
               <span class="badge badge-secondary">${e.libelleType||'—'}</span>
             </div>
           </div>
@@ -90,12 +317,101 @@
     }
   }
 
-  function badgeClass(s) {
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function badgeCategorie(c) {
+    if (c === 'HEUREUX') return `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Heureux</span>`
+    return `<span style="background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Malheureux</span>`
+  }
+
+  function badgeStatut(s) {
+    const map = {
+      EN_ATTENTE: ['#fff3e0', '#e65100', 'En attente'],
+      TRAITE:     ['#e8f5e9', '#2e7d32', 'Traité'],
+      REJETE:     ['#fce4ec', '#c62828', 'Rejeté'],
+    }
+    const [bg, color, label] = map[s] || ['#f5f5f5', '#666', s]
+    return `<span style="background:${bg};color:${color};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">${label}</span>`
+  }
+
+  function badgeEvtClass(s) {
     const m = { PLANIFIE: 'badge-info', EN_COURS: 'badge-warning', TERMINE: 'badge-success', ANNULE: 'badge-danger' }
     return m[s] || 'badge-secondary'
   }
 
-  charger()
+  function libelleNature(n) {
+    const map = { MARIAGE:'Mariage', NAISSANCE:'Naissance', DECES:'Décès', MALADIE:'Maladie',
+                  ACCIDENT:'Accident', PROMOTION:'Promotion professionnelle', RETRAITE:'Retraite', AUTRE:'Autre' }
+    return map[n] || n
+  }
+
+  function formatDate(d) {
+    if (!d) return '—'
+    return new Date(d).toLocaleDateString('fr-FR')
+  }
+
+  function formatDateHeure(d) {
+    if (!d) return '—'
+    return new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+  }
+
+  window.voirDeclaration = function(id) {
+    const d = toutesDeclarations.find(x => x.id === id)
+    if (!d) return
+    const heureux  = d.categorie === 'HEUREUX'
+    const accent   = heureux ? '#2e7d32' : '#c62828'
+    const accentBg = heureux ? '#f1f8f1' : '#fdf3f3'
+    const statutMap = { EN_ATTENTE: ['#fff8e1','#f57f17','En attente'], TRAITE: ['#e8f5e9','#2e7d32','Traité'], REJETE: ['#fce4ec','#c62828','Rejeté'] }
+    const [sBg, sColor, sLabel] = statutMap[d.statut] || ['#f5f5f5','#666', d.statut]
+    document.getElementById('detail-content').innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+        <div style="font-size:18px;font-weight:700;color:var(--text-primary);">${libelleNature(d.nature)}</div>
+        <span style="background:${accent};color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">${heureux ? 'Heureux' : 'Malheureux'}</span>
+        <span style="background:${sBg};color:${sColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${sLabel}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin-bottom:3px;">Date de l'événement</div>
+          <div style="font-weight:600;">${formatDate(d.dateEvenement)}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin-bottom:3px;">Déclaré le</div>
+          <div style="font-weight:600;">${formatDateHeure(d.dateDeclaration)}</div>
+        </div>
+      </div>
+      ${d.description ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin-bottom:6px;">Description</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;background:var(--surface-alt,#f9fafb);padding:12px;border-radius:8px;">${d.description}</div>
+      </div>` : ''}
+      ${d.urlDocument ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin-bottom:6px;">Document joint</div>
+        <a href="${d.urlDocument}" target="_blank" style="color:var(--primary);font-weight:600;display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Voir le document
+        </a>
+      </div>` : ''}
+      ${(d.commentaireAdmin || (d.montantDecaisse > 0)) ? `
+      <div style="padding:14px 16px;background:${accentBg};border-left:3px solid ${accent};border-radius:0 8px 8px 0;font-size:13px;">
+        <div style="font-weight:700;color:${accent};margin-bottom:8px;">Réponse de l'organisation</div>
+        ${d.montantDecaisse > 0 ? `
+        <div style="background:rgba(255,255,255,.6);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-weight:600;color:#2e7d32;">Montant décaissé</span>
+            <span style="font-size:15px;font-weight:800;color:#2e7d32;">${Number(d.montantDecaisse).toLocaleString('fr-FR')} ${ctx.devise || 'XOF'}</span>
+          </div>
+          ${d.moyenPaiement ? `<div style="font-size:12px;color:#388e3c;">Via <strong>${({WAVE:'Wave',MTN_MONNEY:'MTN MoMo',ORANGE_MONNEY:'Orange Money',MOOV_MONNEY:'Moov Money',ESPECES:'Espèces',VIREMENT:'Virement'})[d.moyenPaiement] || d.moyenPaiement}</strong></div>` : ''}
+          ${d.referenceDecaissement ? `<div style="font-size:12px;color:#388e3c;margin-top:2px;">Réf. : <strong>${d.referenceDecaissement}</strong></div>` : ''}
+        </div>
+        ` : ''}
+        ${d.commentaireAdmin ? `<div style="color:var(--text-secondary);">${d.commentaireAdmin}</div>` : ''}
+      </div>` : ''}`
+    document.getElementById('modal-detail-declaration').style.display = 'flex'
+  }
+
+  chargerMesDeclarations()
+  chargerEvtsOrg()
+  buildHistorique('historique-container', 50, 'déclaration événement de vie', { url: `/audit/moi/${orgId}` })
 </script>
 </body>
 </html>

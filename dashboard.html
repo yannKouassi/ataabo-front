@@ -8,29 +8,29 @@
   <link rel="stylesheet" href="/src/css/main.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
-    @media (max-width: 767px) {
-      /* Grilles inline 1fr 1fr → 1 colonne */
-      .main-content [style*="grid-template-columns: 1fr 1fr"] {
-        grid-template-columns: 1fr !important;
-      }
-      /* Filtre période : empilé */
-      .main-content [style*="display:flex"][style*="align-items:center"][style*="gap:10px"] {
-        flex-direction: column;
-        align-items: stretch;
-      }
+    .graphique-header {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 20px;cursor:pointer;user-select:none;
+      border-radius:14px;transition:background .15s;
+    }
+    .graphique-header:hover { background:var(--bg-secondary,#f9fafb); }
+    .graphique-bloc.ouvert .graphique-header { border-bottom:1px solid var(--border);border-radius:14px 14px 0 0; }
+    .chevron { color:var(--text-muted);transition:transform .25s;flex-shrink:0; }
+    .graphique-bloc.ouvert .chevron { transform:rotate(180deg); }
+    .graphique-body { animation:slideDown .2s ease; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    @media(max-width:767px){
+      #stats-grid { grid-template-columns:1fr 1fr !important; }
+      #filtre-bar { flex-direction:column;align-items:stretch !important; }
     }
   </style>
 </head>
 <body>
 <div class="app-layout">
-
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div id="sidebar-org-logo"></div>
-      <div>
-        <div class="sidebar-org-name" id="sidebar-org-name">Organisation</div>
-      </div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
     <div class="sidebar-footer">
@@ -43,163 +43,131 @@
     </div>
   </aside>
 
-  <!-- TOPBAR -->
   <header class="topbar">
-    <div class="topbar-search">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" placeholder="Rechercher..."/>
-    </div>
-
+    <div class="topbar-search" style="visibility:hidden;"></div>
     <div class="topbar-actions"></div>
   </header>
 
-  <!-- CONTENU PRINCIPAL -->
   <main class="main-content">
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+
+    <!-- En-tête + filtre -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
       <div>
         <div class="page-title">Tableau de bord</div>
-        <div class="page-subtitle" id="subtitle-periode">Bienvenue sur votre espace de gestion</div>
+        <div class="page-subtitle" id="subtitle-periode">Chargement…</div>
       </div>
-      <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <label style="font-size:12px; color:var(--text-muted); font-weight:600;">PÉRIODE</label>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <input type="date" id="filtre-debut" class="form-input" style="width:145px; font-size:13px; padding:6px 10px;"/>
-          <span style="color:var(--text-muted); font-size:12px;">→</span>
-          <input type="date" id="filtre-fin" class="form-input" style="width:145px; font-size:13px; padding:6px 10px;"/>
-        </div>
-        <button class="btn btn-secondary btn-sm" id="btn-filtrer">Filtrer</button>
-        <button class="btn btn-ghost btn-sm" id="btn-reset-periode">Ce mois</button>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            Total membres
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-adherents">—</div>
-        <div class="stat-card-trend trend-up">Tous statuts confondus</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label" style="color:#16a34a;">
-            <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            </svg>
-            Membres actifs
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-actifs" style="color:#16a34a;">—</div>
-        <div class="stat-card-trend">Accès complet à l'org</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label" style="color:#d97706;">
-            <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-              <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
-            </svg>
-            Membres inactifs
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-inactifs" style="color:#d97706;">—</div>
-        <div class="stat-card-trend">Temporairement désactivés</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label" style="color:#dc2626;">
-            <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-              <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
-            </svg>
-            Membres bannis
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-banis" style="color:#dc2626;">—</div>
-        <div class="stat-card-trend">Accès révoqué définitivement</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            Demandes en attente
-          </div>
-          <div class="stat-card-icon-btn">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-demandes">—</div>
-        <div class="stat-card-trend trend-up">À traiter</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
-            Cotisations du mois
-          </div>
-          <div class="stat-card-icon-btn">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-cotisations">—</div>
-        <div class="stat-card-trend trend-up">Ce mois-ci</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <div class="stat-card-label">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            Événements à venir
-          </div>
-          <div class="stat-card-icon-btn">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-            </svg>
-          </div>
-        </div>
-        <div class="stat-card-value" id="stat-evenements">—</div>
-        <div class="stat-card-trend trend-up">Prochainement</div>
+      <div id="filtre-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+        <svg width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <label style="font-size:12px;color:var(--text-muted);font-weight:600;">Du</label>
+        <input type="date" id="filtre-debut" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary,#f9fafb);color:var(--text);"/>
+        <label style="font-size:12px;color:var(--text-muted);font-weight:600;">Au</label>
+        <input type="date" id="filtre-fin" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary,#f9fafb);color:var(--text);"/>
+        <button class="btn btn-primary btn-sm" id="btn-filtrer" style="font-size:12px;padding:5px 14px;">Filtrer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-reset" style="font-size:12px;padding:5px 10px;display:none;">✕ Réinitialiser</button>
+        <button class="btn btn-secondary btn-sm" id="btn-exporter" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
       </div>
     </div>
 
-    <!-- Dernières demandes d'adhésion -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px;">
+    <!-- Grille KPI -->
+    <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+      <div class="page-loader"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Graphiques accordéon -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;" id="section-graphiques">
+
+      <div class="card graphique-bloc" id="bloc-adherents">
+        <div class="graphique-header" data-target="body-adherents">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#e1f5ee;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#0f6e56" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);" id="titre-adherents">Évolution des adhérents</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-adherents" style="display:none;padding:0 20px 20px;">
+          <div style="position:relative;height:260px;"><canvas id="chart-adherents"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-cotisations">
+        <div class="graphique-header" data-target="body-cotisations">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);" id="titre-cotisations">Cotisations encaissées</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-cotisations" style="display:none;padding:0 20px 20px;">
+          <div style="position:relative;height:260px;"><canvas id="chart-cotisations"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-statuts">
+        <div class="graphique-header" data-target="body-statuts">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);">Répartition des demandes d'adhésion</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-statuts" style="display:none;padding:0 20px 20px;">
+          <div style="max-width:420px;height:280px;margin:0 auto;">
+            <canvas id="chart-statuts"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-declarations">
+        <div class="graphique-header" data-target="body-declarations">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);" id="titre-declarations">Déclarations d'événements de vie</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-declarations" style="display:none;padding:0 20px 20px;">
+          <div style="position:relative;height:260px;"><canvas id="chart-declarations"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card graphique-bloc" id="bloc-tresorerie">
+        <div class="graphique-header" data-target="body-tresorerie">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#d1fae5;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--text);" id="titre-tresorerie">Trésorerie — Entrées et sorties</span>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="graphique-body" id="body-tresorerie" style="display:none;padding:0 20px 20px;">
+          <div style="position:relative;height:260px;"><canvas id="chart-tresorerie"></canvas></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dernières demandes + infos org -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
       <div class="card">
-        <div class="card-title">Dernières demandes d'adhésion</div>
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-weight:700;font-size:14px;">Dernières demandes d'adhésion</div>
+          <a href="/src/pages/adhesions.html" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">Voir toutes →</a>
+        </div>
         <div class="table-wrapper">
           <table>
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Date</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Nom</th><th>Email</th><th>Statut</th></tr></thead>
             <tbody id="tbody-demandes">
               <tr><td colspan="3"><div class="page-loader"><div class="spinner"></div></div></td></tr>
             </tbody>
@@ -207,31 +175,12 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Informations organisation</div>
-        <div id="org-infos" style="display:flex; flex-direction:column; gap:12px;">
-          <div class="page-loader"><div class="spinner"></div></div>
-        </div>
+      <div class="card" style="padding:20px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:16px;">Informations organisation</div>
+        <div id="org-infos"></div>
       </div>
     </div>
 
-    <!-- Graphiques -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:24px;">
-      <div class="card" style="padding:20px;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Évolution des adhérents (12 mois)</div>
-        <canvas id="chart-adherents" height="160"></canvas>
-      </div>
-      <div class="card" style="padding:20px;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Cotisations encaissées (12 mois)</div>
-        <canvas id="chart-cotisations" height="160"></canvas>
-      </div>
-    </div>
-    <div style="margin-top:20px; max-width:400px;">
-      <div class="card" style="padding:20px;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text);">Répartition des demandes d'adhésion</div>
-        <canvas id="chart-statuts" height="180"></canvas>
-      </div>
-    </div>
   </main>
 </div>
 
@@ -240,173 +189,300 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
 
-  if (!requireContexte()) throw new Error('Non autorisé')
-
+  if (!requireContexte()) throw new Error()
   const ctx = getContexte()
-  const user = getUser()
-
-  // Appliquer la couleur de l'organisation
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
-
-  // Sidebar
   buildSidebar()
-
-
-  // Déconnexion
-  document.getElementById('btn-logout').addEventListener('click', () => {
-    if (confirm('Voulez-vous vraiment vous déconnecter ?')) logout()
-  })
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
   const MOIS_FR = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc']
   function labelMois(key) {
     const [y, m] = key.split('-')
     return MOIS_FR[parseInt(m) - 1] + ' ' + y.slice(2)
   }
-
-  let chartAdherents, chartCotisations, chartStatuts
-
-  function dessinerGraphiques(stats) {
-    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
-
-    // Graphique 1 — évolution adhérents
-    const labelsAdh = (stats.graphAdherentsLabels || []).map(labelMois)
-    const dataAdh = stats.graphAdherentsData || []
-    if (chartAdherents) chartAdherents.destroy()
-    chartAdherents = new Chart(document.getElementById('chart-adherents'), {
-      type: 'line',
-      data: {
-        labels: labelsAdh,
-        datasets: [{
-          label: 'Nouveaux adhérents',
-          data: dataAdh,
-          borderColor: primary,
-          backgroundColor: primary + '22',
-          borderWidth: 2,
-          pointRadius: 3,
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-    })
-
-    // Graphique 2 — cotisations par mois
-    const labelsCot = (stats.graphCotisationsLabels || []).map(labelMois)
-    const dataCot = stats.graphCotisationsData || []
-    if (chartCotisations) chartCotisations.destroy()
-    chartCotisations = new Chart(document.getElementById('chart-cotisations'), {
-      type: 'bar',
-      data: {
-        labels: labelsCot,
-        datasets: [{
-          label: 'Montant (FCFA)',
-          data: dataCot,
-          backgroundColor: primary + 'bb',
-          borderRadius: 4
-        }]
-      },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-    })
-
-    // Graphique 3 — répartition statuts
-    const labelsStatuts = stats.graphStatutsLabels || []
-    const dataStatuts = stats.graphStatutsData || []
-    const STATUT_COLORS = { EN_ATTENTE: '#f59e0b', APPROUVE: '#10b981', REJETE: '#ef4444', ACTIF: '#10b981' }
-    const bgColors = labelsStatuts.map(l => STATUT_COLORS[l] || '#94a3b8')
-    if (chartStatuts) chartStatuts.destroy()
-    chartStatuts = new Chart(document.getElementById('chart-statuts'), {
-      type: 'doughnut',
-      data: {
-        labels: labelsStatuts,
-        datasets: [{ data: dataStatuts, backgroundColor: bgColors, borderWidth: 0 }]
-      },
-      options: { plugins: { legend: { position: 'right' } }, cutout: '65%' }
-    })
-  }
-
-  // Initialiser les dates au mois en cours
-  function initPeriode() {
-    const now = new Date()
-    const debut = new Date(now.getFullYear(), now.getMonth(), 1)
-    const fin   = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    document.getElementById('filtre-debut').value = debut.toISOString().slice(0, 10)
-    document.getElementById('filtre-fin').value   = fin.toISOString().slice(0, 10)
-  }
-
-  function formatDateFR(iso) {
+  function fmt(n) { return (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) }
+  function fmtDate(iso) {
     if (!iso) return '—'
     const [y, m, d] = iso.split('-')
     return `${d}/${m}/${y}`
   }
 
-  // Charger les stats de l'organisation connectée
+  let chartAdherents, chartCotisations, chartStatuts, chartDeclarations, chartTresorerie
+  let _dernierStats = null
+  let _dateCreationOrg = null
+
+  // ── KPI cards ────────────────────────────────────────────────────────────
+  function kpiCard(label, value, color, href) {
+    const inner = `
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px;">${label}</div>
+      <div style="font-size:26px;font-weight:800;color:${color || 'var(--text)'};">${value}</div>`
+    return href
+      ? `<a href="${href}" class="card" style="padding:20px;text-decoration:none;display:block;cursor:pointer;">${inner}</a>`
+      : `<div class="card" style="padding:20px;">${inner}</div>`
+  }
+
+  // ── Graphiques ────────────────────────────────────────────────────────────
+  function dessinerGraphiques(stats) {
+    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1'
+
+    const labelsAdh = (stats.graphAdherentsLabels || []).map(labelMois)
+    if (chartAdherents) chartAdherents.destroy()
+    chartAdherents = new Chart(document.getElementById('chart-adherents'), {
+      type: 'line',
+      data: {
+        labels: labelsAdh,
+        datasets: [{ label: 'Nouveaux adhérents', data: stats.graphAdherentsData || [],
+          borderColor: primary, backgroundColor: primary + '22', fill: true, tension: 0.4, pointRadius: 3 }]
+      },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    })
+
+    const labelsCot = (stats.graphCotisationsLabels || []).map(labelMois)
+    if (chartCotisations) chartCotisations.destroy()
+    chartCotisations = new Chart(document.getElementById('chart-cotisations'), {
+      type: 'bar',
+      data: {
+        labels: labelsCot,
+        datasets: [{ label: 'Montant (XOF)', data: stats.graphCotisationsData || [],
+          backgroundColor: '#10b981bb', borderRadius: 4 }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') } } }
+      }
+    })
+
+    const labelsStatuts = stats.graphStatutsLabels || []
+    const COULEURS_STATUTS = { EN_ATTENTE: '#f59e0b', APPROUVE: '#10b981', REJETE: '#ef4444', ACTIF: '#10b981' }
+    if (chartStatuts) chartStatuts.destroy()
+    chartStatuts = new Chart(document.getElementById('chart-statuts'), {
+      type: 'doughnut',
+      data: {
+        labels: labelsStatuts,
+        datasets: [{ data: stats.graphStatutsData || [],
+          backgroundColor: labelsStatuts.map(l => COULEURS_STATUTS[l] || '#94a3b8'), borderWidth: 0 }]
+      },
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '60%' }
+    })
+
+    // Graphique 4 : déclarations par statut et par mois
+    const labelsDecl = (stats.graphDeclLabels || []).map(labelMois)
+    if (chartDeclarations) chartDeclarations.destroy()
+    chartDeclarations = new Chart(document.getElementById('chart-declarations'), {
+      type: 'bar',
+      data: {
+        labels: labelsDecl,
+        datasets: [
+          { label: 'En attente', data: stats.graphDeclEnAttente || [], backgroundColor: '#f59e0bbb', borderRadius: 3 },
+          { label: 'Traitées',   data: stats.graphDeclTraitees  || [], backgroundColor: '#10b981bb', borderRadius: 3 },
+          { label: 'Rejetées',   data: stats.graphDeclRejetees  || [], backgroundColor: '#ef4444bb', borderRadius: 3 },
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: { x: { stacked: false }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    })
+
+    // Graphique 5 : trésorerie entrées vs sorties
+    const labelsTreso = (stats.graphTresoLabels || []).map(labelMois)
+    if (chartTresorerie) chartTresorerie.destroy()
+    chartTresorerie = new Chart(document.getElementById('chart-tresorerie'), {
+      type: 'line',
+      data: {
+        labels: labelsTreso,
+        datasets: [
+          { label: 'Entrées (cotisations)', data: stats.graphTresoEntrees || [],
+            borderColor: '#10b981', backgroundColor: '#10b98122', fill: true, tension: 0.4, pointRadius: 3 },
+          { label: 'Sorties (abonnements)', data: stats.graphTresoSorties || [],
+            borderColor: '#ef4444', backgroundColor: '#ef444422', fill: true, tension: 0.4, pointRadius: 3 },
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') } } }
+      }
+    })
+  }
+
+  // ── Charger les stats ─────────────────────────────────────────────────────
   async function chargerStats() {
     const debut = document.getElementById('filtre-debut').value
     const fin   = document.getElementById('filtre-fin').value
+
+    // Label période + bouton reset
+    const btnReset = document.getElementById('btn-reset')
+    const periodeLabel = document.getElementById('subtitle-periode')
+    const estFiltre = debut || fin
+    if (estFiltre) {
+      btnReset.style.display = ''
+      periodeLabel.textContent = `Période : ${debut ? fmtDate(debut) : '…'} → ${fin ? fmtDate(fin) : '…'}`
+      periodeLabel.style.color = 'var(--primary)'
+    } else {
+      btnReset.style.display = 'none'
+      periodeLabel.textContent = 'Vue globale de votre organisation'
+      periodeLabel.style.color = ''
+    }
+
     const params = new URLSearchParams()
     if (debut) params.set('debut', debut)
     if (fin)   params.set('fin', fin)
+
     try {
       const stats = await api.get(`/organisations/${ctx.orgId}/stats?${params}`)
-      document.getElementById('stat-adherents').textContent  = stats.totalAdherents  ?? '—'
-      document.getElementById('stat-actifs').textContent     = stats.membresActifs    ?? '—'
-      document.getElementById('stat-inactifs').textContent   = stats.membresInactifs  ?? '—'
-      document.getElementById('stat-banis').textContent      = stats.membresBanis     ?? '—'
-      document.getElementById('stat-demandes').textContent   = stats.demandesEnAttente ?? '—'
-      document.getElementById('stat-cotisations').textContent = stats.cotisationsMois ?? '—'
-      document.getElementById('stat-evenements').textContent  = stats.evenementsAvenir ?? '0'
+      _dernierStats = stats
 
-      // Dernières demandes d'adhésion
-      const tbody = document.getElementById('tbody-demandes')
-      const demandes = stats.dernieresDemandes || []
-      if (!demandes.length) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px;">Aucune demande en attente</td></tr>`
-      } else {
-        tbody.innerHTML = demandes.map(d => `
-          <tr>
-            <td style="font-weight:600;">${d.nom}</td>
-            <td style="font-size:12px;color:var(--text-muted);">${d.email}</td>
-            <td><span class="badge badge-warning">En attente</span></td>
-          </tr>`).join('')
+      // Mémoriser la date de création la première fois
+      if (!_dateCreationOrg && stats.dateCreationOrg) {
+        _dateCreationOrg = stats.dateCreationOrg
       }
 
+      // Grille KPI
+      document.getElementById('stats-grid').innerHTML = [
+        kpiCard('Total adhérents',          fmt(stats.totalAdherents),        'var(--primary)'),
+        kpiCard('Membres actifs',            fmt(stats.membresActifs),          '#16a34a'),
+        kpiCard('Membres inactifs',          fmt(stats.membresInactifs),        '#d97706'),
+        kpiCard('Membres bannis',            fmt(stats.membresBanis),           '#dc2626'),
+        kpiCard('Demandes en attente',       fmt(stats.demandesEnAttente),      '#d97706', '/src/pages/adhesions.html'),
+        kpiCard('Cotisations (période)',     fmt(stats.cotisationsMois),        'var(--primary)', '/src/pages/cotisations.html'),
+        kpiCard('Montant cotisations (XOF)', fmt(stats.montantCotisationsMois), '#16a34a'),
+        kpiCard('Déclarations en attente',  fmt(stats.declarationsEnAttente),  '#7c3aed', '/src/pages/activites.html'),
+        kpiCard('Événements à venir',        fmt(stats.evenementsAvenir),       'var(--primary)'),
+        kpiCard('Solde trésorerie (XOF)',    fmt(stats.soldeTresorerie),        (stats.soldeTresorerie ?? 0) >= 0 ? '#059669' : '#dc2626'),
+      ].join('')
+
+      // Dernières demandes
+      const demandes = stats.dernieresDemandes || []
+      const tbody = document.getElementById('tbody-demandes')
+      tbody.innerHTML = demandes.length
+        ? demandes.map(d => `<tr>
+            <td style="font-weight:600;">${d.nom || '—'}</td>
+            <td style="font-size:12px;color:var(--text-muted);">${d.email || '—'}</td>
+            <td><span class="badge badge-warning">En attente</span></td>
+          </tr>`).join('')
+        : `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px;">Aucune demande en attente</td></tr>`
+
+      // Titres dynamiques avec la période
+      const labelPeriode = debut && fin ? ` — ${fmtDate(debut)} → ${fmtDate(fin)}` : ''
+      document.getElementById('titre-adherents').textContent   = 'Évolution des adhérents' + labelPeriode
+      document.getElementById('titre-cotisations').textContent = 'Cotisations encaissées' + labelPeriode
+      document.getElementById('titre-declarations').textContent = 'Déclarations d\'événements de vie' + labelPeriode
+      document.getElementById('titre-tresorerie').textContent  = 'Trésorerie — Entrées et sorties' + labelPeriode
+
+      // Graphiques
       dessinerGraphiques(stats)
 
-      // Mettre à jour le sous-titre avec la période
-      const d = stats.periodeDebut ? formatDateFR(stats.periodeDebut) : '—'
-      const f = stats.periodeFin   ? formatDateFR(stats.periodeFin)   : '—'
-      document.getElementById('subtitle-periode').textContent = `Données du ${d} au ${f}`
-    } catch {
-      document.getElementById('tbody-demandes').innerHTML =
-        `<tr><td colspan="3" style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Données non disponibles</td></tr>`
+      // Resize si un accordéon est déjà ouvert
+      requestAnimationFrame(() => {
+        if (chartAdherents)    chartAdherents.resize()
+        if (chartCotisations)  chartCotisations.resize()
+        if (chartStatuts)      chartStatuts.resize()
+        if (chartDeclarations) chartDeclarations.resize()
+        if (chartTresorerie)   chartTresorerie.resize()
+      })
+
+    } catch(e) {
+      document.getElementById('stats-grid').innerHTML =
+        `<p style="color:var(--text-muted);font-size:13px;grid-column:1/-1;">Statistiques non disponibles : ${e.message}</p>`
     }
   }
 
-  // Infos organisation depuis le contexte
+  // ── Infos org ──────────────────────────────────────────────────────────────
   function afficherInfosOrg() {
-    const infos = [
+    const lignes = [
       { label: 'Organisation', value: ctx.nomOrganisation },
-      { label: 'Votre rôle', value: ctx.libelleGroupe },
-      { label: 'N° adhérent', value: ctx.numAdherent },
+      { label: 'Votre rôle',   value: ctx.libelleGroupe },
+      { label: 'N° adhérent',  value: ctx.numAdherent },
     ]
-    document.getElementById('org-infos').innerHTML = infos.map(i => `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid var(--border);">
-        <span style="font-size:13px; color:var(--text-muted)">${i.label}</span>
-        <span style="font-size:13.5px; font-weight:600">${i.value || '—'}</span>
-      </div>
-    `).join('')
+    document.getElementById('org-infos').innerHTML = lignes.map(l => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:13px;color:var(--text-muted);">${l.label}</span>
+        <span style="font-size:13px;font-weight:600;">${l.value || '—'}</span>
+      </div>`).join('')
   }
 
-  initPeriode()
+  // ── Initialisation période : date création → aujourd'hui ──────────────────
+  function initPeriode(dateCreation) {
+    const debut = dateCreation || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
+    const fin   = new Date().toISOString().slice(0, 10)
+    document.getElementById('filtre-debut').value = debut
+    document.getElementById('filtre-fin').value   = fin
+  }
 
-  document.getElementById('btn-filtrer').addEventListener('click', () => chargerStats())
-  document.getElementById('btn-reset-periode').addEventListener('click', () => {
-    initPeriode()
+  // ── Export CSV ────────────────────────────────────────────────────────────
+  document.getElementById('btn-exporter').addEventListener('click', () => {
+    const s = _dernierStats
+    if (!s) return
+    const debut = document.getElementById('filtre-debut').value || 'tout'
+    const fin   = document.getElementById('filtre-fin').value   || 'tout'
+    const lignes = [
+      ['Indicateur', 'Valeur'],
+      ['Total adhérents',           s.totalAdherents ?? 0],
+      ['Membres actifs',             s.membresActifs ?? 0],
+      ['Membres inactifs',           s.membresInactifs ?? 0],
+      ['Membres bannis',             s.membresBanis ?? 0],
+      ['Demandes en attente',        s.demandesEnAttente ?? 0],
+      ['Cotisations (période)',       s.cotisationsMois ?? 0],
+      ['Montant cotisations (XOF)',   s.montantCotisationsMois ?? 0],
+      ['Déclarations vie en attente', s.declarationsEnAttente ?? 0],
+      ['Événements à venir',          s.evenementsAvenir ?? 0],
+      ['Abonnements plateforme (XOF)', s.montantAbonnementsPeriode ?? 0],
+      ['Solde trésorerie (XOF)',       s.soldeTresorerie ?? 0],
+    ]
+    const csv = lignes.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `dashboard-${ctx.nomOrganisation || 'org'}_${debut}_${fin}.csv`
+    a.click()
+  })
+
+  // ── Accordéon graphiques ──────────────────────────────────────────────────
+  document.querySelectorAll('.graphique-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const bodyId = header.dataset.target
+      const body   = document.getElementById(bodyId)
+      const bloc   = header.closest('.graphique-bloc')
+      const ouvert = bloc.classList.contains('ouvert')
+      if (ouvert) {
+        body.style.display = 'none'
+        bloc.classList.remove('ouvert')
+      } else {
+        body.style.display = 'block'
+        bloc.classList.add('ouvert')
+        requestAnimationFrame(() => {
+          if (bodyId === 'body-adherents'    && chartAdherents)    chartAdherents.resize()
+          if (bodyId === 'body-cotisations'  && chartCotisations)  chartCotisations.resize()
+          if (bodyId === 'body-statuts'      && chartStatuts)      chartStatuts.resize()
+          if (bodyId === 'body-declarations' && chartDeclarations) chartDeclarations.resize()
+          if (bodyId === 'body-tresorerie'   && chartTresorerie)   chartTresorerie.resize()
+        })
+      }
+    })
+  })
+
+  // ── Filtrer ───────────────────────────────────────────────────────────────
+  document.getElementById('btn-filtrer').addEventListener('click', chargerStats)
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    initPeriode(_dateCreationOrg)
     chargerStats()
   })
 
-  chargerStats()
+  // ── Démarrage : récupérer la date de création puis charger avec la bonne période ────────
   afficherInfosOrg()
+  api.get(`/organisations/${ctx.orgId}/stats`).then(stats => {
+    _dateCreationOrg = stats.dateCreationOrg || null
+    // Initialiser le filtre avec la vraie date de création → aujourd'hui
+    initPeriode(_dateCreationOrg)
+    // Maintenant charger avec la période complète
+    chargerStats()
+  }).catch(() => {
+    initPeriode(null)
+    chargerStats()
+  })
 </script>
 </body>
 </html>

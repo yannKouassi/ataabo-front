@@ -30,162 +30,227 @@
   </header>
 
   <main class="main-content">
-    <!-- En-tête -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-      <div>
-        <div class="page-title">Gestion des événements</div>
-        <div class="page-subtitle">Déclarations d'événements de vie des adhérents (mariage, naissance, décès...)</div>
-      </div>
-      <button class="btn btn-primary" id="btn-declarer" style="display:none;">
-        + Déclarer un événement
-      </button>
+    <div style="margin-bottom:24px;">
+      <div class="page-title">Gestion des événements de vie</div>
+      <div class="page-subtitle">Déclarations d'événements des adhérents (mariage, naissance, décès...)</div>
     </div>
 
-    <!-- Section admin : toutes les déclarations -->
-    <div id="section-admin" style="display:none;">
-      <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text-primary);">Toutes les déclarations</div>
-      <!-- Filtres statut -->
-      <div class="card" style="padding:16px;margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Filtrer :</span>
-        <button class="btn btn-sm filtre-btn active" data-statut="">Tous</button>
-        <button class="btn btn-sm filtre-btn" data-statut="EN_ATTENTE">En attente</button>
-        <button class="btn btn-sm filtre-btn" data-statut="TRAITE">Traités</button>
-        <button class="btn btn-sm filtre-btn" data-statut="REJETE">Rejetés</button>
-      </div>
-
-      <div class="card" style="overflow:hidden;">
-        <table class="table" style="width:100%;">
-          <thead>
-            <tr>
-              <th>ADHÉRENT</th>
-              <th>CATÉGORIE</th>
-              <th>NATURE</th>
-              <th>DATE ÉVÉNEMENT</th>
-              <th>DATE DÉCLARATION</th>
-              <th>DOCUMENT</th>
-              <th>STATUT</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-admin"></tbody>
-        </table>
-      </div>
+    <!-- Filtres statut -->
+    <div class="card" style="padding:14px 16px;margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Filtrer :</span>
+      <button class="btn btn-sm filtre-btn active" data-statut="">Tous</button>
+      <button class="btn btn-sm filtre-btn" data-statut="EN_ATTENTE">En attente</button>
+      <button class="btn btn-sm filtre-btn" data-statut="TRAITE">Traités</button>
+      <button class="btn btn-sm filtre-btn" data-statut="REJETE">Rejetés</button>
     </div>
 
-    <!-- Vue adhérent : mes propres déclarations -->
-    <div id="section-adherent" style="display:none;">
-      <div style="font-size:15px;font-weight:700;margin:24px 0 14px;color:var(--text-primary);" id="titre-mes-declarations">Mes déclarations</div>
-      <div id="liste-mes-declarations" style="display:grid;gap:16px;"></div>
+    <div class="card" style="overflow:hidden;">
+      <table class="table" style="width:100%;">
+        <thead>
+          <tr>
+            <th>ADHÉRENT</th>
+            <th>NATURE</th>
+            <th>CATÉGORIE</th>
+            <th>DATE ÉVÉNEMENT</th>
+            <th>STATUT</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-admin"></tbody>
+      </table>
     </div>
 
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
 </div>
 
-<!-- Modal déclaration -->
-<div id="modal-declaration" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;">
-  <div class="card" style="width:100%;max-width:540px;padding:28px;position:relative;max-height:90vh;overflow-y:auto;">
-    <button id="modal-close" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
-    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">Déclarer un événement de vie</div>
+<!-- Modal détail déclaration -->
+<div id="modal-detail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="width:100%;max-width:560px;padding:0;position:relative;max-height:90vh;overflow-y:auto;border-radius:12px;">
 
-    <form id="form-declaration">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <!-- En-tête du modal -->
+    <div id="modal-detail-header" style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        <div id="modal-detail-titre" style="font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:4px;"></div>
+        <div id="modal-detail-adherent" style="font-size:13px;color:var(--text-muted);"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="modal-detail-statut"></span>
+        <button id="modal-detail-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);line-height:1;">✕</button>
+      </div>
+    </div>
+
+    <!-- Corps du modal -->
+    <div style="padding:20px 24px;">
+
+      <!-- Infos principales en grille -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
         <div>
-          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Catégorie *</label>
-          <select id="f-categorie" class="form-input" required>
-            <option value="">Choisir...</option>
-            <option value="HEUREUX">😊 Événement heureux</option>
-            <option value="MALHEUREUX">😔 Événement malheureux</option>
-          </select>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Catégorie</div>
+          <div id="modal-detail-categorie"></div>
         </div>
         <div>
-          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Nature *</label>
-          <select id="f-nature" class="form-input" required>
-            <option value="">Choisir...</option>
-            <option value="MARIAGE">Mariage</option>
-            <option value="NAISSANCE">Naissance</option>
-            <option value="DECES">Décès</option>
-            <option value="MALADIE">Maladie</option>
-            <option value="ACCIDENT">Accident</option>
-            <option value="PROMOTION">Promotion professionnelle</option>
-            <option value="RETRAITE">Retraite</option>
-            <option value="AUTRE">Autre</option>
-          </select>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Date de l'événement</div>
+          <div id="modal-detail-date" style="font-size:14px;font-weight:600;color:var(--text-primary);"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Date de déclaration</div>
+          <div id="modal-detail-date-decl" style="font-size:13px;color:var(--text-secondary);"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Document</div>
+          <div id="modal-detail-document"></div>
         </div>
       </div>
 
-      <div style="margin-bottom:16px;">
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Date de l'événement *</label>
-        <input type="date" id="f-date" class="form-input" required/>
+      <!-- Description -->
+      <div id="modal-detail-desc-bloc" style="display:none;margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Description</div>
+        <div id="modal-detail-desc" style="font-size:14px;color:var(--text-secondary);line-height:1.6;background:var(--bg-secondary);padding:12px 16px;border-radius:8px;"></div>
       </div>
 
-      <div style="margin-bottom:16px;">
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Description</label>
-        <textarea id="f-description" class="form-input" rows="3" placeholder="Décrivez brièvement l'événement..."></textarea>
+      <!-- Réponse admin existante -->
+      <div id="modal-detail-reponse-bloc" style="display:none;margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Réponse de l'organisation</div>
+        <div id="modal-detail-reponse" style="font-size:14px;color:var(--text-secondary);line-height:1.6;background:var(--bg-secondary);padding:12px 16px;border-radius:8px;"></div>
       </div>
 
-      <div style="margin-bottom:24px;">
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Document justificatif</label>
-        <input type="file" id="f-document" class="form-input" accept=".pdf,.jpg,.jpeg,.png"/>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">PDF, JPG ou PNG — ex: acte de mariage, certificat médical...</div>
+      <!-- Zone Traiter / Rejeter (visible uniquement si EN_ATTENTE) -->
+      <div id="modal-actions-bloc" style="display:none;border-top:1px solid var(--border);padding-top:20px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:12px;">Commentaire / motif</div>
+        <textarea id="f-commentaire-modal" class="form-input" rows="3" placeholder="Commentaire optionnel pour l'adhérent..." style="margin-bottom:16px;"></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button class="btn btn-sm" style="background:#fce4ec;color:#c62828;padding:8px 18px;font-size:13px;" id="btn-rejeter-modal">Rejeter</button>
+          <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;padding:8px 18px;font-size:13px;" id="btn-traiter-modal">Traiter & décaisser →</button>
+        </div>
       </div>
 
-      <div style="display:flex;gap:12px;justify-content:flex-end;">
-        <button type="button" class="btn btn-outline" id="btn-annuler">Annuler</button>
-        <button type="submit" class="btn btn-primary" id="btn-soumettre">Soumettre</button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
 
-<!-- Modal traitement admin -->
-<div id="modal-traitement" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
-  <div class="card" style="width:100%;max-width:440px;padding:28px;position:relative;">
-    <button id="modal-traitement-close" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
-    <div id="modal-traitement-titre" style="font-size:18px;font-weight:700;margin-bottom:20px;"></div>
-    <textarea id="f-commentaire" class="form-input" rows="3" placeholder="Commentaire (optionnel)..." style="margin-bottom:20px;"></textarea>
-    <div style="display:flex;gap:12px;justify-content:flex-end;">
-      <button class="btn btn-outline" id="btn-traitement-annuler">Annuler</button>
-      <button class="btn btn-primary" id="btn-traitement-confirmer">Confirmer</button>
+<!-- Modal décaissement -->
+<div id="modal-decaissement" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface,#fff);border-radius:16px;width:100%;max-width:500px;box-shadow:0 12px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;max-height:92vh;">
+
+    <!-- En-tête coloré fixe -->
+    <div style="background:var(--primary);padding:18px 22px 14px;border-radius:16px 16px 0 0;flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.7);margin-bottom:3px;">Décaissement — événement de vie</div>
+          <div id="decais-titre" style="font-size:17px;font-weight:800;color:#fff;"></div>
+        </div>
+        <button onclick="document.getElementById('modal-decaissement').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+      </div>
+    </div>
+
+    <!-- Corps scrollable -->
+    <div style="overflow-y:auto;padding:18px 22px;flex:1;">
+
+      <!-- Récap bénéficiaire -->
+      <div style="background:var(--bg,#f8fafc);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+          <div style="width:38px;height:38px;border-radius:9px;background:var(--primary-soft,#ede9fe);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div id="decais-adherent-nom" style="font-weight:700;font-size:14px;color:var(--text);"></div>
+            <div id="decais-adherent-num" style="font-size:12px;color:var(--primary);font-family:monospace;font-weight:700;margin-top:2px;"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--text-muted);">Tarif configuré</span>
+          <span id="decais-tarif-info" style="font-weight:700;font-size:13px;color:var(--primary);"></span>
+        </div>
+      </div>
+
+      <!-- Montant + date sur une ligne -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Montant *</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="f-montant-decais" min="0" step="100" class="form-input"
+              style="flex:1;font-size:16px;font-weight:800;text-align:right;padding:8px 10px;"
+              placeholder="0" oninput="majCheckboxDecais()"/>
+            <span id="decais-devise" style="font-size:12px;font-weight:700;color:var(--text-muted);white-space:nowrap;"></span>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Date paiement *</label>
+          <input type="date" id="f-date-decais" class="form-input" style="padding:8px 10px;" oninput="majCheckboxDecais()"/>
+        </div>
+      </div>
+
+      <!-- Moyen de paiement avec logos -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px;">Moyen de paiement *</label>
+        <div id="decais-moyens" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+      </div>
+
+      <!-- Référence + confirmation -->
+      <div style="margin-bottom:12px;">
+        <label id="decais-ref-label" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Référence transaction <span style="font-weight:400;text-transform:none;">(optionnel)</span></label>
+        <input type="text" id="f-reference-decais" class="form-input" style="padding:8px 10px;text-transform:uppercase;font-family:monospace;letter-spacing:.04em;" placeholder="Sélectionnez d'abord un moyen de paiement" disabled oninput="this.value=this.value.toUpperCase();checkRefMatch()"/>
+        <div id="decais-ref-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px;">Sélectionnez un moyen de paiement ci-dessus pour saisir la référence.</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Confirmer la référence <span style="font-weight:400;text-transform:none;">(optionnel)</span></label>
+        <input type="text" id="f-reference-decais-confirm" class="form-input" style="padding:8px 10px;text-transform:uppercase;font-family:monospace;letter-spacing:.04em;" placeholder="Ressaisissez la même référence" disabled oninput="this.value=this.value.toUpperCase();checkRefMatch()"/>
+        <div id="decais-ref-match" style="font-size:11px;margin-top:4px;display:none;"></div>
+      </div>
+
+      <!-- Commentaire -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Commentaire <span style="font-weight:400;text-transform:none;">(optionnel)</span></label>
+        <textarea id="f-commentaire-decais" class="form-input" rows="2" style="padding:8px 10px;" placeholder="Message d'accompagnement…"></textarea>
+      </div>
+
+      <!-- Checkbox confirmation -->
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:12px;margin-bottom:4px;">
+        <input type="checkbox" id="chk-decais" style="margin-top:2px;width:15px;height:15px;flex-shrink:0;cursor:pointer;accent-color:var(--primary);" onchange="majCheckboxDecais()"/>
+        <span style="font-size:12px;color:#713f12;line-height:1.5;">
+          Je confirme avoir effectué ce décaissement au bénéfice de l'adhérent.
+        </span>
+      </label>
+    </div>
+
+    <!-- Pied fixe -->
+    <div style="padding:12px 22px 18px;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;border-top:1px solid var(--border);">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-decaissement').style.display='none'">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirmer-decais" disabled style="min-width:170px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirmer et traiter
+      </button>
     </div>
   </div>
 </div>
 
 <script type="module">
-  import { requireContexte, getContexte, logout, getPermission } from '/src/js/auth.js'
+  import { requireContexte, getContexte, logout } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   requireContexte()
   const ctx = getContexte()
   const orgId = ctx.orgId
+  const devise = ctx.devise || 'XOF'
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
-  const perm = getPermission('/evenements')
   let toutesDeclarations = []
+  let selectedDecaisMoyen = null
   let filtreStatut = ''
-  let actionEnCours = null
+  let declarationActive = null
+  let tarifsParNature = {} // { MARIAGE: 50000, DECES: 75000, ... }
 
-  const isAdmin = perm.peutEcrire
+  // Charger les tarifs au démarrage
+  api.get(`/activites/${orgId}/tarifs`).then(list => {
+    list.forEach(t => { tarifsParNature[t.nature] = t.montant || 0 })
+  }).catch(() => {})
 
-  // Tout le monde peut déclarer
-  document.getElementById('btn-declarer').style.display = 'inline-flex'
-  document.getElementById('section-adherent').style.display = 'block'
-  chargerMesDeclarations()
-
-  // L'admin voit EN PLUS le tableau de toutes les déclarations
-  if (isAdmin) {
-    document.getElementById('section-admin').style.display = 'block'
-    chargerAdmin()
-  }
-
-  // Bouton déclarer
-  document.getElementById('btn-declarer').addEventListener('click', () => ouvrirModal())
-
-  // Filtres admin
+  // ── Filtres ───────────────────────────────────────────────────────────
   document.querySelectorAll('.filtre-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'))
@@ -195,14 +260,14 @@
     })
   })
 
-  // ── Admin ────────────────────────────────────────────────────────────
+  // ── Chargement ────────────────────────────────────────────────────────
   async function chargerAdmin() {
     try {
       toutesDeclarations = await api.get(`/activites/${orgId}`)
       afficherAdmin()
     } catch (e) {
       document.getElementById('tbody-admin').innerHTML =
-        `<tr><td colspan="8"><div class="empty-state"><p>${e.message}</p></div></td></tr>`
+        `<tr><td colspan="6"><div class="empty-state"><p>${e.message}</p></div></td></tr>`
     }
   }
 
@@ -212,7 +277,7 @@
       : toutesDeclarations
     const tbody = document.getElementById('tbody-admin')
     if (!liste.length) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Aucune déclaration</p></div></td></tr>`
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucune déclaration</p></div></td></tr>`
       return
     }
     tbody.innerHTML = liste.map(d => `
@@ -221,144 +286,284 @@
           <div style="font-weight:600;font-size:13px;">${d.nomAdherent || '—'}</div>
           <div style="font-size:11px;color:var(--text-muted);font-family:monospace;">${d.numAdherent || ''}</div>
         </td>
+        <td style="font-size:13px;font-weight:500;">${libelleNature(d.nature)}</td>
         <td>${badgeCategorie(d.categorie)}</td>
-        <td style="font-size:13px;">${libelleNature(d.nature)}</td>
         <td style="font-size:13px;">${formatDate(d.dateEvenement)}</td>
-        <td style="font-size:12px;color:var(--text-muted);">${formatDateHeure(d.dateDeclaration)}</td>
-        <td>${d.urlDocument ? `<a href="${d.urlDocument}" target="_blank" style="color:var(--primary);font-size:12px;">📎 Voir</a>` : '<span style="color:var(--text-muted);font-size:12px;">—</span>'}</td>
         <td>${badgeStatut(d.statut)}</td>
         <td>
-          ${d.statut === 'EN_ATTENTE' ? `
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;" onclick="traiter('${d.id}')">✓ Traiter</button>
-              <button class="btn btn-sm" style="background:#fce4ec;color:#c62828;" onclick="rejeter('${d.id}')">✕ Rejeter</button>
-            </div>` : `<span style="font-size:12px;color:var(--text-muted);">${d.commentaireAdmin || '—'}</span>`}
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-sm btn-outline" onclick="voirDetail('${d.id}')">Voir</button>
+            ${d.statut === 'EN_ATTENTE' ? `
+              <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;" onclick="voirDetail('${d.id}')">Traiter</button>
+            ` : ''}
+          </div>
         </td>
       </tr>`).join('')
   }
 
-  window.traiter = (id) => ouvrirModalTraitement(id, 'traiter')
-  window.rejeter = (id) => ouvrirModalTraitement(id, 'rejeter')
+  // ── Modal détail ──────────────────────────────────────────────────────
+  window.voirDetail = (id) => {
+    const d = toutesDeclarations.find(x => x.id === id)
+    if (!d) return
+    declarationActive = d
 
-  // ── Adhérent ─────────────────────────────────────────────────────────
-  async function chargerMesDeclarations() {
-    const el = document.getElementById('liste-mes-declarations')
-    el.innerHTML = `<div class="page-loader"><div class="spinner"></div></div>`
-    try {
-      const liste = await api.get(`/activites/${orgId}/mes-declarations`)
-      if (!liste.length) {
-        el.innerHTML = `<div class="empty-state"><p>Vous n'avez pas encore fait de déclaration.<br>Cliquez sur "Déclarer un événement" pour commencer.</p></div>`
-        return
+    const heureux = d.categorie === 'HEUREUX'
+    const accent = heureux ? '#2e7d32' : '#c62828'
+
+    // En-tête
+    document.getElementById('modal-detail-titre').textContent = libelleNature(d.nature)
+    document.getElementById('modal-detail-adherent').textContent =
+      `${d.nomAdherent || '—'}  ·  ${d.numAdherent || ''}`
+    document.getElementById('modal-detail-statut').innerHTML = badgeStatut(d.statut)
+
+    // Catégorie
+    document.getElementById('modal-detail-categorie').innerHTML =
+      `<span style="background:${heureux?'#e8f5e9':'#fce4ec'};color:${accent};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">${heureux?'Heureux':'Malheureux'}</span>`
+
+    // Dates
+    document.getElementById('modal-detail-date').textContent = formatDate(d.dateEvenement)
+    document.getElementById('modal-detail-date-decl').textContent = formatDateHeure(d.dateDeclaration)
+
+    // Document
+    document.getElementById('modal-detail-document').innerHTML = d.urlDocument
+      ? `<a href="${d.urlDocument}" target="_blank" style="color:var(--primary);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+           Ouvrir le document</a>`
+      : `<span style="font-size:13px;color:var(--text-muted);">Aucun document</span>`
+
+    // Description
+    const descBloc = document.getElementById('modal-detail-desc-bloc')
+    if (d.description) {
+      document.getElementById('modal-detail-desc').textContent = d.description
+      descBloc.style.display = 'block'
+    } else {
+      descBloc.style.display = 'none'
+    }
+
+    // Réponse admin + décaissement éventuel
+    const reponseBloc = document.getElementById('modal-detail-reponse-bloc')
+    if (d.commentaireAdmin || d.montantDecaisse > 0) {
+      let html = ''
+      if (d.montantDecaisse > 0) {
+        const libMoyen = { WAVE:'Wave', MTN_MONNEY:'MTN MoMo', ORANGE_MONNEY:'Orange Money', MOOV_MONNEY:'Moov Money', ESPECES:'Espèces', VIREMENT:'Virement' }
+        html += `<div style="background:#e8f5e9;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:600;color:#2e7d32;">Montant décaissé</span>
+            <span style="font-size:15px;font-weight:800;color:#2e7d32;">${Number(d.montantDecaisse).toLocaleString('fr-FR')} ${devise}</span>
+          </div>
+          ${d.moyenPaiement ? `<div style="font-size:12px;color:#388e3c;">Via <strong>${libMoyen[d.moyenPaiement] || d.moyenPaiement}</strong></div>` : ''}
+          ${d.referenceDecaissement ? `<div style="font-size:12px;color:#388e3c;margin-top:2px;">Réf. : <strong>${d.referenceDecaissement}</strong></div>` : ''}
+        </div>`
       }
-      el.innerHTML = liste.map(d => `
-        <div class="card" style="padding:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-            <div>
-              <div style="font-weight:700;font-size:15px;">${libelleNature(d.nature)}</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Le ${formatDate(d.dateEvenement)}</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              ${badgeCategorie(d.categorie)}
-              ${badgeStatut(d.statut)}
-            </div>
-          </div>
-          ${d.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${d.description}</p>` : ''}
-          <div style="display:flex;gap:16px;align-items:center;font-size:12px;color:var(--text-muted);">
-            <span>Déclaré le ${formatDateHeure(d.dateDeclaration)}</span>
-            ${d.urlDocument ? `<a href="${d.urlDocument}" target="_blank" style="color:var(--primary);">📎 Document joint</a>` : ''}
-          </div>
-          ${d.commentaireAdmin ? `<div style="margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:6px;font-size:12px;"><strong>Réponse de l'organisation :</strong> ${d.commentaireAdmin}</div>` : ''}
-        </div>`).join('')
-    } catch(e) {
-      el.innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`
+      if (d.commentaireAdmin) {
+        html += `<div style="font-size:14px;color:var(--text-secondary);line-height:1.6;">${d.commentaireAdmin}</div>`
+      }
+      document.getElementById('modal-detail-reponse').innerHTML = html
+      reponseBloc.style.display = 'block'
+    } else {
+      reponseBloc.style.display = 'none'
     }
+
+    // Zone actions
+    const actionsBloc = document.getElementById('modal-actions-bloc')
+    actionsBloc.style.display = d.statut === 'EN_ATTENTE' ? 'block' : 'none'
+    document.getElementById('f-commentaire-modal').value = ''
+
+    document.getElementById('modal-detail').style.display = 'flex'
   }
 
-  // ── Modal déclaration ─────────────────────────────────────────────────
-  function ouvrirModal() {
-    document.getElementById('modal-declaration').style.display = 'flex'
-    document.getElementById('form-declaration').reset()
-  }
-  function fermerModal() {
-    document.getElementById('modal-declaration').style.display = 'none'
-  }
-  document.getElementById('modal-close').addEventListener('click', fermerModal)
-  document.getElementById('btn-annuler').addEventListener('click', fermerModal)
-
-  document.getElementById('form-declaration').addEventListener('submit', async (e) => {
-    e.preventDefault()
-    const btn = document.getElementById('btn-soumettre')
-    btn.disabled = true
-    btn.textContent = 'Envoi...'
-    try {
-      const fd = new FormData()
-      fd.append('categorie', document.getElementById('f-categorie').value)
-      fd.append('nature', document.getElementById('f-nature').value)
-      fd.append('dateEvenement', document.getElementById('f-date').value)
-      const desc = document.getElementById('f-description').value
-      if (desc) fd.append('description', desc)
-      const file = document.getElementById('f-document').files[0]
-      if (file) fd.append('document', file)
-
-      await api.upload(`/activites/${orgId}/declarer`, fd)
-      fermerModal()
-      toast.success('Déclaration envoyée avec succès.')
-      chargerMesDeclarations()
-    } catch(e) {
-      toast.error(e.message)
-    } finally {
-      btn.disabled = false
-      btn.textContent = 'Soumettre'
-    }
+  document.getElementById('modal-detail-close').addEventListener('click', () => {
+    document.getElementById('modal-detail').style.display = 'none'
+  })
+  document.getElementById('modal-detail').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal-detail'))
+      document.getElementById('modal-detail').style.display = 'none'
   })
 
-  // ── Modal traitement admin ────────────────────────────────────────────
-  function ouvrirModalTraitement(id, type) {
-    actionEnCours = { id, type }
-    const titre = type === 'traiter' ? '✓ Marquer comme traité' : '✕ Rejeter la déclaration'
-    document.getElementById('modal-traitement-titre').textContent = titre
-    document.getElementById('f-commentaire').value = ''
-    document.getElementById('modal-traitement').style.display = 'flex'
-  }
-  document.getElementById('modal-traitement-close').addEventListener('click', () => {
-    document.getElementById('modal-traitement').style.display = 'none'
-  })
-  document.getElementById('btn-traitement-annuler').addEventListener('click', () => {
-    document.getElementById('modal-traitement').style.display = 'none'
-  })
-  document.getElementById('btn-traitement-confirmer').addEventListener('click', async () => {
-    if (!actionEnCours) return
-    const commentaire = document.getElementById('f-commentaire').value
-    const btn = document.getElementById('btn-traitement-confirmer')
+  // ── Rejeter ───────────────────────────────────────────────────────────
+  document.getElementById('btn-rejeter-modal').addEventListener('click', async () => {
+    if (!declarationActive) return
+    const motif = document.getElementById('f-commentaire-modal').value
+    const btn = document.getElementById('btn-rejeter-modal')
     btn.disabled = true
     try {
-      const endpoint = actionEnCours.type === 'traiter' ? 'traiter' : 'rejeter'
-      const bodyKey = actionEnCours.type === 'traiter' ? 'commentaire' : 'motif'
-      await api.put(`/activites/${actionEnCours.id}/${endpoint}`, { [bodyKey]: commentaire })
-      document.getElementById('modal-traitement').style.display = 'none'
-      toast.success(actionEnCours.type === 'traiter' ? 'Déclaration traitée.' : 'Déclaration rejetée.')
+      await api.put(`/activites/${declarationActive.id}/rejeter`, { motif })
+      document.getElementById('modal-detail').style.display = 'none'
+      toast.success('Déclaration rejetée.')
       chargerAdmin()
-    } catch(e) {
-      toast.error(e.message)
-    } finally {
-      btn.disabled = false
+      rafraichirHistorique('historique-container')
+    } catch(e) { toast.error(e.message) }
+    finally { btn.disabled = false }
+  })
+
+  // ── Config moyens de paiement avec logos ─────────────────────────────
+  const decaisMoyenConfig = {
+    WAVE:          { label: 'Wave',         logo: '/logos/wave.png',         bg: '#f0f9ff' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    logo: '/logos/mtn-momo.svg',     bg: '#fefce8' },
+    ORANGE_MONNEY: { label: 'Orange Money', logo: '/logos/orange-money.png', bg: '#fff7ed' },
+    MOOV_MONNEY:   { label: 'Moov Money',  logo: '/logos/moov-money.png',   bg: '#eff6ff' },
+    ESPECES:       { label: 'Espèces',      logo: null,                      bg: '#f0fdf4', icon: `<svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>` },
+    VIREMENT:      { label: 'Virement',     logo: null,                      bg: '#f5f3ff', icon: `<svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>` },
+  }
+
+  // Construire les cartes de moyens de paiement
+  ;(function buildDecaisMoyens() {
+    const container = document.getElementById('decais-moyens')
+    Object.entries(decaisMoyenConfig).forEach(([value, cfg]) => {
+      const card = document.createElement('div')
+      card.dataset.value = value
+      card.style.cssText = 'border:2px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s,box-shadow .15s;background:var(--surface);user-select:none;'
+      const visual = cfg.logo
+        ? `<div style="width:36px;height:36px;border-radius:7px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:${cfg.bg};"><img src="${cfg.logo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;"/></div>`
+        : `<div style="width:36px;height:36px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:${cfg.bg};">${cfg.icon}</div>`
+      card.innerHTML = `
+        ${visual}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${cfg.label}</div>
+        </div>
+        <div class="dm-radio" style="width:15px;height:15px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <div class="dm-dot" style="width:6px;height:6px;border-radius:50%;background:#fff;display:none;"></div>
+        </div>`
+      card.addEventListener('click', () => {
+        selectedDecaisMoyen = value
+        container.querySelectorAll('div[data-value]').forEach(c => {
+          const sel = c === card
+          c.style.borderColor = sel ? 'var(--primary)' : 'var(--border)'
+          c.style.boxShadow   = sel ? '0 0 0 3px rgba(37,99,235,.12)' : 'none'
+          const radio = c.querySelector('.dm-radio')
+          const dot   = c.querySelector('.dm-dot')
+          if (radio) { radio.style.background = sel ? 'var(--primary)' : ''; radio.style.borderColor = sel ? 'var(--primary)' : 'var(--border)' }
+          if (dot)   dot.style.display = sel ? 'block' : 'none'
+        })
+        // Activer champs référence
+        const ref  = document.getElementById('f-reference-decais')
+        const refC = document.getElementById('f-reference-decais-confirm')
+        const hint = document.getElementById('decais-ref-hint')
+        const lbl  = document.getElementById('decais-ref-label')
+        ref.disabled  = false
+        refC.disabled = false
+        ref.placeholder  = cfg.logo ? `Ex : réf. ${cfg.label}` : (value === 'ESPECES' ? 'Optionnel pour les espèces' : 'N° de virement / ordre')
+        refC.placeholder = 'Ressaisissez la même référence'
+        lbl.innerHTML  = `Référence ${cfg.label} <span style="font-weight:400;text-transform:none;">(optionnel)</span>`
+        hint.textContent = `Numéro de transaction ${cfg.label}.`
+        ref.value  = ''
+        refC.value = ''
+        document.getElementById('decais-ref-match').style.display = 'none'
+        ref.focus()
+        majCheckboxDecais()
+      })
+      container.appendChild(card)
+    })
+  })()
+
+  // ── Activer/désactiver le bouton selon remplissage ───────────────────
+  window.checkRefMatch = function() {
+    const v1   = document.getElementById('f-reference-decais').value.trim()
+    const v2   = document.getElementById('f-reference-decais-confirm').value.trim()
+    const hint = document.getElementById('decais-ref-match')
+    if (!v2) { hint.style.display = 'none'; return }
+    hint.style.display = 'block'
+    if (v1 === v2) { hint.style.color = '#166534'; hint.textContent = '✓ Les deux références correspondent.' }
+    else           { hint.style.color = '#b91c1c'; hint.textContent = '✗ Les références ne correspondent pas.' }
+  }
+
+  window.majCheckboxDecais = function() {
+    const montant = parseFloat(document.getElementById('f-montant-decais').value) || 0
+    const date    = document.getElementById('f-date-decais').value
+    const checked = document.getElementById('chk-decais').checked
+    document.getElementById('btn-confirmer-decais').disabled = !(montant > 0 && date && selectedDecaisMoyen && checked)
+  }
+
+  // ── Ouvrir la modal décaissement au clic "Traiter" ────────────────────
+  document.getElementById('btn-traiter-modal').addEventListener('click', () => {
+    if (!declarationActive) return
+    const d = declarationActive
+    const montantTarif = tarifsParNature[d.nature] || 0
+
+    document.getElementById('decais-titre').textContent = libelleNature(d.nature)
+    document.getElementById('decais-adherent-nom').textContent = d.nomAdherent || '—'
+    document.getElementById('decais-adherent-num').textContent = d.telAdherent || ('N° ' + (d.numAdherent || '—'))
+    document.getElementById('decais-devise').textContent = devise
+    document.getElementById('f-montant-decais').value = montantTarif > 0 ? montantTarif : ''
+    document.getElementById('f-date-decais').value = new Date().toISOString().split('T')[0]
+    document.getElementById('f-reference-decais').value = ''
+    document.getElementById('f-commentaire-decais').value = document.getElementById('f-commentaire-modal').value
+    document.getElementById('decais-tarif-info').textContent = montantTarif > 0
+      ? `${montantTarif.toLocaleString('fr-FR')} ${devise}`
+      : 'Aucun tarif configuré'
+
+    // Reset cartes + références + checkbox
+    selectedDecaisMoyen = null
+    document.querySelectorAll('#decais-moyens div[data-value]').forEach(c => {
+      c.style.borderColor = 'var(--border)'; c.style.boxShadow = 'none'
+      const radio = c.querySelector('.dm-radio'); const dot = c.querySelector('.dm-dot')
+      if (radio) { radio.style.background = ''; radio.style.borderColor = 'var(--border)' }
+      if (dot) dot.style.display = 'none'
+    })
+    const ref  = document.getElementById('f-reference-decais')
+    const refC = document.getElementById('f-reference-decais-confirm')
+    ref.value = ''; ref.disabled = true
+    ref.placeholder = 'Sélectionnez d\'abord un moyen de paiement'
+    refC.value = ''; refC.disabled = true
+    document.getElementById('decais-ref-match').style.display = 'none'
+    document.getElementById('decais-ref-hint').textContent = 'Sélectionnez un moyen de paiement ci-dessus pour saisir la référence.'
+    document.getElementById('decais-ref-label').innerHTML = 'Référence transaction <span style="font-weight:400;text-transform:none;">(optionnel)</span>'
+    document.getElementById('chk-decais').checked = false
+    document.getElementById('btn-confirmer-decais').disabled = true
+
+    document.getElementById('modal-detail').style.display = 'none'
+    document.getElementById('modal-decaissement').style.display = 'flex'
+  })
+
+  // ── Confirmer le décaissement et traiter ─────────────────────────────
+  document.getElementById('btn-confirmer-decais').addEventListener('click', async () => {
+    if (!declarationActive) return
+    const montant     = parseFloat(document.getElementById('f-montant-decais').value) || 0
+    const reference   = document.getElementById('f-reference-decais').value.trim()
+    const referenceC  = document.getElementById('f-reference-decais-confirm').value.trim()
+    const commentaire = document.getElementById('f-commentaire-decais').value.trim()
+    const datePaiement = document.getElementById('f-date-decais').value
+
+    if (reference && reference !== referenceC) {
+      toast.error('Les deux références ne correspondent pas. Vérifiez votre saisie.')
+      return
     }
+
+    const btn = document.getElementById('btn-confirmer-decais')
+    btn.disabled = true
+    try {
+      await api.put(`/activites/${declarationActive.id}/traiter`, {
+        commentaire,
+        montantDecaisse: montant,
+        referenceDecaissement: reference || null,
+        moyenPaiement: selectedDecaisMoyen,
+        datePaiement: datePaiement || null
+      })
+      document.getElementById('modal-decaissement').style.display = 'none'
+      const msg = montant > 0
+        ? `Déclaration traitée — décaissement de ${montant.toLocaleString('fr-FR')} ${devise} enregistré.`
+        : 'Déclaration traitée.'
+      toast.success(msg)
+      chargerAdmin()
+      rafraichirHistorique('historique-container')
+    } catch(e) { toast.error(e.message) }
+    finally { btn.disabled = false }
   })
 
   // ── Helpers ───────────────────────────────────────────────────────────
   function badgeCategorie(c) {
-    if (c === 'HEUREUX') return `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">😊 Heureux</span>`
-    return `<span style="background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">😔 Malheureux</span>`
+    if (c === 'HEUREUX') return `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Heureux</span>`
+    return `<span style="background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Malheureux</span>`
   }
 
   function badgeStatut(s) {
     const map = {
-      EN_ATTENTE: ['#fff3e0', '#e65100', 'En attente'],
-      TRAITE:     ['#e8f5e9', '#2e7d32', 'Traité'],
-      REJETE:     ['#fce4ec', '#c62828', 'Rejeté'],
+      EN_ATTENTE: ['#fff3e0','#e65100','En attente'],
+      TRAITE:     ['#e8f5e9','#2e7d32','Traité'],
+      REJETE:     ['#fce4ec','#c62828','Rejeté'],
     }
-    const [bg, color, label] = map[s] || ['#f5f5f5', '#666', s]
-    return `<span style="background:${bg};color:${color};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">${label}</span>`
+    const [bg, color, label] = map[s] || ['#f5f5f5','#666', s]
+    return `<span style="background:${bg};color:${color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${label}</span>`
   }
 
   function libelleNature(n) {
@@ -369,7 +574,7 @@
 
   function formatDate(d) {
     if (!d) return '—'
-    return new Date(d).toLocaleDateString('fr-FR')
+    return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
   }
 
   function formatDateHeure(d) {
@@ -377,7 +582,8 @@
     return new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
   }
 
-  buildHistorique('historique-container', 50, 'déclaration')
+  chargerAdmin()
+  buildHistorique('historique-container', 50, ['déclaration traitée', 'déclaration rejetée'], { url: `/audit/moi/${orgId}` })
 </script>
 </body>
 </html>
