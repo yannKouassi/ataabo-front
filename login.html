@@ -25,6 +25,8 @@
       width: 36px; height: 36px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-weight: 800; font-size: 14px; overflow: hidden;
+      background: var(--primary-light); color: var(--primary);
+      border: 1px solid rgba(46,125,50,.2);
     }
     .navbar-actions { display: flex; gap: 10px; align-items: center; }
     .nav-btn-outline {
@@ -95,7 +97,7 @@
 
     .login-right {
       flex: 1;
-      background: white;
+      background: var(--surface);
       padding: 48px 40px;
       display: flex;
       flex-direction: column;
@@ -172,7 +174,7 @@
 <nav class="navbar">
   <a class="navbar-brand" href="/accueil.html">
     <div class="navbar-brand-icon" id="nav-brand-icon">A</div>
-    <span id="nav-brand-nom"><span style="color:#2E7D32">Unio</span><span style="color:#1e2530">Nova</span></span>
+    <span id="nav-brand-nom"><span style="color:#2E7D32">Unio</span><span style="color:var(--text)">Nova</span></span>
   </a>
   <div class="navbar-actions">
     <button id="btn-theme" class="nav-btn-outline" title="Mode nuit">
@@ -204,7 +206,7 @@
 
   <!-- Droite formulaire -->
   <div class="login-right">
-    <div class="login-title" data-i18n="LOGIN_TITRE">Bon retour 👋</div>
+    <div class="login-title" data-i18n="LOGIN_TITRE">Bon retour</div>
     <div class="login-subtitle" data-i18n="LOGIN_SOUS_TITRE">Connectez-vous à votre espace</div>
 
     <div class="login-error" id="login-error"></div>
@@ -253,7 +255,7 @@
     if (p.nomPlateforme && nomEl) {
       const nom = p.nomPlateforme
       const mid = Math.ceil(nom.length / 2)
-      nomEl.innerHTML = `<span style="color:#2E7D32">${nom.slice(0, mid)}</span><span style="color:#1e2530">${nom.slice(mid)}</span>`
+      nomEl.innerHTML = `<span style="color:#2E7D32">${nom.slice(0, mid)}</span><span style="color:var(--text)">${nom.slice(mid)}</span>`
     }
   }).catch(() => {})
   await chargerTraductions()

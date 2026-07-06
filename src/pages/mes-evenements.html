@@ -204,12 +204,12 @@
       return `
       <div class="card" style="padding:0;overflow:hidden;border-left:4px solid ${accent};cursor:pointer;" onclick="voirDeclaration('${d.id}')">
         <div style="background:${accentBg};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <span style="font-size:14px;font-weight:700;color:var(--text-primary);">${libelleNature(d.nature)}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--text);">${libelleNature(d.nature)}</span>
           <span style="background:${accent};color:#fff;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;">${heureux ? 'Heureux' : 'Malheureux'}</span>
         </div>
         <div style="padding:12px 14px;">
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
-            <div>Événement du <strong style="color:var(--text-primary);">${formatDate(d.dateEvenement)}</strong></div>
+            <div>Événement du <strong style="color:var(--text);">${formatDate(d.dateEvenement)}</strong></div>
             <div style="margin-top:3px;">Déclaré le ${formatDateHeure(d.dateDeclaration)}</div>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -364,7 +364,7 @@
     const [sBg, sColor, sLabel] = statutMap[d.statut] || ['#f5f5f5','#666', d.statut]
     document.getElementById('detail-content').innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-        <div style="font-size:18px;font-weight:700;color:var(--text-primary);">${libelleNature(d.nature)}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text);">${libelleNature(d.nature)}</div>
         <span style="background:${accent};color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">${heureux ? 'Heureux' : 'Malheureux'}</span>
         <span style="background:${sBg};color:${sColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${sLabel}</span>
       </div>

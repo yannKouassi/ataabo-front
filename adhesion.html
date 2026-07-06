@@ -11,7 +11,7 @@
     body { min-height:100vh; background:var(--bg); }
     .navbar { display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
     .navbar-brand { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800; color:var(--primary); cursor:pointer; text-decoration:none; }
-    .navbar-brand-icon { width:34px; height:34px; border-radius:8px; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; overflow:hidden; }
+    .navbar-brand-icon { width:34px; height:34px; border-radius:8px; background:var(--primary-light); color:var(--primary); border:1px solid rgba(46,125,50,.2); display:flex; align-items:center; justify-content:center; font-weight:800; overflow:hidden; }
     .navbar-actions { display:flex; gap:10px; align-items:center; }
     .nav-link-btn { padding:7px 16px; background:var(--surface); border:1.5px solid var(--border); color:var(--text); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s, color .15s; }
     .nav-link-btn:hover { border-color:var(--primary); color:var(--primary); }
@@ -642,7 +642,7 @@
     const iconEl = document.getElementById('nav-brand-icon')
     const nomEl = document.getElementById('nav-brand-nom')
     if (p.urlLogoPlateforme && iconEl) iconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" onerror="this.parentElement.textContent='A'">`
-    if (p.nomPlateforme && nomEl) { const nom = p.nomPlateforme; const mid = Math.ceil(nom.length / 2); nomEl.innerHTML = `<span style="color:#2E7D32">${nom.slice(0,mid)}</span><span style="color:#1e2530">${nom.slice(mid)}</span>` }
+    if (p.nomPlateforme && nomEl) { const nom = p.nomPlateforme; const mid = Math.ceil(nom.length / 2); nomEl.innerHTML = `<span style="color:#2E7D32">${nom.slice(0,mid)}</span><span style="color:var(--text)">${nom.slice(mid)}</span>` }
   }).catch(() => {})
 
   // ─── STATE ───────────────────────────────────────────
