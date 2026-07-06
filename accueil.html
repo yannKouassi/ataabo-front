@@ -256,25 +256,46 @@
     .how-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
 
     /* ── FEATURES ──────────────────────────────────────────────── */
-    .features-section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
-    .features-header { text-align: center; margin-bottom: 72px; }
-    .features-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+    .features-section { padding: 100px 0; overflow: hidden; }
+    .features-inner { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+    .features-header { text-align: center; margin-bottom: 80px; }
+    .feature-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center; margin-bottom: 100px;
     }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px; padding: 36px;
-      transition: border-color .2s, transform .2s, box-shadow .2s;
-      position: relative; overflow: hidden;
+    .feature-row:last-child { margin-bottom: 0; }
+    .feature-row.reverse { direction: rtl; }
+    .feature-row.reverse > * { direction: ltr; }
+    .feature-text {}
+    .feature-text-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 14px;
     }
-    .feature-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--primary), #43A047);
-      opacity: 0; transition: opacity .2s;
+    .feature-text h3 {
+      font-size: clamp(22px, 2.5vw, 32px); font-weight: 900;
+      letter-spacing: -.02em; line-height: 1.2;
+      color: var(--text); margin-bottom: 14px;
     }
-    .feature-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.08); }
-    .feature-card:hover::before { opacity: 1; }
+    .feature-text p { font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; }
+    .feature-bullets { display: flex; flex-direction: column; gap: 10px; }
+    .feature-bullet {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13.5px; color: var(--text-muted); line-height: 1.5;
+    }
+    .feature-bullet-dot {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+      background: var(--primary-light);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .feature-mockup-wrap {
+      position: relative;
+    }
+    .feature-mockup {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+      box-shadow: 0 20px 64px rgba(0,0,0,.1), 0 4px 16px rgba(0,0,0,.05);
+    }
     .feature-icon-wrap {
       width: 52px; height: 52px; border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
@@ -284,20 +305,6 @@
     .fi-blue  { background: linear-gradient(135deg, #e3f2fd, #bbdefb); color: #1565c0; }
     .fi-purple{ background: linear-gradient(135deg, #f3e5f5, #e1bee7); color: #6a1b9a; }
     .fi-amber { background: linear-gradient(135deg, #fff8e1, #ffecb3); color: #e65100; }
-    .feature-card-title { font-size: 17px; font-weight: 800; margin-bottom: 10px; }
-    .feature-card-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.7; }
-    .feature-list { list-style: none; margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
-    .feature-list li {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 13px; color: var(--text-muted);
-    }
-    .feature-list li::before {
-      content: ''; display: inline-block;
-      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
-      background: var(--primary-light);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%232E7D32' stroke-width='3'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: center;
-    }
 
     /* ── TARIFS ────────────────────────────────────────────────── */
     .tarifs-section {
@@ -634,57 +641,147 @@
           <div class="mockup-url">app.unionova.com/dashboard</div>
         </div>
 
-        <!-- Contenu dashboard -->
-        <div class="mockup-body">
-          <div class="mockup-header-row">
-            <div class="mockup-title">Tableau de bord</div>
-            <span class="mockup-badge-active">● En ligne</span>
+        <!-- Layout dashboard : sidebar + main -->
+        <div style="display:flex;height:340px;overflow:hidden;">
+
+          <!-- Sidebar hero -->
+          <div style="width:148px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:7px;padding:10px 10px 10px;border-bottom:1px solid var(--border);">
+              <div style="width:26px;height:26px;border-radius:7px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-size:11px;font-weight:900;">M</span></div>
+              <span style="font-size:9.5px;font-weight:800;color:var(--text);line-height:1.2;">Mutuelle<br/>Solidarité</span>
+            </div>
+            <div style="flex:1;overflow:hidden;padding:6px 0;">
+              <!-- Dashboard actif -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--primary-light);border-radius:6px;margin:0 5px 1px;">
+                <svg width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span style="font-size:9.5px;font-weight:700;color:var(--primary);flex:1;">Dashboard</span>
+              </div>
+              <!-- Adhérents avec sous-menus ouverts -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:0 5px 0;">
+                <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span style="font-size:9.5px;color:var(--text-muted);flex:1;">Adhérents</span>
+                <svg width="9" height="9" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div style="margin:0 5px 1px;border-left:2px solid var(--border);margin-left:18px;padding-left:8px;">
+                <div style="font-size:8.5px;color:var(--text-muted);padding:3px 4px;">Liste</div>
+                <div style="font-size:8.5px;color:var(--text-muted);padding:3px 4px;">Demandes</div>
+                <div style="font-size:8.5px;color:var(--text-muted);padding:3px 4px;">Bénéficiaires</div>
+              </div>
+              <!-- Paiements collapsed -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:0 5px 0;">
+                <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span style="font-size:9.5px;color:var(--text-muted);flex:1;">Paiements</span>
+                <svg width="9" height="9" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <!-- Dons -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:0 5px 0;">
+                <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span style="font-size:9.5px;color:var(--text-muted);flex:1;">Dons</span>
+                <svg width="9" height="9" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <!-- Événements -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:0 5px 0;">
+                <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span style="font-size:9.5px;color:var(--text-muted);flex:1;">Événements</span>
+              </div>
+              <!-- Mon espace -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:0 5px 0;">
+                <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span style="font-size:9.5px;color:var(--text-muted);flex:1;">Mon espace</span>
+                <svg width="9" height="9" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <!-- Habilitations -->
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:0 5px 0;">
+                <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span style="font-size:9.5px;color:var(--text-muted);flex:1;">Habilitations</span>
+                <svg width="9" height="9" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
           </div>
 
-          <!-- Stats cards -->
-          <div class="mockup-stats-row">
-            <div class="mockup-stat-card">
-              <div class="mockup-stat-val">247</div>
-              <div class="mockup-stat-lbl">Adhérents actifs</div>
-              <div class="mockup-stat-trend">↑ +12 ce mois</div>
+          <!-- Main -->
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <!-- Topbar -->
+            <div style="height:36px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--surface);flex-shrink:0;">
+              <span style="font-size:11px;font-weight:700;color:var(--text);">Tableau de bord</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;">
+                  <svg width="11" height="11" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
+                <div style="width:22px;height:22px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;">
+                  <span style="color:#fff;font-size:9px;font-weight:800;">AK</span>
+                </div>
+              </div>
             </div>
-            <div class="mockup-stat-card">
-              <div class="mockup-stat-val" style="color:#16a34a;">94%</div>
-              <div class="mockup-stat-lbl">Cotisations OK</div>
-              <div class="mockup-stat-trend">↑ +3% vs mois dernier</div>
-            </div>
-            <div class="mockup-stat-card">
-              <div class="mockup-stat-val" style="color:#7c3aed;">3</div>
-              <div class="mockup-stat-lbl">Événements à venir</div>
-              <div class="mockup-stat-trend">Prochain : 15 juil.</div>
-            </div>
-          </div>
 
-          <!-- Mini tableau adhérents -->
-          <div class="mockup-table-head">
-            <span>Adhérent</span>
-            <span>Cotisation</span>
-            <span>Statut</span>
-          </div>
-          <div class="mockup-row">
-            <span class="mockup-row-name">Koné Aminata</span>
-            <span style="color:var(--text-muted);font-size:10px;">Jan – Déc</span>
-            <span class="mockup-pill pill-actif">Actif</span>
-          </div>
-          <div class="mockup-row">
-            <span class="mockup-row-name">Traoré Moussa</span>
-            <span style="color:var(--text-muted);font-size:10px;">Jan – Déc</span>
-            <span class="mockup-pill pill-retard">En retard</span>
-          </div>
-          <div class="mockup-row">
-            <span class="mockup-row-name">Bah Fatoumata</span>
-            <span style="color:var(--text-muted);font-size:10px;">Jan – Déc</span>
-            <span class="mockup-pill pill-actif">Actif</span>
-          </div>
-          <div class="mockup-row">
-            <span class="mockup-row-name">Diallo Ibrahima</span>
-            <span style="color:var(--text-muted);font-size:10px;">Jan – Déc</span>
-            <span class="mockup-pill pill-pend">En attente</span>
+            <!-- Content -->
+            <div style="flex:1;overflow:hidden;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+
+              <!-- 4 KPI cards -->
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;">
+                  <div style="font-size:16px;font-weight:900;color:var(--text);">247</div>
+                  <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">Adhérents actifs</div>
+                  <div style="font-size:9px;color:#16a34a;font-weight:700;margin-top:3px;">↑ +12</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;">
+                  <div style="font-size:16px;font-weight:900;color:#16a34a;">94%</div>
+                  <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">Cotisations OK</div>
+                  <div style="font-size:9px;color:#16a34a;font-weight:700;margin-top:3px;">↑ +3%</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;">
+                  <div style="font-size:16px;font-weight:900;color:#d97706;">18</div>
+                  <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">En retard</div>
+                  <div style="font-size:9px;color:#d97706;font-weight:700;margin-top:3px;">↓ -4</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;">
+                  <div style="font-size:16px;font-weight:900;color:#7c3aed;">3</div>
+                  <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">Événements</div>
+                  <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">15 juil.</div>
+                </div>
+              </div>
+
+              <!-- Graphique accordéon (adhérents) -->
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--border);">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="width:20px;height:20px;border-radius:5px;background:#e1f5ee;display:flex;align-items:center;justify-content:center;">
+                      <svg width="11" height="11" fill="none" stroke="#0f6e56" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    </div>
+                    <span style="font-size:10px;font-weight:700;">Évolution des adhérents</span>
+                  </div>
+                  <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Mini graphique SVG -->
+                <div style="padding:8px 10px;">
+                  <svg viewBox="0 0 280 60" width="100%" height="60" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#2E7D32" stop-opacity=".2"/>
+                        <stop offset="100%" stop-color="#2E7D32" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,50 L40,42 L80,38 L120,28 L160,22 L200,14 L240,10 L280,6 L280,60 L0,60 Z" fill="url(#grad)"/>
+                    <path d="M0,50 L40,42 L80,38 L120,28 L160,22 L200,14 L240,10 L280,6" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="280" cy="6" r="3" fill="#2E7D32"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Graphique accordéon (cotisations) -->
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="width:20px;height:20px;border-radius:5px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+                      <svg width="11" height="11" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </div>
+                    <span style="font-size:10px;font-weight:700;">Cotisations encaissées</span>
+                  </div>
+                  <svg width="12" height="12" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
@@ -737,69 +834,337 @@
 
 <!-- FEATURES -->
 <section class="features-section">
-  <div class="features-header">
-    <div class="section-label">
-      <svg width="12" height="12" fill="var(--primary)" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      Tout ce dont vous avez besoin
-    </div>
-    <h2 class="section-title">Des fonctionnalités pensées<br/>pour vos organisations</h2>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon-wrap fi-green">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  <div class="features-inner">
+    <div class="features-header">
+      <div class="section-label">
+        <svg width="12" height="12" fill="var(--primary)" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Tout ce dont vous avez besoin
       </div>
-      <div class="feature-card-title">Gestion des adhérents</div>
-      <div class="feature-card-desc">Gérez les demandes d'adhésion, validez les profils et suivez tous vos membres depuis une interface unifiée.</div>
-      <ul class="feature-list">
-        <li>Validation IA des documents d'identité</li>
-        <li>Statuts adhérents en temps réel</li>
-        <li>Fiches membres complètes avec historique</li>
-        <li>Bénéficiaires et ayants droit</li>
-      </ul>
+      <h2 class="section-title">Des fonctionnalités pensées<br/>pour vos organisations</h2>
     </div>
 
-    <div class="feature-card">
-      <div class="feature-icon-wrap fi-blue">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <!-- ROW 1 : texte gauche, mockup dashboard droite -->
+    <div class="feature-row">
+      <div class="feature-text">
+        <div class="feature-text-label">
+          <svg width="12" height="12" fill="var(--primary)" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Tableau de bord
+        </div>
+        <h3>Pilotez votre organisation en temps réel</h3>
+        <p>Un dashboard complet qui vous donne une vision instantanée de l'état de votre organisation — adhérents, cotisations, événements à venir.</p>
+        <div class="feature-bullets">
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            KPIs en temps réel : adhérents actifs, taux de cotisation, retards
+          </div>
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Graphiques d'évolution filtrables par période
+          </div>
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Alertes intelligentes : rappels, retards, actions en attente
+          </div>
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Export CSV de toutes vos données
+          </div>
+        </div>
       </div>
-      <div class="feature-card-title">Cotisations & Finances</div>
-      <div class="feature-card-desc">Enregistrez les paiements, suivez les retards et visualisez la santé financière de votre organisation.</div>
-      <ul class="feature-list">
-        <li>Enregistrement rapide des paiements</li>
-        <li>Alertes automatiques de retard</li>
-        <li>Historique et reçus numériques</li>
-        <li>Tableau de bord financier interactif</li>
-      </ul>
+
+      <div class="feature-mockup-wrap">
+        <div class="feature-mockup">
+          <div class="mockup-topbar">
+            <div class="mockup-dot" style="background:#ff5f57;"></div>
+            <div class="mockup-dot" style="background:#febc2e;"></div>
+            <div class="mockup-dot" style="background:#28c840;"></div>
+            <div class="mockup-url">app.unionova.com/dashboard</div>
+          </div>
+          <div style="display:flex;height:280px;overflow:hidden;">
+            <!-- Sidebar feature 1 : dashboard actif -->
+            <div style="width:130px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--border);">
+                <div style="width:20px;height:20px;border-radius:5px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-size:8px;font-weight:900;">M</span></div>
+                <span style="font-size:8.5px;font-weight:800;line-height:1.2;">Mutuelle<br/>Solidarité</span>
+              </div>
+              <div style="flex:1;overflow:hidden;padding:4px 0;">
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;background:var(--primary-light);border-radius:5px;margin:0 4px 1px;">
+                  <svg width="10" height="10" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                  <span style="font-size:8.5px;font-weight:700;color:var(--primary);">Dashboard</span>
+                </div>
+                <!-- Adhérents + sous-menus -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Adhérents</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div style="margin:0 4px 1px;border-left:2px solid var(--border);margin-left:16px;padding-left:7px;">
+                  <div style="font-size:7.5px;color:var(--text-muted);padding:2px 3px;">Liste</div>
+                  <div style="font-size:7.5px;color:var(--text-muted);padding:2px 3px;">Demandes</div>
+                  <div style="font-size:7.5px;color:var(--text-muted);padding:2px 3px;">Bénéficiaires</div>
+                </div>
+                <!-- Paiements + sous-menus -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Paiements</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Dons -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Dons</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Événements -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Événements</span>
+                </div>
+                <!-- Mon espace -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Mon espace</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Habilitations -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Habilitations</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
+            <!-- Main -->
+            <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+              <div style="height:32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:var(--surface);flex-shrink:0;">
+                <span style="font-size:10px;font-weight:700;">Tableau de bord</span>
+                <div style="width:20px;height:20px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:8px;font-weight:800;">AK</span></div>
+              </div>
+              <div style="flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:7px;overflow:hidden;">
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+                  <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px;">
+                    <div style="font-size:15px;font-weight:900;">247</div>
+                    <div style="font-size:8px;color:var(--text-muted);">Adhérents actifs</div>
+                    <div style="font-size:8px;color:#16a34a;font-weight:700;margin-top:2px;">↑ +12</div>
+                  </div>
+                  <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px;">
+                    <div style="font-size:15px;font-weight:900;color:#16a34a;">94%</div>
+                    <div style="font-size:8px;color:var(--text-muted);">Cotisations</div>
+                    <div style="font-size:8px;color:#16a34a;font-weight:700;margin-top:2px;">↑ +3%</div>
+                  </div>
+                  <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px;">
+                    <div style="font-size:15px;font-weight:900;color:#d97706;">18</div>
+                    <div style="font-size:8px;color:var(--text-muted);">En retard</div>
+                    <div style="font-size:8px;color:#d97706;font-weight:700;margin-top:2px;">↓ -4</div>
+                  </div>
+                  <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px;">
+                    <div style="font-size:15px;font-weight:900;color:#7c3aed;">3</div>
+                    <div style="font-size:8px;color:var(--text-muted);">Événements</div>
+                    <div style="font-size:8px;color:var(--text-muted);margin-top:2px;">15 juil.</div>
+                  </div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;flex:1;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:5px;">
+                      <div style="width:16px;height:16px;border-radius:4px;background:#e1f5ee;display:flex;align-items:center;justify-content:center;"><svg width="9" height="9" fill="none" stroke="#0f6e56" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                      <span style="font-size:9px;font-weight:700;">Évolution des adhérents</span>
+                    </div>
+                    <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                  <div style="padding:6px 8px;">
+                    <svg viewBox="0 0 240 50" width="100%" height="50" preserveAspectRatio="none">
+                      <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2E7D32" stop-opacity=".2"/><stop offset="100%" stop-color="#2E7D32" stop-opacity="0"/></linearGradient></defs>
+                      <path d="M0,42 L40,35 L80,30 L120,22 L160,16 L200,10 L240,5 L240,50 L0,50 Z" fill="url(#g2)"/>
+                      <path d="M0,42 L40,35 L80,30 L120,22 L160,16 L200,10 L240,5" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="240" cy="5" r="3" fill="#2E7D32"/>
+                    </svg>
+                  </div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 8px;display:flex;align-items:center;justify-content:space-between;">
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    <div style="width:16px;height:16px;border-radius:4px;background:#dcfce7;display:flex;align-items:center;justify-content:center;"><svg width="9" height="9" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                    <span style="font-size:9px;font-weight:700;">Cotisations encaissées</span>
+                  </div>
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="feature-card">
-      <div class="feature-icon-wrap fi-purple">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <!-- ROW 2 : mockup adhérents gauche, texte droite -->
+    <div class="feature-row reverse">
+      <div class="feature-text">
+        <div class="feature-text-label">
+          <svg width="12" height="12" fill="var(--primary)" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Gestion des adhérents
+        </div>
+        <h3>Tous vos membres, organisés et à portée de main</h3>
+        <p>Recherchez, filtrez et gérez chaque adhérent depuis un tableau clair. Validez les demandes d'adhésion, consultez les historiques, gérez les bénéficiaires.</p>
+        <div class="feature-bullets">
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Recherche instantanée par nom, email ou numéro adhérent
+          </div>
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Filtres par statut : Actif, Inactif, Banni
+          </div>
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Fiche complète : documents, cotisations, bénéficiaires
+          </div>
+          <div class="feature-bullet">
+            <div class="feature-bullet-dot"><svg width="10" height="10" fill="none" stroke="#2E7D32" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Validation IA des pièces d'identité à l'adhésion
+          </div>
+        </div>
       </div>
-      <div class="feature-card-title">Événements & Activités</div>
-      <div class="feature-card-desc">Planifiez vos assemblées, formations et activités. Gérez les inscriptions et suivez les présences.</div>
-      <ul class="feature-list">
-        <li>Calendrier des événements</li>
-        <li>Inscriptions en ligne</li>
-        <li>Suivi des présences</li>
-        <li>Notifications automatiques</li>
-      </ul>
+
+      <div class="feature-mockup-wrap">
+        <div class="feature-mockup">
+          <div class="mockup-topbar">
+            <div class="mockup-dot" style="background:#ff5f57;"></div>
+            <div class="mockup-dot" style="background:#febc2e;"></div>
+            <div class="mockup-dot" style="background:#28c840;"></div>
+            <div class="mockup-url">app.unionova.com/adherents</div>
+          </div>
+          <div style="display:flex;height:280px;overflow:hidden;">
+            <!-- Sidebar feature 2 : adhérents actif, sous-menus ouverts -->
+            <div style="width:130px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--border);">
+                <div style="width:20px;height:20px;border-radius:5px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-size:8px;font-weight:900;">M</span></div>
+                <span style="font-size:8.5px;font-weight:800;line-height:1.2;">Mutuelle<br/>Solidarité</span>
+              </div>
+              <div style="flex:1;overflow:hidden;padding:4px 0;">
+                <!-- Dashboard -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 1px;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);">Dashboard</span>
+                </div>
+                <!-- Adhérents actif + sous-menus ouverts -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;background:var(--primary-light);border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  <span style="font-size:8.5px;font-weight:700;color:var(--primary);flex:1;">Adhérents</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div style="margin:0 4px 1px;border-left:2px solid var(--primary);margin-left:16px;padding-left:7px;">
+                  <div style="font-size:7.5px;font-weight:700;color:var(--primary);padding:3px 4px;background:rgba(46,125,50,.07);border-radius:3px;">● Liste</div>
+                  <div style="font-size:7.5px;color:var(--text-muted);padding:3px 4px;">Demandes</div>
+                  <div style="font-size:7.5px;color:var(--text-muted);padding:3px 4px;">Filiation</div>
+                  <div style="font-size:7.5px;color:var(--text-muted);padding:3px 4px;">Bénéficiaires</div>
+                </div>
+                <!-- Paiements collapsed -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Paiements</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Dons -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Dons</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Événements -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Événements</span>
+                </div>
+                <!-- Mon espace -->
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;margin:0 4px 0;">
+                  <svg width="10" height="10" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span style="font-size:8.5px;color:var(--text-muted);flex:1;">Mon espace</span>
+                  <svg width="8" height="8" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24" style="transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
+            <!-- Main adhérents -->
+            <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+              <!-- Topbar avec recherche -->
+              <div style="height:32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:var(--surface);flex-shrink:0;gap:8px;">
+                <div style="flex:1;display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:3px 7px;">
+                  <svg width="9" height="9" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span style="font-size:9px;color:var(--text-muted);">Rechercher un adhérent...</span>
+                </div>
+                <div style="width:20px;height:20px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-size:8px;font-weight:800;">AK</span></div>
+              </div>
+              <div style="flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
+                <!-- Titre + bouton imprimer -->
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <div>
+                    <div style="font-size:11px;font-weight:800;">Adhérents</div>
+                    <div style="font-size:8px;color:var(--text-muted);">Liste des membres</div>
+                  </div>
+                  <div style="font-size:8px;padding:3px 7px;border:1px solid var(--border);border-radius:5px;color:var(--text-muted);display:flex;align-items:center;gap:3px;">
+                    <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Imprimer
+                  </div>
+                </div>
+                <!-- Filtre statut -->
+                <div style="display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 7px;">
+                  <div style="font-size:8px;padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--surface);">Tous les statuts ▾</div>
+                  <div style="font-size:8px;padding:2px 8px;border-radius:4px;background:var(--primary);color:#fff;">Filtrer</div>
+                </div>
+                <!-- Tableau -->
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;flex:1;">
+                  <!-- En-tête tableau -->
+                  <div style="display:grid;grid-template-columns:0.7fr 1.2fr 1.4fr 0.8fr 0.7fr;gap:4px;padding:5px 8px;background:var(--surface);border-bottom:1px solid var(--border);">
+                    <span style="font-size:7.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">N°</span>
+                    <span style="font-size:7.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Nom complet</span>
+                    <span style="font-size:7.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Email</span>
+                    <span style="font-size:7.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Date</span>
+                    <span style="font-size:7.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Statut</span>
+                  </div>
+                  <!-- Lignes -->
+                  <div style="display:grid;grid-template-columns:0.7fr 1.2fr 1.4fr 0.8fr 0.7fr;gap:4px;padding:5px 8px;border-bottom:1px solid var(--border);align-items:center;">
+                    <span style="font-size:8px;color:var(--text-muted);">#0012</span>
+                    <span style="font-size:8px;font-weight:600;">Koné Aminata</span>
+                    <span style="font-size:8px;color:var(--text-muted);">kone.a@mail.co</span>
+                    <span style="font-size:8px;color:var(--text-muted);">12 jan. 24</span>
+                    <span style="font-size:7px;font-weight:700;background:#dcfce7;color:#166534;padding:2px 5px;border-radius:10px;">Actif</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:0.7fr 1.2fr 1.4fr 0.8fr 0.7fr;gap:4px;padding:5px 8px;border-bottom:1px solid var(--border);align-items:center;background:rgba(46,125,50,.03);">
+                    <span style="font-size:8px;color:var(--text-muted);">#0013</span>
+                    <span style="font-size:8px;font-weight:600;">Traoré Moussa</span>
+                    <span style="font-size:8px;color:var(--text-muted);">m.traore@mail.co</span>
+                    <span style="font-size:8px;color:var(--text-muted);">3 fév. 24</span>
+                    <span style="font-size:7px;font-weight:700;background:#fef9c3;color:#854d0e;padding:2px 5px;border-radius:10px;">Inactif</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:0.7fr 1.2fr 1.4fr 0.8fr 0.7fr;gap:4px;padding:5px 8px;border-bottom:1px solid var(--border);align-items:center;">
+                    <span style="font-size:8px;color:var(--text-muted);">#0014</span>
+                    <span style="font-size:8px;font-weight:600;">Bah Fatoumata</span>
+                    <span style="font-size:8px;color:var(--text-muted);">f.bah@mail.co</span>
+                    <span style="font-size:8px;color:var(--text-muted);">18 fév. 24</span>
+                    <span style="font-size:7px;font-weight:700;background:#dcfce7;color:#166534;padding:2px 5px;border-radius:10px;">Actif</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:0.7fr 1.2fr 1.4fr 0.8fr 0.7fr;gap:4px;padding:5px 8px;align-items:center;">
+                    <span style="font-size:8px;color:var(--text-muted);">#0015</span>
+                    <span style="font-size:8px;font-weight:600;">Diallo Ibrahima</span>
+                    <span style="font-size:8px;color:var(--text-muted);">i.diallo@mail.co</span>
+                    <span style="font-size:8px;color:var(--text-muted);">2 mar. 24</span>
+                    <span style="font-size:7px;font-weight:700;background:#dcfce7;color:#166534;padding:2px 5px;border-radius:10px;">Actif</span>
+                  </div>
+                </div>
+                <!-- Pagination -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;">
+                  <span style="font-size:8px;color:var(--text-muted);">247 adhérents — Page 1 / 25</span>
+                  <div style="display:flex;gap:3px;">
+                    <div style="width:18px;height:18px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text-muted);">‹</div>
+                    <div style="width:18px;height:18px;border:1px solid var(--primary);background:var(--primary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;">1</div>
+                    <div style="width:18px;height:18px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text-muted);">2</div>
+                    <div style="width:18px;height:18px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text-muted);">›</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="feature-card">
-      <div class="feature-icon-wrap fi-amber">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div class="feature-card-title">Sécurité & Habilitations</div>
-      <div class="feature-card-desc">Définissez des rôles précis pour chaque membre de l'équipe avec un audit complet de toutes les actions.</div>
-      <ul class="feature-list">
-        <li>Rôles personnalisés par organisation</li>
-        <li>Permissions granulaires par module</li>
-        <li>Journal d'audit complet</li>
-        <li>Connexion sécurisée (2FA)</li>
-      </ul>
-    </div>
   </div>
 </section>
 
