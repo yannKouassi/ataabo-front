@@ -384,13 +384,22 @@
     const aujourd = new Date(); aujourd.setHours(0,0,0,0)
     const dans7  = new Date(aujourd); dans7.setDate(dans7.getDate() + 7)
     const dans30 = new Date(aujourd); dans30.setDate(dans30.getDate() + 30)
-    const expirantBientot = tousAbonnements.filter(a => {
-      if (a.statut !== 'ACTIF' || !a.dateProchainEcheance) return false
+    // Dédoublonner par organisation : garder uniquement le plus récent ACTIF par org
+    const actifParOrg = new Map()
+    tousAbonnements.forEach(a => {
+      if (a.statut !== 'ACTIF' || !a.dateProchainEcheance) return
+      const orgId = a.organisation?.id
+      if (!orgId) return
+      const existing = actifParOrg.get(orgId)
+      if (!existing || new Date(String(a.dateDebut||'').slice(0,10)) > new Date(String(existing.dateDebut||'').slice(0,10))) {
+        actifParOrg.set(orgId, a)
+      }
+    })
+    const expirantBientot = [...actifParOrg.values()].filter(a => {
       const iso = Array.isArray(a.dateProchainEcheance)
         ? `${a.dateProchainEcheance[0]}-${String(a.dateProchainEcheance[1]).padStart(2,'0')}-${String(a.dateProchainEcheance[2]).padStart(2,'0')}`
         : String(a.dateProchainEcheance).slice(0,10)
-      const d = new Date(iso + 'T00:00:00')
-      return d <= dans30
+      return new Date(iso + 'T00:00:00') <= dans30
     })
     const bandeauEl = document.getElementById('bandeau-expiration')
     if (expirantBientot.length > 0) {
