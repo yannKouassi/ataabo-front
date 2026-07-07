@@ -50,7 +50,7 @@
     .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
 
     .err-box { background:#fee2e2; color:#b91c1c; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:16px; display:none; }
-    .btn-back { display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--text-muted); cursor:pointer; margin-bottom:24px; width:fit-content; }
+    .btn-back { display:inline-flex; align-items:center; gap:6px; font-size:13.5px; color:var(--text-muted); cursor:pointer; margin-bottom:24px; width:fit-content; background:none; border:none; padding:0; font-family:inherit; }
     .btn-back:hover { color:var(--text); }
 
     /* OTP */
@@ -159,6 +159,7 @@
   <!-- SECTION 0 : CHOIX INITIAL           -->
   <!-- ════════════════════════════════════ -->
   <div class="section visible" id="sec-choix">
+    <button class="btn-back" onclick="window.location.href='/accueil.html'">← Retour à l'accueil</button>
     <div style="text-align:center; margin-bottom:36px;">
       <div style="font-size:26px; font-weight:800; margin-bottom:8px;">Bienvenue sur UnioNova</div>
       <div style="font-size:14px; color:var(--text-muted);">Que souhaitez-vous faire ?</div>
@@ -190,7 +191,7 @@
   <!-- FLUX CRÉER — Étape 2 : Infos personnelles fondateur -->
   <!-- ════════════════════════════════════════════════ -->
   <div class="section" id="sec-fond-infos">
-    <div class="btn-back" id="back-fond">← Retour à l'organisation</div>
+    <button class="btn-back" id="back-fond">← Retour à l'organisation</button>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">Votre compte</div>
     <div style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;">Vous serez le fondateur et administrateur de l'organisation</div>
     <div class="form-card">
@@ -276,7 +277,7 @@
   <!-- FLUX CRÉER — Étape 1 : Infos organisation -->
   <!-- ════════════════════════════════════════ -->
   <div class="section" id="sec-org-infos">
-    <div class="btn-back" id="back-org">← Retour</div>
+    <button class="btn-back" id="back-org">← Retour</button>
 
     <!-- Bandeau pays : armoiries + nom pays, sans boîte -->
     <div id="org-country-banner" style="display:none;flex-direction:column;align-items:center;gap:8px;text-align:center;margin-bottom:18px;">
@@ -438,7 +439,7 @@
   <!-- FLUX REJOINDRE — Étape 1 : Liste des orgs   -->
   <!-- ═══════════════════════════════════════════ -->
   <div class="section" id="sec-liste-orgs">
-    <div class="btn-back" id="back-liste">← Retour</div>
+    <button class="btn-back" id="back-liste">← Retour</button>
     <div style="font-size:20px; font-weight:800; margin-bottom:4px;">Choisir une organisation</div>
     <div style="font-size:13.5px; color:var(--text-muted); margin-bottom:20px;">Sélectionnez l'organisation que vous souhaitez rejoindre</div>
     <div class="search-bar">
@@ -454,7 +455,7 @@
   <!-- FLUX REJOINDRE — Étape 2 : Formulaire adhésion   -->
   <!-- ════════════════════════════════════════════════ -->
   <div class="section" id="sec-form-adhesion">
-    <div class="btn-back" id="back-adhesion">← Retour à la liste</div>
+    <button class="btn-back" id="back-adhesion">← Retour à la liste</button>
 
     <!-- Bannière organisation : logo + infos + armoiries -->
     <div id="org-detail-card" style="
@@ -978,11 +979,29 @@
     }).join('')
   }
 
-  function show(id) {
+  function show(id, pushHistory = true) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'))
     document.getElementById(id).classList.add('visible')
-    window.scrollTo(0,0)
+    window.scrollTo(0, 0)
+    if (pushHistory) history.pushState({ section: id }, '', '')
   }
+
+  // Intercepter le bouton Retour du navigateur / swipe back mobile
+  window.addEventListener('popstate', () => {
+    const visible = document.querySelector('.section.visible')
+    if (!visible) return
+    const id = visible.id
+    const backMap = {
+      'sec-org-infos':    () => { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) },
+      'sec-fond-infos':   () => { renderSteps(STEPS_CREER, 1); show('sec-org-infos', false) },
+      'sec-fond-otp':     () => { renderSteps(STEPS_CREER, 2); show('sec-fond-infos', false) },
+      'sec-org-otp':      () => { renderSteps(STEPS_CREER, 3); show('sec-fond-otp', false) },
+      'sec-liste-orgs':   () => { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) },
+      'sec-form-adhesion':() => { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) },
+    }
+    if (backMap[id]) backMap[id]()
+    else { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) }
+  })
 
   // ─── UTILITAIRES ─────────────────────────────────────
   window.previewFile = (inputId, labelId) => {
@@ -1037,16 +1056,10 @@
   })
 
   // Back depuis org form → choix
-  document.getElementById('back-org').addEventListener('click', () => {
-    document.getElementById('steps-bar').style.display = 'none'
-    show('sec-choix')
-  })
+  document.getElementById('back-org').addEventListener('click', () => history.back())
 
   // Back depuis fondateur form → org form
-  document.getElementById('back-fond').addEventListener('click', () => {
-    renderSteps(STEPS_CREER, 1)
-    show('sec-org-infos')
-  })
+  document.getElementById('back-fond').addEventListener('click', () => history.back())
 
   // ─── FLUX CRÉER — ÉTAPE 2 : INSCRIPTION FONDATEUR ────
   document.getElementById('btn-fond-suivant').addEventListener('click', async () => {
@@ -1277,10 +1290,7 @@
   })
 
   // ─── FLUX REJOINDRE — LISTE DES ORGS ──────────────────
-  document.getElementById('back-liste').addEventListener('click', () => {
-    document.getElementById('steps-bar').style.display = 'none'
-    show('sec-choix')
-  })
+  document.getElementById('back-liste').addEventListener('click', () => history.back())
 
   async function chargerOrgs() {
     const list = document.getElementById('org-list')
@@ -1420,10 +1430,7 @@
   })
 
   // ─── FLUX REJOINDRE — FORMULAIRE ADHÉSION ─────────────
-  document.getElementById('back-adhesion').addEventListener('click', () => {
-    renderSteps(STEPS_REJOINDRE, 1)
-    show('sec-liste-orgs')
-  })
+  document.getElementById('back-adhesion').addEventListener('click', () => history.back())
 
   document.getElementById('btn-soumettre-adhesion').addEventListener('click', async () => {
     const btn = document.getElementById('btn-soumettre-adhesion')
