@@ -520,6 +520,9 @@
       .hero-sub { max-width: 100%; }
       .hero-stats { max-width: 100%; }
       .hero-right { display: none; }
+      .feature-row { grid-template-columns: 1fr; gap: 40px; }
+      .feature-row.reverse { direction: ltr; }
+      .features-inner { padding: 0 24px; }
     }
     @media (max-width: 899px) {
       .navbar { padding: 0 24px; }
@@ -536,14 +539,33 @@
     @media (max-width: 639px) {
       .navbar { padding: 0 16px; height: 60px; }
       .nav-btn-secondary { display: none; }
-      .hero-wrapper { padding: 56px 16px 48px; }
+      .hero-wrapper { padding: 48px 16px 40px; }
       .hero h1 { letter-spacing: -.01em; }
       .hero-stat-value { font-size: 18px; }
-      .how-section, .features-section, .tarifs-section, .testimonials-section { padding: 64px 16px; }
+      .hero-stats { max-width: 100%; }
+      .how-section { padding: 64px 16px; }
+      .features-section { padding: 64px 0; overflow: hidden; }
+      .features-inner { padding: 0 16px; }
+      .feature-row { grid-template-columns: 1fr; gap: 28px; margin-bottom: 60px; }
+      .feature-row.reverse { direction: ltr; }
+      .feature-mockup { max-width: 100%; overflow: hidden; }
+      .tarifs-section { padding: 64px 16px; }
       .tarifs-grid { grid-template-columns: 1fr; gap: 14px; }
-      .cta-bottom { margin: 0 16px 64px; padding: 56px 24px; border-radius: 20px; }
+      .testimonials-section { padding: 64px 0; }
+      /* Orbit/pays section : contenir sur mobile */
+      #orbit-container { width: 100% !important; height: 220px !important; overflow: hidden; }
+      /* CTA */
+      .cta-bottom { margin: 0 12px 48px; padding: 48px 20px; border-radius: 16px; }
+      .cta-bottom h2 { font-size: clamp(20px, 6vw, 32px); }
       .cta-bottom-actions { flex-direction: column; align-items: stretch; }
-      .cta-bottom-actions button { width: 100%; justify-content: center; }
+      .cta-bottom-actions button, .cta-bottom-actions a { width: 100%; justify-content: center; }
+      /* Footer */
+      footer { padding: 28px 16px; }
+      .footer-links { gap: 16px; }
+      /* Section pays strip */
+      .countries-strip-wrap { margin-top: 28px; }
+      /* Sections label/title */
+      .section-title { font-size: clamp(22px, 6vw, 32px); }
     }
     @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   </style>

@@ -196,6 +196,20 @@
   </main>
 </div>
 
+<style>
+@media (max-width: 767px) {
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  #tarifs-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #params-map {
+    height: 220px !important;
+  }
+}
+</style>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
   import { requireContexte, getContexte, getUser, logout, applyOrgColor, saveContexte, getPermission } from '/src/js/auth.js'

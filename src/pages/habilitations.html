@@ -6,6 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UnioNova — Habilitations</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    @media (max-width: 767px) {
+      /* Grille groupes/permissions → colonne unique */
+      [style*="grid-template-columns:280px 1fr"],
+      [style*="grid-template-columns: 280px 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="app-layout">

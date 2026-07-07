@@ -55,6 +55,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ── Mise en page responsive : empilement des conteneurs flex/grid ──
+  // Sur mobile, tout conteneur flex ou grid inline qui est parent direct
+  // de .card doit empiler ses enfants verticalement.
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    document.querySelectorAll('.card').forEach(card => {
+      const parent = card.parentElement
+      if (!parent) return
+      const s = parent.getAttribute('style') || ''
+      const isFlexRow = (s.includes('display:flex') || s.includes('display: flex')) &&
+                        !s.includes('flex-direction:column') && !s.includes('flex-direction: column')
+      const isGrid = s.includes('grid-template-columns')
+      if (isFlexRow || isGrid) {
+        parent.style.flexDirection = 'column'
+        parent.style.maxWidth = '100%'
+        // S'assurer que chaque carte prend toute la largeur
+        parent.querySelectorAll(':scope > .card').forEach(c => {
+          c.style.width = '100%'
+          c.style.flex = 'none'
+        })
+      }
+    })
+  }
+
   // ── Modals inline-stylés → classes responsive + body scroll lock ──
   // Tous les modals ont position:fixed et inset:0 en style inline.
   // On leur ajoute une classe CSS pour les gérer via media query,

@@ -6,6 +6,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UnioNova — Gestion des activités</title>
   <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    /* ── Table : scroll horizontal ── */
+    .card[style*="overflow:hidden"] { overflow: visible !important; }
+
+    @media (max-width: 767px) {
+      /* Table : wrappée pour scroll */
+      .card table { min-width: 580px; }
+
+      /* Modal détail : bottom sheet */
+      #modal-detail {
+        padding: 0 !important;
+        align-items: flex-end !important;
+      }
+      #modal-detail > div {
+        border-radius: 16px 16px 0 0 !important;
+        max-height: 92vh !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      /* Grille 2 colonnes dans le modal → 1 colonne */
+      #modal-detail [style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      /* Modal décaissement : bottom sheet */
+      #modal-decaissement {
+        padding: 0 !important;
+        align-items: flex-end !important;
+      }
+      #modal-decaissement > div {
+        border-radius: 16px 16px 0 0 !important;
+        max-height: 92vh !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      /* Grille moyens paiement 2 col → 1 col */
+      #decais-moyens {
+        grid-template-columns: 1fr !important;
+      }
+      /* Grille montant + date → 1 col */
+      #modal-decaissement [style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="app-layout">
@@ -44,7 +89,8 @@
       <button class="btn btn-sm filtre-btn" data-statut="REJETE">Rejetés</button>
     </div>
 
-    <div class="card" style="overflow:hidden;">
+    <div class="card">
+      <div class="table-wrapper">
       <table class="table" style="width:100%;">
         <thead>
           <tr>
@@ -58,6 +104,7 @@
         </thead>
         <tbody id="tbody-admin"></tbody>
       </table>
+      </div><!-- /table-wrapper -->
     </div>
 
     <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>

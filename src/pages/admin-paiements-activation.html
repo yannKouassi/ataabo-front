@@ -48,6 +48,11 @@
 
     /* Org avatar */
     .org-avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--primary); color: #fff; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; flex-shrink: 0; }
+
+    @media (max-width: 767px) {
+      [style*="grid-template-columns:2fr 1fr"],
+      [style*="grid-template-columns: 2fr 1fr"] { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>

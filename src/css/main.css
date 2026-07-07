@@ -856,8 +856,48 @@ body.sidebar-open .sidebar-backdrop { display: block; }
   #toast-container { left: 12px; right: 12px; bottom: 12px; }
   .toast { max-width: 100%; }
 
-  /* Tables : scroll horizontal natif */
-  .table-wrapper { -webkit-overflow-scrolling: touch; }
+  /* Tables : scroll horizontal natif + min-width pour forcer le scroll */
+  .table-wrapper {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  table { min-width: 480px; }
+  th, td { padding: 8px 10px; font-size: 12.5px; white-space: nowrap; }
+
+  /* Page header */
+  .page-title { font-size: 18px; }
+  .page-subtitle { font-size: 12px; }
+
+  /* Cards : padding réduit dès 767px */
+  .card { padding: 14px; }
+
+  /* Filtres et barres d'action inline */
+  .filter-row,
+  [style*="display:flex"][style*="flex-wrap"] select,
+  [style*="display:flex"][style*="flex-wrap"] input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Boutons d'action dans les headers de page */
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .page-actions .btn { flex: 1; justify-content: center; min-width: 120px; }
+
+  /* Badge / pill : pas de wrapping */
+  .badge { white-space: nowrap; }
+
+  /* ── Grilles inline → colonne unique sur mobile ── */
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    max-width: 100% !important;
+  }
+  /* width fixes sur selects et inputs inline */
+  select[style*="width"], input[style*="width"] { width: 100% !important; }
 }
 
 /* =============================================
@@ -897,3 +937,13 @@ body.sidebar-open .sidebar-backdrop { display: block; }
     margin: 0 !important;
   }
 }
+
+/* =============================================
+   GLOBAL OVERFLOW PROTECTION
+   Empêche tout débordement horizontal sur body
+   ============================================= */
+body { overflow-x: hidden; }
+
+/* Inputs et selects : jamais plus larges que le conteneur */
+input, select, textarea { max-width: 100%; }
+
