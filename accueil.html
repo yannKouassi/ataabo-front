@@ -1372,79 +1372,136 @@
   <div class="container" style="text-align:center;">
     <p style="font-size:13px;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Disponible dans 5 pays</p>
     <h2 style="font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;color:var(--text);margin-bottom:16px;">Une plateforme conçue pour l'Afrique</h2>
-    <p style="color:var(--text-muted);max-width:520px;margin:0 auto 56px;">Gérez vos adhérents, cotisations et événements depuis n'importe lequel de nos pays partenaires.</p>
-    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:24px;">
+    <p style="color:var(--text-muted);max-width:520px;margin:0 auto 48px;">Gérez vos adhérents, cotisations et événements depuis n'importe lequel de nos pays partenaires.</p>
 
-      <!-- Côte d'Ivoire -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 32px;background:var(--bg);border:1px solid var(--border);border-radius:20px;min-width:140px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(46,125,50,.12)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="56" height="38" viewBox="0 0 3 2" style="border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.15);" xmlns="http://www.w3.org/2000/svg">
-          <rect width="1" height="2" fill="#F77F00"/>
-          <rect x="1" width="1" height="2" fill="#FFFFFF"/>
-          <rect x="2" width="1" height="2" fill="#009A44"/>
+    <!-- Orbit 3D -->
+    <div id="orbit-scene" style="position:relative;width:100%;height:320px;margin:0 auto;max-width:700px;overflow:visible;">
+      <!-- Globe central -->
+      <div style="
+        position:absolute;top:50%;left:50%;
+        transform:translate(-50%,-50%);
+        width:72px;height:72px;border-radius:50%;
+        background:radial-gradient(circle at 35% 35%,#66bb6a,#1b5e20);
+        box-shadow:0 0 0 12px rgba(46,125,50,.08),0 0 0 24px rgba(46,125,50,.04);
+        display:flex;align-items:center;justify-content:center;
+        z-index:5;
+      ">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
-        <div>
-          <div style="font-weight:700;color:var(--text);font-size:14px;">Côte d'Ivoire</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">XOF · Français</div>
-        </div>
       </div>
-
-      <!-- Mali -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 32px;background:var(--bg);border:1px solid var(--border);border-radius:20px;min-width:140px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(46,125,50,.12)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="56" height="38" viewBox="0 0 3 2" style="border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.15);" xmlns="http://www.w3.org/2000/svg">
-          <rect width="1" height="2" fill="#009A44"/>
-          <rect x="1" width="1" height="2" fill="#FCD116"/>
-          <rect x="2" width="1" height="2" fill="#CE1126"/>
-        </svg>
-        <div>
-          <div style="font-weight:700;color:var(--text);font-size:14px;">Mali</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">XOF · Français</div>
-        </div>
-      </div>
-
-      <!-- Bénin -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 32px;background:var(--bg);border:1px solid var(--border);border-radius:20px;min-width:140px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(46,125,50,.12)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="56" height="38" viewBox="0 0 3 2" style="border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.15);" xmlns="http://www.w3.org/2000/svg">
-          <rect width="3" height="2" fill="#FCD116"/>
-          <rect width="3" height="1" fill="#CE1126" y="1"/>
-          <rect width="1" height="2" fill="#008751"/>
-        </svg>
-        <div>
-          <div style="font-weight:700;color:var(--text);font-size:14px;">Bénin</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">XOF · Français</div>
-        </div>
-      </div>
-
-      <!-- Madagascar -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 32px;background:var(--bg);border:1px solid var(--border);border-radius:20px;min-width:140px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(46,125,50,.12)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="56" height="38" viewBox="0 0 3 2" style="border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.15);" xmlns="http://www.w3.org/2000/svg">
-          <rect width="3" height="2" fill="#FC3D32"/>
-          <rect x="1" width="2" height="1" fill="#FC3D32"/>
-          <rect x="1" y="1" width="2" height="1" fill="#007E3A"/>
-          <rect width="1" height="2" fill="#FFFFFF"/>
-        </svg>
-        <div>
-          <div style="font-weight:700;color:var(--text);font-size:14px;">Madagascar</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">MGA · Français</div>
-        </div>
-      </div>
-
-      <!-- Nigeria -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 32px;background:var(--bg);border:1px solid var(--border);border-radius:20px;min-width:140px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(46,125,50,.12)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="56" height="38" viewBox="0 0 3 2" style="border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.15);" xmlns="http://www.w3.org/2000/svg">
-          <rect width="1" height="2" fill="#008751"/>
-          <rect x="1" width="1" height="2" fill="#FFFFFF"/>
-          <rect x="2" width="1" height="2" fill="#008751"/>
-        </svg>
-        <div>
-          <div style="font-weight:700;color:var(--text);font-size:14px;">Nigeria</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">NGN · English</div>
-        </div>
-      </div>
-
+      <!-- Ellipse décorative SVG (correspond exactement au chemin des cartes) -->
+      <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);overflow:visible;pointer-events:none;" width="460" height="160" viewBox="-230 -80 460 160">
+        <ellipse cx="0" cy="0" rx="220" ry="70" fill="none" stroke="rgba(46,125,50,.18)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      </svg>
+      <!-- Cards injectées par JS -->
     </div>
-    <p style="margin-top:40px;font-size:13px;color:var(--text-muted);">D'autres pays arrivent bientôt</p>
+
+    <p style="margin-top:16px;font-size:13px;color:var(--text-muted);">D'autres pays arrivent bientôt 🌍</p>
   </div>
 </section>
+
+<script>
+(function() {
+  const PAYS = [
+    {
+      nom: "Côte d'Ivoire", devise: "XOF · Français",
+      flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="2" fill="#F77F00"/><rect x="1" width="1" height="2" fill="#FFF"/><rect x="2" width="1" height="2" fill="#009A44"/></svg>`
+    },
+    {
+      nom: "Mali", devise: "XOF · Français",
+      flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="2" fill="#009A44"/><rect x="1" width="1" height="2" fill="#FCD116"/><rect x="2" width="1" height="2" fill="#CE1126"/></svg>`
+    },
+    {
+      nom: "Bénin", devise: "XOF · Français",
+      flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="3" height="2" fill="#FCD116"/><rect width="3" height="1" y="1" fill="#CE1126"/><rect width="1" height="2" fill="#008751"/></svg>`
+    },
+    {
+      nom: "Madagascar", devise: "MGA · Français",
+      flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="3" height="2" fill="#FC3D32"/><rect x="1" width="2" height="1" fill="#FC3D32"/><rect x="1" y="1" width="2" height="1" fill="#007E3A"/><rect width="1" height="2" fill="#FFF"/></svg>`
+    },
+    {
+      nom: "Nigeria", devise: "NGN · English",
+      flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="2" fill="#008751"/><rect x="1" width="1" height="2" fill="#FFF"/><rect x="2" width="1" height="2" fill="#008751"/></svg>`
+    },
+  ]
+
+  const scene = document.getElementById('orbit-scene')
+  const N = PAYS.length
+  const RX = 220   // rayon horizontal ellipse
+  const RY = 70    // rayon vertical ellipse (profondeur)
+  const CX = 0     // centre X relatif
+  const CY = 0     // centre Y relatif
+
+  // Créer les cards
+  const cards = PAYS.map((p, i) => {
+    const el = document.createElement('div')
+    el.style.cssText = `
+      position:absolute;
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+      padding:14px 18px;
+      background:var(--surface,#fff);
+      border:1.5px solid var(--border,#e5e7eb);
+      border-radius:16px;
+      box-shadow:0 2px 12px rgba(0,0,0,.08);
+      min-width:110px;
+      transform-origin:center center;
+      transition:box-shadow .2s;
+      cursor:default;
+      pointer-events:auto;
+    `
+    el.innerHTML = `
+      <div style="width:48px;height:32px;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);">${p.flag}</div>
+      <div>
+        <div style="font-weight:700;font-size:13px;color:var(--text,#1a2e1a);white-space:nowrap;">${p.nom}</div>
+        <div style="font-size:11px;color:var(--text-muted,#888);margin-top:2px;">${p.devise}</div>
+      </div>
+    `
+    el.addEventListener('mouseenter', () => { el.style.boxShadow = '0 8px 28px rgba(46,125,50,.18)'; el.style.borderColor = 'var(--primary,#2e7d32)' })
+    el.addEventListener('mouseleave', () => { el.style.boxShadow = '0 2px 12px rgba(0,0,0,.08)'; el.style.borderColor = 'var(--border,#e5e7eb)' })
+    scene.appendChild(el)
+    return { el, baseAngle: (i / N) * Math.PI * 2 }
+  })
+
+  let angle = 0
+  let paused = false
+  scene.addEventListener('mouseenter', () => paused = true)
+  scene.addEventListener('mouseleave', () => paused = false)
+
+  function tick() {
+    if (!paused) angle += 0.004
+
+    // Trier par Z pour le z-index
+    const positions = cards.map((c, i) => {
+      const a = c.baseAngle + angle
+      const x = Math.cos(a) * RX
+      const y = Math.sin(a) * RY
+      const z = Math.sin(a)  // -1 (arrière) à +1 (avant)
+      return { c, x, y, z, a }
+    })
+    positions.sort((a, b) => a.z - b.z)
+
+    positions.forEach(({ c, x, y, z }, idx) => {
+      const scale = 0.75 + 0.25 * ((z + 1) / 2)
+      const opacity = 0.55 + 0.45 * ((z + 1) / 2)
+      const zIndex = idx + 1
+      const el = c.el
+      const rect = el.getBoundingClientRect()
+      const w = el.offsetWidth || 120
+      const h = el.offsetHeight || 80
+      el.style.left = `calc(50% + ${x}px - ${w/2}px)`
+      el.style.top  = `calc(50% + ${y}px - ${h/2}px)`
+      el.style.transform = `scale(${scale})`
+      el.style.opacity = opacity
+      el.style.zIndex = zIndex
+    })
+
+    requestAnimationFrame(tick)
+  }
+  tick()
+})()
+</script>
 
 <!-- CTA BOTTOM -->
 <div class="cta-bottom">
