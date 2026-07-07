@@ -147,13 +147,29 @@ function _injecterCSS() {
     .pays-combobox-item .pays-check { margin-left: auto; color: var(--primary); opacity: 0; }
     .pays-combobox-item.actif .pays-check { opacity: 1; }
     .pays-combobox-item .pays-pin { color: var(--text-muted); flex-shrink: 0; }
+    .pays-combobox-item .pays-arrow { margin-left: auto; color: var(--text-muted); font-size: 10px; transition: transform .15s; }
+    .pays-combobox-item.ouvert .pays-arrow { transform: rotate(90deg); }
+    .pays-combobox-sublabel { font-size: 11px; color: var(--text-muted); padding: 4px 14px 2px 28px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; display: none; }
+    .pays-combobox-sublabel.visible { display: block; }
+    .pays-combobox-lang {
+      display: none; align-items: center; gap: 8px;
+      padding: 7px 14px 7px 28px;
+      font-size: 12.5px; font-weight: 500;
+      cursor: pointer; color: var(--text);
+      transition: background .12s;
+    }
+    .pays-combobox-lang.visible { display: flex; }
+    .pays-combobox-lang:hover { background: var(--bg-subtle, #f3f4f6); }
+    .pays-combobox-lang.actif { color: var(--primary); font-weight: 700; }
+    .pays-combobox-lang .lang-check { margin-left: auto; color: var(--primary); opacity: 0; }
+    .pays-combobox-lang.actif .lang-check { opacity: 1; }
   `
   document.head.appendChild(style)
 }
 
 // Langue officielle par pays (fallback si DB ne retourne pas les langues)
 const PAYS_LANGUE_DEFAULT = {
-  CIV: 'fr', BEN: 'fr', MLI: 'fr', NGA: 'en', MDG: 'mg'
+  CIV: 'fr', BEN: 'fr', MLI: 'fr', NGA: 'en', MDG: 'fr'
 }
 
 // Crée le combobox custom et l'injecte dans containerId
@@ -167,6 +183,41 @@ export async function buildComboboxPays(containerId) {
   const paysChoisi = paysList.find(p => p.codePays === paysActuel)
   const labelBtn = paysChoisi ? paysChoisi.libPays : 'Pays'
 
+  const langueActuelle = getLangue()
+
+  const renderItem = (p) => {
+    const langues = p.langues?.length ? p.langues : [{ code: PAYS_LANGUE_DEFAULT[p.codePays] || 'fr', nom: 'Français' }]
+    const actif = p.codePays === paysActuel
+    const multiLangue = langues.length > 1
+
+    if (multiLangue) {
+      const sousItems = langues.map(l => {
+        const langActif = actif && langueActuelle === l.code
+        return `<div class="pays-combobox-lang${langActif ? ' actif' : ''}"
+          data-code="${p.codePays}" data-lang="${l.code}">
+          ${l.nom}
+          <span class="lang-check">${SVG_CHECK}</span>
+        </div>`
+      }).join('')
+      return `
+        <div class="pays-combobox-item${actif ? ' actif' : ''}" data-code="${p.codePays}" data-multi="1">
+          <span class="pays-pin">${SVG_MAP_PIN}</span>
+          ${p.libPays}
+          <span class="pays-arrow">▶</span>
+        </div>
+        <div class="pays-combobox-sublabel" data-code="${p.codePays}">${p.libPays} — langue</div>
+        ${sousItems}`
+    }
+
+    const lang = langues[0].code
+    return `<div class="pays-combobox-item${actif ? ' actif' : ''}"
+      data-code="${p.codePays}" data-lang="${lang}">
+      <span class="pays-pin">${SVG_MAP_PIN}</span>
+      ${p.libPays}
+      <span class="pays-check">${SVG_CHECK}</span>
+    </div>`
+  }
+
   container.innerHTML = `
     <div class="pays-combobox" id="pays-combobox-root">
       <button class="pays-combobox-btn" id="pays-combobox-btn" type="button">
@@ -175,16 +226,7 @@ export async function buildComboboxPays(containerId) {
         ${SVG_CHEVRON}
       </button>
       <div class="pays-combobox-dropdown" id="pays-combobox-dropdown">
-        ${paysList.map(p => {
-          const lang = p.langues?.[0]?.code || PAYS_LANGUE_DEFAULT[p.codePays] || 'fr'
-          const actif = p.codePays === paysActuel
-          return `<div class="pays-combobox-item${actif ? ' actif' : ''}"
-            data-code="${p.codePays}" data-lang="${lang}">
-            <span class="pays-pin">${SVG_MAP_PIN}</span>
-            ${p.libPays}
-            <span class="pays-check">${SVG_CHECK}</span>
-          </div>`
-        }).join('')}
+        ${paysList.map(renderItem).join('')}
       </div>
     </div>`
 
@@ -197,14 +239,42 @@ export async function buildComboboxPays(containerId) {
     dropdown.classList.toggle('ouvert')
   })
 
-  dropdown.querySelectorAll('.pays-combobox-item').forEach(item => {
+  dropdown.querySelectorAll('.pays-combobox-item:not([data-multi])').forEach(item => {
     item.addEventListener('click', () => {
       changerPays(item.dataset.code, item.dataset.lang)
     })
   })
 
-  document.addEventListener('click', () => {
-    btn.classList.remove('ouvert')
-    dropdown.classList.remove('ouvert')
-  }, { capture: true, once: false })
+  dropdown.querySelectorAll('.pays-combobox-item[data-multi]').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const code = item.dataset.code
+      const isOuvert = item.classList.contains('ouvert')
+      // Fermer tous les autres accordions ouverts
+      dropdown.querySelectorAll('.pays-combobox-item[data-multi].ouvert').forEach(el => {
+        el.classList.remove('ouvert')
+        dropdown.querySelectorAll(`.pays-combobox-lang[data-code="${el.dataset.code}"], .pays-combobox-sublabel[data-code="${el.dataset.code}"]`)
+          .forEach(el2 => el2.classList.remove('visible'))
+      })
+      if (!isOuvert) {
+        item.classList.add('ouvert')
+        dropdown.querySelectorAll(`.pays-combobox-lang[data-code="${code}"], .pays-combobox-sublabel[data-code="${code}"]`)
+          .forEach(el => el.classList.add('visible'))
+      }
+    })
+  })
+
+  dropdown.querySelectorAll('.pays-combobox-lang').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation()
+      changerPays(item.dataset.code, item.dataset.lang)
+    })
+  })
+
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('pays-combobox-root')?.contains(e.target)) {
+      btn.classList.remove('ouvert')
+      dropdown.classList.remove('ouvert')
+    }
+  })
 }
