@@ -69,7 +69,7 @@ export function logout() {
 
 export function requireAuth() {
   if (!isLoggedIn()) {
-    window.location.href = '/loginnpm run dev.html'
+    window.location.href = '/login.html'
     return false
   }
   return true
