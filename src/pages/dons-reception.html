@@ -59,10 +59,11 @@
               <th>Moyen</th>
               <th>Date</th>
               <th>Motif</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-dons">
-            <tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -79,7 +80,7 @@
 <div class="modal-overlay" id="modal-don" style="display:none;">
   <div class="modal" style="max-width:500px;">
     <div class="modal-header">
-      <span class="modal-title">Enregistrer un don reçu</span>
+      <span class="modal-title" id="modal-don-title">Enregistrer un don reçu</span>
       <button class="modal-close" id="modal-don-close">&times;</button>
     </div>
     <div class="modal-body">
@@ -100,7 +101,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Date *</label>
-        <input type="date" class="form-input" id="don-date"/>
+        <input type="date" class="form-input" id="don-date" max=""/>
       </div>
       <div class="form-group">
         <label class="form-label">Motif</label>
@@ -132,10 +133,12 @@
   if (!perm.peutEcrire) document.getElementById('btn-nouveau-don').style.display = 'none'
 
   let page = 0, totalPages = 1
+  let donsParId = {}
+  let editingDonId = null
 
   async function chargerMoyens() {
     try {
-      const moyens = await api.get('/referentiel/moyens-paiement')
+      const moyens = await api.get(`/referentiel/moyens-paiement?codePays=${encodeURIComponent(ctx.codePays || '')}`)
       const sel = document.getElementById('don-moyen')
       moyens.forEach(m => {
         const opt = document.createElement('option')
@@ -149,15 +152,17 @@
   async function charger() {
     const params = new URLSearchParams({ page, size: 15 })
     const tbody = document.getElementById('tbody-dons')
-    tbody.innerHTML = `<tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
+    tbody.innerHTML = `<tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>`
     try {
       const data = await api.get(`/dons/reception/${ctx.orgId}?${params}`)
       const items = Array.isArray(data) ? data : (data.content || [])
       totalPages = data.totalPages || 1
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucun don reçu</p></div></td></tr>`
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun don reçu</p></div></td></tr>`
         return
       }
+      donsParId = {}
+      items.forEach(d => { donsParId[d.id] = d })
       tbody.innerHTML = items.map(d => `
         <tr>
           <td style="font-weight:600;">${d.donateur||'—'}</td>
@@ -165,6 +170,10 @@
           <td style="font-size:13px;">${d.libelleMoyen||'—'}</td>
           <td style="font-size:13px;">${d.dateDon ? new Date(d.dateDon).toLocaleDateString('fr-FR') : '—'}</td>
           <td style="font-size:13px; color:var(--text-muted);">${d.motif||'—'}</td>
+          <td style="white-space:nowrap;">
+            ${perm.peutEcrire ? `<button class="btn btn-ghost btn-sm" onclick="modifierDon('${d.id}')">Modifier</button>` : ''}
+            ${perm.peutSupprimer ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="supprimerDon('${d.id}')">Supprimer</button>` : ''}
+          </td>
         </tr>
       `).join('')
       document.getElementById('pagination-info').textContent = `Page ${page+1} / ${totalPages}`
@@ -172,7 +181,7 @@
         <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
         <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
 
@@ -180,26 +189,68 @@
   window.changerPage = n => { page = n; charger() }
 
   document.getElementById('btn-nouveau-don').addEventListener('click', () => {
-    document.getElementById('don-date').value = new Date().toISOString().slice(0,10)
+    editingDonId = null
+    document.getElementById('modal-don-title').textContent = 'Enregistrer un don reçu'
+    document.getElementById('btn-sauvegarder-don').textContent = 'Enregistrer'
+    document.getElementById('don-donateur').value = ''
+    document.getElementById('don-montant').value = ''
+    document.getElementById('don-moyen').value = ''
+    document.getElementById('don-motif').value = ''
+    const aujourdhui = new Date().toISOString().slice(0,10)
+    document.getElementById('don-date').max = aujourdhui
+    document.getElementById('don-date').value = aujourdhui
     document.getElementById('err-don').style.display = 'none'
     document.getElementById('modal-don').style.display = 'flex'
   })
   document.getElementById('modal-don-close').addEventListener('click', () => { document.getElementById('modal-don').style.display = 'none' })
   document.getElementById('modal-don-cancel').addEventListener('click', () => { document.getElementById('modal-don').style.display = 'none' })
 
+  window.modifierDon = function(id) {
+    const d = donsParId[id]
+    if (!d) return
+    editingDonId = id
+    document.getElementById('modal-don-title').textContent = 'Modifier le don'
+    document.getElementById('btn-sauvegarder-don').textContent = 'Enregistrer les modifications'
+    document.getElementById('don-donateur').value = d.donateur || ''
+    document.getElementById('don-montant').value = d.montant || ''
+    document.getElementById('don-moyen').value = ''
+    document.getElementById('don-date').max = new Date().toISOString().slice(0,10)
+    document.getElementById('don-date').value = d.dateDon ? d.dateDon.slice(0,10) : ''
+    document.getElementById('don-motif').value = d.motif || ''
+    document.getElementById('err-don').style.display = 'none'
+    document.getElementById('modal-don').style.display = 'flex'
+  }
+
+  window.supprimerDon = async function(id) {
+    if (!confirm('Supprimer ce don ? Cette action est irréversible.')) return
+    try {
+      await api.delete(`/dons/${id}`)
+      toast.success('Don supprimé.')
+      charger()
+    } catch(err) {
+      toast.error(err.message)
+    }
+  }
+
   document.getElementById('btn-sauvegarder-don').addEventListener('click', async () => {
     const errEl = document.getElementById('err-don')
     errEl.style.display = 'none'
+    const payload = {
+      orgId: ctx.orgId,
+      donateur: document.getElementById('don-donateur').value,
+      montant: parseFloat(document.getElementById('don-montant').value),
+      moyenPaiementId: document.getElementById('don-moyen').value,
+      dateDon: document.getElementById('don-date').value,
+      motif: document.getElementById('don-motif').value,
+    }
     try {
-      await api.post('/dons/reception', {
-        orgId: ctx.orgId,
-        donateur: document.getElementById('don-donateur').value,
-        montant: parseFloat(document.getElementById('don-montant').value),
-        moyenPaiementId: document.getElementById('don-moyen').value,
-        dateDon: document.getElementById('don-date').value,
-        motif: document.getElementById('don-motif').value,
-      })
-      toast.success('Don reçu enregistré !')
+      if (editingDonId) {
+        await api.put(`/dons/${editingDonId}`, payload)
+        toast.success('Don modifié !')
+      } else {
+        await api.post('/dons/reception', payload)
+        toast.success('Don reçu enregistré !')
+      }
       document.getElementById('modal-don').style.display = 'none'
       charger()
     } catch(err) {
@@ -209,7 +260,7 @@
   })
 
   chargerMoyens(); charger()
-  buildHistorique('historique-container', 50, 'don')
+  buildHistorique('historique-container', 50, 'don reçu')
 </script>
 </body>
 </html>

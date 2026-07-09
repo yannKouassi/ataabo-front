@@ -93,45 +93,7 @@
 
       <div id="pay-instructions" style="display:none;">
         <div class="section-label">Choisissez votre moyen de paiement</div>
-        <div class="pay-methods" role="radiogroup">
-
-          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
-               data-method="wave" data-placeholder="Ex: W241231ABCDEF" data-label="Référence Wave">
-            <div class="pm-logo" style="background:#f0f9ff;">
-              <img src="/logos/wave.png" alt=""/>
-            </div>
-            <div><div class="pm-name">Wave</div><div class="pm-sub" id="pays-label-wave">—</div></div>
-            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
-          </div>
-
-          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
-               data-method="orange" data-placeholder="Ex: CI241231ABCDEF" data-label="Référence Orange Money">
-            <div class="pm-logo" style="background:#fff7ed;">
-              <img src="/logos/orange-money.png" alt=""/>
-            </div>
-            <div><div class="pm-name">Orange Money</div><div class="pm-sub" id="pays-label-orange">—</div></div>
-            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
-          </div>
-
-          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
-               data-method="mtn" data-placeholder="Ex: MTN241231ABCDE" data-label="Référence MTN MoMo">
-            <div class="pm-logo" style="background:#fefce8;padding:5px;">
-              <img src="/logos/mtn-momo.svg" alt=""/>
-            </div>
-            <div><div class="pm-name">MTN MoMo</div><div class="pm-sub" id="pays-label-mtn">—</div></div>
-            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
-          </div>
-
-          <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0"
-               data-method="moov" data-placeholder="Ex: MOOV241231ABCD" data-label="Référence Moov Money">
-            <div class="pm-logo" style="background:#eff6ff;">
-              <img src="/logos/moov-money.png" alt=""/>
-            </div>
-            <div><div class="pm-name">Moov Money</div><div class="pm-sub" id="pays-label-moov">—</div></div>
-            <div class="pm-radio"><div class="pm-radio-dot"></div></div>
-          </div>
-
-        </div>
+        <div class="pay-methods" role="radiogroup" id="pay-methods-container"></div>
 
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:0;line-height:1.5;">
           Envoyez exactement <strong id="montant-inline">ce montant</strong> via le moyen choisi, puis conservez votre référence de transaction.
@@ -250,8 +212,20 @@
   let devise = 'XOF'
   let nomPays = ''
 
+  const moyenConfig = {
+    WAVE:          { label: 'Wave',         logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+    ORANGE_MONNEY: { label: 'Orange Money', logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCDE' },
+    MOOV_MONNEY:   { label: 'Moov Money',  logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+    OPAY:          { label: 'OPay',         logo: '', bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
+    PALMPAY:       { label: 'PalmPay',      logo: '', bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
+    PAGA:          { label: 'Paga',         logo: '', bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
+    MVOLA:         { label: 'MVola',        logo: '', bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
+    AIRTEL_MONEY:  { label: 'Airtel Money', logo: '', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
+  }
+
   // --- Sélection moyen de paiement ---
-  const cards    = Array.from(document.querySelectorAll('.pay-method-card'))
+  let cards        = []
   const refInput   = document.getElementById('ref-input')
   const refConfirm = document.getElementById('ref-confirm')
   const refLabel   = document.getElementById('ref-label')
@@ -278,14 +252,45 @@
     refHint.textContent = 'Numéro de transaction reçu après votre paiement ' + card.querySelector('.pm-name').textContent + '.'
   }
 
-  cards.forEach((card, i) => {
-    card.addEventListener('click', () => selectMethod(card))
-    card.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMethod(card) }
-      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); const n = cards[(i+1)%cards.length]; n.focus(); selectMethod(n) }
-      else if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); const n = cards[(i-1+cards.length)%cards.length]; n.focus(); selectMethod(n) }
+  function attachCardListeners() {
+    cards.forEach((card, i) => {
+      card.addEventListener('click', () => selectMethod(card))
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMethod(card) }
+        else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); const n = cards[(i+1)%cards.length]; n.focus(); selectMethod(n) }
+        else if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); const n = cards[(i-1+cards.length)%cards.length]; n.focus(); selectMethod(n) }
+      })
     })
-  })
+  }
+
+  async function construireCartesMoyens() {
+    const container = document.getElementById('pay-methods-container')
+    let moyens = []
+    try { moyens = await api.get(`/referentiel/moyens-paiement?codePays=${encodeURIComponent(ctx.codePays || '')}`) } catch (e) { moyens = [] }
+
+    container.innerHTML = ''
+    moyens.forEach((m, i) => {
+      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, logo: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
+      const card = document.createElement('div')
+      card.className = 'pay-method-card'
+      card.setAttribute('role', 'radio')
+      card.setAttribute('aria-checked', 'false')
+      card.setAttribute('tabindex', i === 0 ? '0' : '-1')
+      card.dataset.placeholder = cfg.placeholder
+      card.dataset.label = 'Référence ' + cfg.label
+      const visual = cfg.logo
+        ? `<img src="${cfg.logo}" alt=""/>`
+        : `<span style="font-size:13px;font-weight:800;color:var(--text);">${cfg.label.slice(0,2).toUpperCase()}</span>`
+      card.innerHTML = `
+        <div class="pm-logo" style="background:${cfg.bg};display:flex;align-items:center;justify-content:center;">${visual}</div>
+        <div><div class="pm-name">${cfg.label}</div><div class="pm-sub">${nomPays || 'International'}</div></div>
+        <div class="pm-radio"><div class="pm-radio-dot"></div></div>`
+      container.appendChild(card)
+    })
+
+    cards = Array.from(document.querySelectorAll('.pay-method-card'))
+    attachCardListeners()
+  }
 
   function checkRefMatch() {
     const v1 = refInput.value.trim().toUpperCase()
@@ -319,8 +324,7 @@
         nomPays = pays.libPays || ''
       }
 
-      // Mettre à jour le sous-label pays sur chaque méthode
-      document.querySelectorAll('.pm-sub').forEach(el => { el.textContent = nomPays || 'International' })
+      await construireCartesMoyens()
 
       // Vérifier si un paiement existe déjà
       const paiements = await api.get(`/paiements/organisation/${ctx.orgId}`)

@@ -89,53 +89,7 @@
             <!-- Opérateurs -->
             <div id="pay-instructions" style="display:none;">
                 <div class="section-label" id="pay-methods-label">Choisissez votre moyen de paiement</div>
-                <div class="pay-methods" role="radiogroup" aria-labelledby="pay-methods-label">
-
-                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="wave" data-placeholder="Ex: W241231ABCDEF" data-label="Référence Wave" aria-label="Wave, Côte d'Ivoire">
-                        <div class="pm-logo" style="background:#f0f9ff;">
-                            <img src="/logos/wave.png" alt="" aria-hidden="true"/>
-                        </div>
-                        <div style="min-width:0;">
-                            <div class="pm-name">Wave</div>
-                            <div class="pm-sub">Côte d'Ivoire</div>
-                        </div>
-                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
-                    </div>
-
-                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="orange" data-placeholder="Ex: CI241231ABCDEF" data-label="Référence Orange Money" aria-label="Orange Money, Côte d'Ivoire">
-                        <div class="pm-logo" style="background:#fff7ed;">
-                            <img src="/logos/orange-money.png" alt="" aria-hidden="true"/>
-                        </div>
-                        <div style="min-width:0;">
-                            <div class="pm-name">Orange Money</div>
-                            <div class="pm-sub">Côte d'Ivoire</div>
-                        </div>
-                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
-                    </div>
-
-                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="mtn" data-placeholder="Ex: MTN241231ABCDE" data-label="Référence MTN MoMo" aria-label="MTN MoMo, Côte d'Ivoire">
-                        <div class="pm-logo" style="background:#fefce8;padding:5px;">
-                            <img src="/logos/mtn-momo.svg" alt="" aria-hidden="true"/>
-                        </div>
-                        <div style="min-width:0;">
-                            <div class="pm-name">MTN MoMo</div>
-                            <div class="pm-sub">Côte d'Ivoire</div>
-                        </div>
-                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
-                    </div>
-
-                    <div class="pay-method-card" role="radio" aria-checked="false" tabindex="0" data-method="moov" data-placeholder="Ex: MOOV241231ABCD" data-label="Référence Moov Money" aria-label="Moov Money, Côte d'Ivoire">
-                        <div class="pm-logo" style="background:#eff6ff;">
-                            <img src="/logos/moov-money.png" alt="" aria-hidden="true"/>
-                        </div>
-                        <div style="min-width:0;">
-                            <div class="pm-name">Moov Money</div>
-                            <div class="pm-sub">Côte d'Ivoire</div>
-                        </div>
-                        <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>
-                    </div>
-
-                </div>
+                <div class="pay-methods" role="radiogroup" aria-labelledby="pay-methods-label" id="pay-methods-container"></div>
 
                 <!-- Numéro -->
                 <div class="pay-number-block">
@@ -224,8 +178,20 @@
     const params     = new URLSearchParams(window.location.search)
     const adhesionId = params.get('adhesion')
 
+    const moyenConfig = {
+        WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire, Mali", logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+        ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire, Mali, Madagascar", logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+        MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire, Bénin", logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
+        MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire, Bénin, Mali", logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+        OPAY:          { label: 'OPay',         sub: 'Nigeria', logo: '', bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
+        PALMPAY:       { label: 'PalmPay',      sub: 'Nigeria', logo: '', bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
+        PAGA:          { label: 'Paga',         sub: 'Nigeria', logo: '', bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
+        MVOLA:         { label: 'MVola',        sub: 'Madagascar', logo: '', bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
+        AIRTEL_MONEY:  { label: 'Airtel Money', sub: 'Madagascar', logo: '', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
+    }
+
     // Références DOM
-    const cards       = Array.from(document.querySelectorAll('.pay-method-card'))
+    let cards         = []
     const refInput    = document.getElementById('ref-input')
     const refConfirm  = document.getElementById('ref-confirm')
     const refLabel    = document.getElementById('ref-label')
@@ -275,23 +241,58 @@
         refHint.textContent = 'Numéro de transaction reçu après votre paiement ' + methodName + '.'
     }
 
-    cards.forEach((card, index) => {
-        card.addEventListener('click', () => selectMethod(card))
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-                e.preventDefault()
-                selectMethod(card)
-            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                e.preventDefault()
-                const next = cards[(index + 1) % cards.length]
-                next.focus(); selectMethod(next)
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                e.preventDefault()
-                const prev = cards[(index - 1 + cards.length) % cards.length]
-                prev.focus(); selectMethod(prev)
-            }
+    function attachCardListeners() {
+        cards.forEach((card, index) => {
+            card.addEventListener('click', () => selectMethod(card))
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault()
+                    selectMethod(card)
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    const next = cards[(index + 1) % cards.length]
+                    next.focus(); selectMethod(next)
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault()
+                    const prev = cards[(index - 1 + cards.length) % cards.length]
+                    prev.focus(); selectMethod(prev)
+                }
+            })
         })
-    })
+    }
+
+    async function construireCartesMoyens(codePays) {
+        const container = document.getElementById('pay-methods-container')
+        let moyens = []
+        try { moyens = await api.get(`/referentiel/moyens-paiement?codePays=${encodeURIComponent(codePays || '')}`) } catch (e) { moyens = [] }
+
+        container.innerHTML = ''
+        moyens.forEach((m, i) => {
+            const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, sub: '', logo: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
+            const card = document.createElement('div')
+            card.className = 'pay-method-card'
+            card.setAttribute('role', 'radio')
+            card.setAttribute('aria-checked', 'false')
+            card.setAttribute('tabindex', i === 0 ? '0' : '-1')
+            card.dataset.placeholder = cfg.placeholder
+            card.dataset.label = 'Référence ' + cfg.label
+            card.setAttribute('aria-label', cfg.label + (cfg.sub ? ', ' + cfg.sub : ''))
+            const visual = cfg.logo
+                ? `<img src="${cfg.logo}" alt="" aria-hidden="true"/>`
+                : `<span style="font-size:13px;font-weight:800;color:var(--text);">${cfg.label.slice(0,2).toUpperCase()}</span>`
+            card.innerHTML = `
+                <div class="pm-logo" style="background:${cfg.bg};display:flex;align-items:center;justify-content:center;">${visual}</div>
+                <div style="min-width:0;">
+                    <div class="pm-name">${cfg.label}</div>
+                    <div class="pm-sub">${cfg.sub}</div>
+                </div>
+                <div class="pm-radio" aria-hidden="true"><div class="pm-radio-dot"></div></div>`
+            container.appendChild(card)
+        })
+
+        cards = Array.from(document.querySelectorAll('.pay-method-card'))
+        attachCardListeners()
+    }
 
     // --- Vérification en temps réel de la correspondance ---
     function checkRefMatch() {
@@ -324,6 +325,8 @@
 
         try {
             const data = await api.get(`/adhesions/${adhesionId}/infos-paiement`)
+
+            await construireCartesMoyens(data.codePays)
 
             if (data.nomOrganisation)
                 document.getElementById('org-name-header').textContent = data.nomOrganisation

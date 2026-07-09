@@ -197,10 +197,15 @@
   const freqLabelMin = { MENSUELLE: 'mensuelle', TRIMESTRIELLE: 'trimestrielle', SEMESTRIELLE: 'semestrielle', ANNUELLE: 'annuelle' }
   const freqLabelCap = { MENSUELLE: 'Mensuelle', TRIMESTRIELLE: 'Trimestrielle', SEMESTRIELLE: 'Semestrielle', ANNUELLE: 'Annuelle' }
   const moyenConfig = {
-    WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire", logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
-    ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire", logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
-    MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire", logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
-    MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire", logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+    WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire, Mali", logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+    ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire, Mali, Madagascar", logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire, Bénin", logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
+    MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire, Bénin, Mali", logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+    OPAY:          { label: 'OPay',         sub: 'Nigeria', logo: '', bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
+    PALMPAY:       { label: 'PalmPay',      sub: 'Nigeria', logo: '', bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
+    PAGA:          { label: 'Paga',         sub: 'Nigeria', logo: '', bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
+    MVOLA:         { label: 'MVola',        sub: 'Madagascar', logo: '', bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
+    AIRTEL_MONEY:  { label: 'Airtel Money', sub: 'Madagascar', logo: '', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
   }
   let selectedMoyenId = null
 
@@ -208,7 +213,7 @@
     try {
       [orgInfos, moyensPaiement] = await Promise.all([
         api.get(`/organisations/${ctx.orgId}/infos`),
-        api.get(`/cotisations/moyens-paiement`)
+        api.get(`/cotisations/moyens-paiement?codePays=${encodeURIComponent(ctx.codePays || '')}`)
       ])
     } catch(e) { orgInfos = {}; moyensPaiement = [] }
 
@@ -235,9 +240,12 @@
       card.dataset.id = m.id
       card.dataset.placeholder = cfg.placeholder
       card.dataset.label = cfg.label
+      const visual = cfg.logo
+        ? `<img src="${cfg.logo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;"/>`
+        : `<span style="font-size:13px;font-weight:800;color:var(--text);">${cfg.label.slice(0,2).toUpperCase()}</span>`
       card.innerHTML = `
         <div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:${cfg.bg};">
-          <img src="${cfg.logo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;"/>
+          ${visual}
         </div>
         <div style="min-width:0;flex:1;">
           <div style="font-size:12px;font-weight:700;color:var(--text);">${cfg.label}</div>
