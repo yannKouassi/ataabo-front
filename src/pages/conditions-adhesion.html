@@ -89,7 +89,7 @@
 </div>
 
 <script type="module">
-  import { requireContexte, getContexte, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { requireContexte, getContexte, logout, applyOrgColor, getPermission, hasMenu } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
@@ -97,11 +97,13 @@
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
+
+  if (!hasMenu('/organisation/params/conditions-adhesion')) { window.location.href = '/403.html'; throw new Error() }
+  const perm = getPermission('/organisation/params/conditions-adhesion')
+
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
-
-  const perm = getPermission('/organisation/params/conditions-adhesion')
 
   const MAX_CONDITIONS = 6
   let conditions = []
