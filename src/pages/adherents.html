@@ -267,7 +267,7 @@
     document.getElementById('modal-acces').style.display = 'flex'
 
     try {
-      const groupes = await api.get('/utilisateurs/groupes')
+      const groupes = await api.get(`/utilisateurs/groupes?orgId=${encodeURIComponent(ctx.orgId)}`)
       select.innerHTML = groupes
         .filter(g => g.codeGroupe !== 'GRP_ADMIN_PLATEFORME')
         .map(g => `<option value="${g.codeGroupe}">${g.libelleGroupe}</option>`)

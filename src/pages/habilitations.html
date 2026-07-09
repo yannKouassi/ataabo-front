@@ -94,7 +94,7 @@
 
   async function chargerGroupes() {
     try {
-      const groupes = await api.get('/utilisateurs/groupes')
+      const groupes = await api.get(`/utilisateurs/groupes?orgId=${encodeURIComponent(ctx.orgId)}`)
       const el = document.getElementById('liste-groupes')
       if (!groupes.length) {
         el.innerHTML = `<p style="padding:12px; font-size:13px; color:var(--text-muted);">Aucun groupe</p>`
@@ -132,7 +132,7 @@
       </div>`
 
     try {
-      const perms = await api.get(`/utilisateurs/groupes/${groupeId}/permissions`)
+      const perms = await api.get(`/utilisateurs/groupes/${groupeId}/permissions?orgId=${encodeURIComponent(ctx.orgId)}`)
       const content = document.getElementById('perms-content')
 
       if (!perms.length) {
@@ -173,7 +173,7 @@
         try {
           await Promise.all(rows.map(row => {
             const menuId = row.dataset.menuId
-            return api.put(`/utilisateurs/groupes/${groupeId}/permissions/${menuId}`, {
+            return api.put(`/utilisateurs/groupes/${groupeId}/permissions/${menuId}?orgId=${encodeURIComponent(ctx.orgId)}`, {
               peutLire: row.querySelector('.perm-lire').checked,
               peutEcrire: row.querySelector('.perm-ecrire').checked,
               peutSupprimer: row.querySelector('.perm-supprimer').checked

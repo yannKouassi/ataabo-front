@@ -114,7 +114,7 @@
 
   async function charger() {
     try {
-      const items = await api.get('/utilisateurs/groupes')
+      const items = await api.get(`/utilisateurs/groupes?orgId=${encodeURIComponent(ctx.orgId)}`)
       if (!items || !items.length) {
         tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>Aucun groupe</p></div></td></tr>`
         return
@@ -146,7 +146,7 @@
   async function supprimerGroupe(code, libelle) {
     if (!confirm(`Supprimer le groupe "${libelle}" ?\nLes membres de ce groupe perdront leur accès.`)) return
     try {
-      await api.delete(`/utilisateurs/groupes/${code}`)
+      await api.delete(`/utilisateurs/groupes/${code}?orgId=${encodeURIComponent(ctx.orgId)}`)
       toast.success('Groupe supprimé.')
       charger()
     } catch(err) {
@@ -181,7 +181,7 @@
     const btn = document.getElementById('btn-sauvegarder')
     btn.disabled = true; btn.textContent = 'Création...'
     try {
-      await api.post('/utilisateurs/groupes', { codeGroupe: code, libelleGroupe: libelle })
+      await api.post(`/utilisateurs/groupes?orgId=${encodeURIComponent(ctx.orgId)}`, { codeGroupe: code, libelleGroupe: libelle })
       toast.success('Groupe créé !')
       document.getElementById('modal-groupe').style.display = 'none'
       charger()
