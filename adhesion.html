@@ -314,6 +314,7 @@
       <div class="form-group"><label class="form-label">Nom de l'organisation *</label><input type="text" class="form-input" id="org-nom" placeholder="Ex: Association Fraternité Abidjan"/></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Type d'organisation *</label><select class="form-input" id="org-type"><option value="">Chargement...</option></select></div>
+        <div class="form-group"><label class="form-label">Statut</label><select class="form-input" id="org-statut"><option value="">Chargement...</option></select></div>
         <div class="form-group">
           <label class="form-label">Pays *</label>
           <select class="form-input" id="org-pays" onchange="afficherArmoiriesPays(this)"><option value="">Chargement...</option></select>
@@ -657,11 +658,12 @@
   // ─── RÉFÉRENTIELS ─────────────────────────────────────
   async function chargerReferentiels() {
     try {
-      const [sexes, situations, typesOrg, pays] = await Promise.all([
+      const [sexes, situations, typesOrg, pays, statuts] = await Promise.all([
         api.get('/referentiel/sexes'),
         api.get('/referentiel/situations-matrimoniales'),
         api.get('/referentiel/types-organisation'),
         api.get('/referentiel/pays'),
+        api.get('/referentiel/statuts'),
       ])
       _paysDataCache = pays
       const fill = (id, items, vKey, lKey) => {
@@ -674,6 +676,7 @@
       ;['adh-situation','fond-situation'].forEach(id => fill(id, situations, 'idSituationMatrimoniale', 'libSituationMatrimoniale'))
       fill('org-type', typesOrg, 'libelle', 'libelle')
       fill('org-pays', pays, 'codePays', 'libPays')
+      fill('org-statut', statuts, 'code', 'libelle')
       // Si le form org est déjà affiché (user a cliqué Créer avant la fin du chargement)
       if (document.getElementById('sec-org-infos')?.classList.contains('visible')) {
         preselecterPaysOrg()
@@ -1227,6 +1230,7 @@
     hideErr('err-org')
     const nom       = document.getElementById('org-nom').value.trim()
     const type      = document.getElementById('org-type').value
+    const statut    = document.getElementById('org-statut').value
     const pays      = document.getElementById('org-pays').value
     const email     = document.getElementById('org-email').value.trim()
     const agrement  = document.getElementById('org-agrement').value.trim()
@@ -1250,6 +1254,7 @@
     orgDataStored = {
       libAssociation: nom,
       typeOrganisation: type,
+      codeStatut: statut || null,
       codePays: pays,
       emailAssociation: email,
       numAgr: agrement,
