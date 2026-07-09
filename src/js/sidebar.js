@@ -332,7 +332,6 @@ const NAV_PAGES = {
     '/paiements/cotisations':         '/src/pages/cotisations.html',
     '/paiements/droits-entree':       '/src/pages/paiements-adhesion.html',
     '/paiements/recouvrement':        '/src/pages/recouvrement.html',
-    '/paiements/adhesion-plateforme': '/src/pages/cotisations.html',
     '/paiements/adhesion-organisation':'/src/pages/demandes-adhesion.html',
     // Dons
     '/dons/emission':                 '/src/pages/dons-emission.html',

@@ -98,14 +98,13 @@
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
-  // Fusionner les permissions des deux menus qui pointent vers cette page
+  // Fusionner les permissions des menus qui pointent vers cette page
   const _p1 = getPermission('/habilitations/programmes')
   const _p2 = getPermission('/organisation/params/groupes')
-  const _p3 = getPermission('/utilisateurs/groupes')
   const perm = {
-    peutLire:      _p1.peutLire      || _p2.peutLire      || _p3.peutLire,
-    peutEcrire:    _p1.peutEcrire    || _p2.peutEcrire    || _p3.peutEcrire,
-    peutSupprimer: _p1.peutSupprimer || _p2.peutSupprimer || _p3.peutSupprimer,
+    peutLire:      _p1.peutLire      || _p2.peutLire,
+    peutEcrire:    _p1.peutEcrire    || _p2.peutEcrire,
+    peutSupprimer: _p1.peutSupprimer || _p2.peutSupprimer,
   }
   if (!perm.peutEcrire) {
     document.getElementById('btn-nouveau').style.display = 'none'
