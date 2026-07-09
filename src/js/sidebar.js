@@ -356,6 +356,7 @@ const NAV_PAGES = {
     // Organisation
     '/organisation/params/infos':     '/src/pages/params-organisation.html',
     '/organisation/params/groupes':   '/src/pages/groupes-organisation.html',
+    '/organisation/params/conditions-adhesion': '/src/pages/conditions-adhesion.html',
     '/organisation/abonnement':       '/src/pages/mon-abonnement.html',
     // Utilisateurs & habilitations
     '/utilisateurs/liste':            '/src/pages/utilisateurs.html',

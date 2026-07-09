@@ -74,6 +74,24 @@
     .org-item-meta { font-size:12px; color:var(--text-muted); margin-top:2px; }
     .org-selected-banner { background:var(--primary-light); border:1.5px solid var(--primary); border-radius:var(--radius); padding:14px 18px; display:flex; align-items:center; gap:12px; margin-bottom:24px; }
 
+    /* CONDITIONS D'ADHÉSION */
+    .condition-card-adh {
+      border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px;
+      margin-bottom:10px; background:var(--bg); display:flex; gap:12px;
+    }
+    .condition-card-adh .num {
+      flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--primary-light);
+      color:var(--primary-dark); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    }
+    .condition-card-adh p { margin:0; font-size:13.5px; line-height:1.55; }
+    .accept-box-adh {
+      margin-top:18px; padding:14px 16px; border-radius:var(--radius-sm); border:1px solid var(--border);
+      background:var(--primary-light); display:flex; gap:10px; align-items:flex-start;
+    }
+    .accept-box-adh input[type=checkbox] { margin-top:3px; width:16px; height:16px; accent-color:var(--primary); flex-shrink:0; }
+    .accept-box-adh label { font-size:13px; line-height:1.5; color:var(--text); cursor:pointer; }
+    .accept-box-adh .stamp { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
     /* UPLOAD */
     .upload-zone { border:2px dashed var(--border); border-radius:var(--radius-sm); padding:20px; text-align:center; cursor:pointer; font-size:13px; color:var(--text-muted); transition:border-color .15s; }
     .upload-zone:hover { border-color:var(--primary); }
@@ -452,8 +470,39 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- FLUX REJOINDRE — Étape 2 : Conditions d'adhésion     -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-conditions-adhesion">
+    <button class="btn-back" id="back-conditions">← Retour à la liste</button>
+    <div class="org-selected-banner">
+      <div id="cond-org-logo" style="width:42px;height:42px;border-radius:10px;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;overflow:hidden;"></div>
+      <div>
+        <div style="font-weight:700;font-size:14.5px;" id="cond-org-nom"></div>
+        <div style="font-size:12px;color:var(--text-muted);" id="cond-org-meta"></div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Conditions d'adhésion</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Merci de lire attentivement avant de continuer votre demande.</div>
+
+      <div id="cond-liste"></div>
+
+      <div class="accept-box-adh">
+        <input type="checkbox" id="cond-accept">
+        <div>
+          <label for="cond-accept">J'ai lu et j'accepte les conditions d'adhésion de cette organisation.</label>
+          <div class="stamp">Cette acceptation sera horodatée et jointe à votre demande.</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:20px;font-size:14px;padding:12px;" id="btn-cond-continuer" disabled>Continuer →</button>
+    </div>
+  </div>
+
   <!-- ════════════════════════════════════════════════ -->
-  <!-- FLUX REJOINDRE — Étape 2 : Formulaire adhésion   -->
+  <!-- FLUX REJOINDRE — Étape 3 : Formulaire adhésion   -->
   <!-- ════════════════════════════════════════════════ -->
   <div class="section" id="sec-form-adhesion">
     <button class="btn-back" id="back-adhesion">← Retour à la liste</button>
@@ -967,7 +1016,9 @@
 
   // ─── INDICATEUR D'ÉTAPES ─────────────────────────────
   const STEPS_CREER = ['Organisation','Votre compte','Confirmation','Email org','Finalisation']
-  const STEPS_REJOINDRE = ['Choisir','Formulaire','Confirmation']
+  const STEPS_REJOINDRE = ['Choisir','Conditions','Formulaire','Confirmation']
+  let orgAConditions = false
+  let conditionsAccepteesLe = null
 
   function renderSteps(steps, active) {
     const bar = document.getElementById('steps-bar')
@@ -1000,7 +1051,11 @@
       'sec-fond-otp':     () => { renderSteps(STEPS_CREER, 2); show('sec-fond-infos', false) },
       'sec-org-otp':      () => { renderSteps(STEPS_CREER, 3); show('sec-fond-otp', false) },
       'sec-liste-orgs':   () => { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) },
-      'sec-form-adhesion':() => { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) },
+      'sec-conditions-adhesion': () => { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) },
+      'sec-form-adhesion':() => {
+        if (orgAConditions) { renderSteps(STEPS_REJOINDRE, 2); show('sec-conditions-adhesion', false) }
+        else { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) }
+      },
     }
     if (backMap[id]) backMap[id]()
     else { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) }
@@ -1369,13 +1424,60 @@
           bandeauDE.style.display = 'none'
         }
 
-        renderSteps(STEPS_REJOINDRE, 2)
-        show('sec-form-adhesion')
         chargerDocsRequis(org.id)
+        chargerConditionsAdhesion(org)
       })
       list.appendChild(el)
     })
   }
+
+  // ─── CONDITIONS D'ADHÉSION ────────────────────────────
+  async function chargerConditionsAdhesion(org) {
+    conditionsAccepteesLe = null
+    let conditions = []
+    try {
+      conditions = await api.get(`/organisations/${org.id}/conditions-adhesion`)
+    } catch { conditions = [] }
+
+    orgAConditions = conditions && conditions.length > 0
+
+    if (!orgAConditions) {
+      renderSteps(STEPS_REJOINDRE, 3)
+      show('sec-form-adhesion')
+      return
+    }
+
+    const nom = org.nomOrganisation || org.libAssociation || '—'
+    const logoEl = document.getElementById('cond-org-logo')
+    logoEl.innerHTML = org.urlLogo
+      ? `<img src="${org.urlLogo}" style="width:100%;height:100%;object-fit:cover;">`
+      : (nom[0] || 'O').toUpperCase()
+    document.getElementById('cond-org-nom').textContent = nom
+    document.getElementById('cond-org-meta').textContent = `${org.typeOrganisation || ''} · ${org.libellePays || org.codePays || ''}`
+
+    document.getElementById('cond-liste').innerHTML = conditions.map((c, i) => `
+      <div class="condition-card-adh">
+        <div class="num">${i + 1}</div>
+        <p>${c.libelle}</p>
+      </div>
+    `).join('')
+
+    const checkbox = document.getElementById('cond-accept')
+    const btnContinuer = document.getElementById('btn-cond-continuer')
+    checkbox.checked = false
+    btnContinuer.disabled = true
+    checkbox.onchange = () => { btnContinuer.disabled = !checkbox.checked }
+
+    renderSteps(STEPS_REJOINDRE, 2)
+    show('sec-conditions-adhesion')
+  }
+
+  document.getElementById('back-conditions').addEventListener('click', () => history.back())
+  document.getElementById('btn-cond-continuer').addEventListener('click', () => {
+    conditionsAccepteesLe = new Date().toISOString()
+    renderSteps(STEPS_REJOINDRE, 3)
+    show('sec-form-adhesion')
+  })
 
   // ─── DOCUMENTS REQUIS DYNAMIQUES ──────────────────────
   let docsRequis = []
@@ -1498,6 +1600,7 @@
         situationMatrimonialeId: situationId,
         typePiece,
         numeroPiece,
+        conditionsAccepteesLe,
       })], { type: 'application/json' }))
       fd.append('photo', photo)
       // Ajouter chaque document avec sa catégorie comme clé
@@ -1509,7 +1612,7 @@
       document.getElementById('succes-adhesion-msg').textContent =
         `Votre demande d'adhésion à ${selectedOrg.nomOrganisation || selectedOrg.libAssociation} a bien été envoyée. L'administrateur de l'organisation examinera votre dossier et vous recevrez une réponse par email.`
 
-      renderSteps(STEPS_REJOINDRE, 3)
+      renderSteps(STEPS_REJOINDRE, 4)
       show('sec-succes-adhesion')
     } catch(e) {
       showErr('err-adhesion', e.message || 'Erreur lors de la soumission.')

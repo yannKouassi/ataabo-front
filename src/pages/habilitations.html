@@ -133,6 +133,7 @@
 
     try {
       const perms = await api.get(`/utilisateurs/groupes/${groupeId}/permissions?orgId=${encodeURIComponent(ctx.orgId)}`)
+      const permsParMenuId = new Map(perms.map(p => [String(p.menuId), p]))
       const content = document.getElementById('perms-content')
 
       if (!perms.length) {
@@ -170,8 +171,20 @@
 
       document.getElementById('btn-sauvegarder')?.addEventListener('click', async () => {
         const rows = [...content.querySelectorAll('tr[data-menu-id]')]
+        const rowsModifiees = rows.filter(row => {
+          const original = permsParMenuId.get(row.dataset.menuId) || { peutLire: false, peutEcrire: false, peutSupprimer: false }
+          return row.querySelector('.perm-lire').checked !== original.peutLire
+              || row.querySelector('.perm-ecrire').checked !== original.peutEcrire
+              || row.querySelector('.perm-supprimer').checked !== original.peutSupprimer
+        })
+
+        if (!rowsModifiees.length) {
+          toast.info('Aucune modification à enregistrer.')
+          return
+        }
+
         try {
-          await Promise.all(rows.map(row => {
+          await Promise.all(rowsModifiees.map(row => {
             const menuId = row.dataset.menuId
             return api.put(`/utilisateurs/groupes/${groupeId}/permissions/${menuId}?orgId=${encodeURIComponent(ctx.orgId)}`, {
               peutLire: row.querySelector('.perm-lire').checked,
@@ -180,6 +193,7 @@
             })
           }))
           toast.success('Permissions mises à jour ! Les utilisateurs de ce groupe doivent se reconnecter pour voir les changements.')
+          chargerPermissions(groupeId, libelleGroupe)
         } catch(err) {
           toast.error(err.message)
         }
