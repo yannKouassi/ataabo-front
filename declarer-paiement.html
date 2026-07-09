@@ -67,6 +67,7 @@
     <div class="header">
         <div class="logo-text">UnioNova</div>
         <p style="color:var(--text-muted);font-size:13px;margin-top:4px;" id="org-name-header">Déclaration de paiement</p>
+        <p style="color:var(--text-muted);font-size:12px;margin-top:2px;font-family:monospace;display:none;" id="ids-header"></p>
     </div>
 
     <!-- Formulaire principal -->
@@ -326,6 +327,15 @@
 
             if (data.nomOrganisation)
                 document.getElementById('org-name-header').textContent = data.nomOrganisation
+
+            if (data.orgId || data.numAdherent) {
+                const idsEl = document.getElementById('ids-header')
+                const parts = []
+                if (data.orgId) parts.push('Organisation : ' + data.orgId)
+                if (data.numAdherent) parts.push('Votre n° adhérent : ' + data.numAdherent)
+                idsEl.textContent = parts.join(' · ')
+                idsEl.style.display = 'block'
+            }
 
             if (data.droitEntreePaye || data.refPaiementEntree) {
                 showCard('card-deja')
