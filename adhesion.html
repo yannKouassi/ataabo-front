@@ -438,7 +438,53 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════ -->
-  <!-- FLUX REJOINDRE — Étape 2 : Conditions d'adhésion     -->
+  <!-- FLUX REJOINDRE — Étape 2 : Détails de l'organisation -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-org-detail-rejoindre">
+    <button class="btn-back" id="back-org-detail">← Retour à la liste</button>
+    <div id="orgdet-card" style="
+      display:flex;align-items:stretch;gap:0;
+      background:var(--primary);color:white;
+      border-radius:14px;overflow:hidden;
+      margin-bottom:20px;min-height:100px;
+    ">
+      <div id="orgdet-logo" style="
+        width:90px;min-height:100px;flex-shrink:0;
+        background:rgba(255,255,255,.15);
+        display:flex;align-items:center;justify-content:center;
+        font-size:32px;font-weight:800;color:white;
+      "></div>
+      <div style="flex:1;padding:16px 20px;display:flex;flex-direction:column;justify-content:center;gap:4px;">
+        <div id="orgdet-nom" style="font-size:19px;font-weight:800;line-height:1.2;">—</div>
+        <div id="orgdet-type" style="font-size:12.5px;opacity:.85;"></div>
+        <div style="font-size:12.5px;opacity:.85;display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="orgdet-pays-nom"></span>
+        </div>
+      </div>
+      <div id="orgdet-armoiries" style="
+        width:90px;flex-shrink:0;
+        background:rgba(255,255,255,.1);
+        display:flex;align-items:center;justify-content:center;
+        padding:12px;
+      "></div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Description</label>
+        <div id="orgdet-description" style="font-size:13.5px;line-height:1.6;color:var(--text);"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:4px;">
+        <label class="form-label">Siège social</label>
+        <div id="orgdet-siege" style="font-size:13.5px;line-height:1.6;color:var(--text);"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:20px;font-size:14px;padding:12px;" id="btn-orgdet-continuer">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- FLUX REJOINDRE — Étape 3 : Conditions d'adhésion     -->
   <!-- ═══════════════════════════════════════════════════ -->
   <div class="section" id="sec-conditions-adhesion">
     <button class="btn-back" id="back-conditions">← Retour à la liste</button>
@@ -469,7 +515,7 @@
   </div>
 
   <!-- ════════════════════════════════════════════════ -->
-  <!-- FLUX REJOINDRE — Étape 3 : Formulaire adhésion   -->
+  <!-- FLUX REJOINDRE — Étape 4 : Formulaire adhésion   -->
   <!-- ════════════════════════════════════════════════ -->
   <div class="section" id="sec-form-adhesion">
     <button class="btn-back" id="back-adhesion">← Retour à la liste</button>
@@ -982,7 +1028,7 @@
 
   // ─── INDICATEUR D'ÉTAPES ─────────────────────────────
   const STEPS_CREER = ['Organisation','Fondateur','Email org','Finalisation']
-  const STEPS_REJOINDRE = ['Choisir','Conditions','Formulaire','Confirmation']
+  const STEPS_REJOINDRE = ['Choisir','Organisation','Conditions','Formulaire','Confirmation']
   let orgAConditions = false
   let conditionsAccepteesLe = null
 
@@ -1016,10 +1062,11 @@
       'sec-fond-infos':   () => { renderSteps(STEPS_CREER, 1); show('sec-org-infos', false) },
       'sec-org-otp':      () => { renderSteps(STEPS_CREER, 2); show('sec-fond-infos', false) },
       'sec-liste-orgs':   () => { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) },
-      'sec-conditions-adhesion': () => { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) },
+      'sec-org-detail-rejoindre': () => { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) },
+      'sec-conditions-adhesion': () => { renderSteps(STEPS_REJOINDRE, 2); show('sec-org-detail-rejoindre', false) },
       'sec-form-adhesion':() => {
-        if (orgAConditions) { renderSteps(STEPS_REJOINDRE, 2); show('sec-conditions-adhesion', false) }
-        else { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) }
+        if (orgAConditions) { renderSteps(STEPS_REJOINDRE, 3); show('sec-conditions-adhesion', false) }
+        else { renderSteps(STEPS_REJOINDRE, 2); show('sec-org-detail-rejoindre', false) }
       },
     }
     if (backMap[id]) backMap[id]()
@@ -1271,7 +1318,7 @@
         <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`
       el.addEventListener('click', () => {
         selectedOrg = org
-        // Remplir la bannière organisation
+        // Remplir la bannière organisation (utilisée sur l'écran formulaire)
         const nom = org.nomOrganisation || org.libAssociation || '—'
         const initiale = nom[0]?.toUpperCase() || 'O'
         const logoEl = document.getElementById('org-detail-logo')
@@ -1281,7 +1328,7 @@
           logoEl.textContent = initiale
         }
         document.getElementById('org-detail-nom').textContent = nom
-        document.getElementById('org-detail-type').textContent = org.typeOrganisation || ''
+        document.getElementById('org-detail-type').textContent = org.typeOrganisation?.libelle || org.typeOrganisation || ''
         document.getElementById('org-detail-pays-nom').textContent = org.pays?.libPays || org.libellePays || ''
         const armoiriesEl = document.getElementById('org-detail-armoiries')
         const urlArmoiries = org.pays?.urlArmoiries
@@ -1306,12 +1353,41 @@
           bandeauDE.style.display = 'none'
         }
 
-        chargerDocsRequis(org.id)
-        chargerConditionsAdhesion(org)
+        afficherDetailOrganisation(org)
       })
       list.appendChild(el)
     })
   }
+
+  // ─── DÉTAILS DE L'ORGANISATION ─────────────────────────
+  function afficherDetailOrganisation(org) {
+    const nom = org.nomOrganisation || org.libAssociation || '—'
+    const initiale = nom[0]?.toUpperCase() || 'O'
+    const logoEl = document.getElementById('orgdet-logo')
+    logoEl.innerHTML = org.urlLogo
+      ? `<img src="${org.urlLogo}" style="width:70px;height:70px;object-fit:contain;border-radius:8px;" />`
+      : initiale
+    document.getElementById('orgdet-nom').textContent = nom
+    document.getElementById('orgdet-type').textContent = org.typeOrganisation?.libelle || org.typeOrganisation || ''
+    document.getElementById('orgdet-pays-nom').textContent = org.pays?.libPays || org.libellePays || ''
+    const armoiriesEl = document.getElementById('orgdet-armoiries')
+    const urlArmoiries = org.pays?.urlArmoiries
+    armoiriesEl.innerHTML = urlArmoiries
+      ? `<img src="${urlArmoiries}" style="width:60px;height:60px;object-fit:contain;" alt="Armoiries" />`
+      : ''
+    document.getElementById('orgdet-description').textContent = org.description || 'Aucune description fournie par cette organisation.'
+    document.getElementById('orgdet-siege').textContent = org.siegeSocial || '—'
+
+    renderSteps(STEPS_REJOINDRE, 2)
+    show('sec-org-detail-rejoindre')
+  }
+
+  document.getElementById('back-org-detail').addEventListener('click', () => history.back())
+  document.getElementById('btn-orgdet-continuer').addEventListener('click', () => {
+    if (!selectedOrg) return
+    chargerDocsRequis(selectedOrg.id)
+    chargerConditionsAdhesion(selectedOrg)
+  })
 
   // ─── CONDITIONS D'ADHÉSION ────────────────────────────
   async function chargerConditionsAdhesion(org) {
@@ -1324,7 +1400,7 @@
     orgAConditions = conditions && conditions.length > 0
 
     if (!orgAConditions) {
-      renderSteps(STEPS_REJOINDRE, 3)
+      renderSteps(STEPS_REJOINDRE, 4)
       show('sec-form-adhesion')
       return
     }
@@ -1350,14 +1426,14 @@
     btnContinuer.disabled = true
     checkbox.onchange = () => { btnContinuer.disabled = !checkbox.checked }
 
-    renderSteps(STEPS_REJOINDRE, 2)
+    renderSteps(STEPS_REJOINDRE, 3)
     show('sec-conditions-adhesion')
   }
 
   document.getElementById('back-conditions').addEventListener('click', () => history.back())
   document.getElementById('btn-cond-continuer').addEventListener('click', () => {
     conditionsAccepteesLe = new Date().toISOString()
-    renderSteps(STEPS_REJOINDRE, 3)
+    renderSteps(STEPS_REJOINDRE, 4)
     show('sec-form-adhesion')
   })
 
@@ -1494,7 +1570,7 @@
       document.getElementById('succes-adhesion-msg').textContent =
         `Votre demande d'adhésion à ${selectedOrg.nomOrganisation || selectedOrg.libAssociation} a bien été envoyée. L'administrateur de l'organisation examinera votre dossier et vous recevrez une réponse par email.`
 
-      renderSteps(STEPS_REJOINDRE, 4)
+      renderSteps(STEPS_REJOINDRE, 5)
       show('sec-succes-adhesion')
     } catch(e) {
       showErr('err-adhesion', e.message || 'Erreur lors de la soumission.')
