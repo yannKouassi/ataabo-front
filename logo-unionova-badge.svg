@@ -1,0 +1,67 @@
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="arcTop" d="M 150,540 A 380,380 0 0 1 850,540" fill="none"/>
+    <path id="arcBottom" d="M 210,650 A 340,340 0 0 0 790,650" fill="none"/>
+  </defs>
+
+  <!-- Fond -->
+  <circle cx="500" cy="500" r="490" fill="#ffffff"/>
+
+  <!-- Anneau vert extérieur -->
+  <circle cx="500" cy="500" r="478" fill="none" stroke="#2E7D32" stroke-width="18"/>
+  <!-- Fin trait marine intérieur -->
+  <circle cx="500" cy="500" r="440" fill="none" stroke="#1e2530" stroke-width="3"/>
+
+  <!-- Deux points verts latéraux -->
+  <circle cx="150" cy="500" r="9" fill="#2E7D32"/>
+  <circle cx="850" cy="500" r="9" fill="#2E7D32"/>
+
+  <!-- Texte arqué du haut : UnioNova -->
+  <text font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-weight="800" font-size="72" letter-spacing="4">
+    <textPath href="#arcTop" startOffset="50%" text-anchor="middle">
+      <tspan fill="#2E7D32">UNIO</tspan><tspan fill="#1e2530">NOVA</tspan>
+    </textPath>
+  </text>
+
+  <!-- Texte arqué du bas : tagline -->
+  <text font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-weight="700" font-size="34" letter-spacing="3" fill="#1e2530">
+    <textPath href="#arcBottom" startOffset="50%" text-anchor="middle">
+      ORGANISATIONS SANS FRONTIÈRES
+    </textPath>
+  </text>
+
+  <!-- ===== Motif central : globe + 3 silhouettes en cercle + poignée de main ===== -->
+
+  <!-- Bras/liens qui relient les 3 silhouettes en cercle -->
+  <path d="M 500,330 A 170,170 0 0 1 640,470" fill="none" stroke="#2E7D32" stroke-width="34" stroke-linecap="round"/>
+  <path d="M 500,330 A 170,170 0 0 0 360,470" fill="none" stroke="#2E7D32" stroke-width="34" stroke-linecap="round"/>
+  <path d="M 360,470 A 170,170 0 0 0 470,630" fill="none" stroke="#2E7D32" stroke-width="34" stroke-linecap="round"/>
+  <path d="M 640,470 A 170,170 0 0 1 530,630" fill="none" stroke="#1e2530" stroke-width="34" stroke-linecap="round"/>
+
+  <!-- Globe central -->
+  <circle cx="500" cy="470" r="95" fill="#ffffff" stroke="#1e2530" stroke-width="11"/>
+  <line x1="500" y1="375" x2="500" y2="565" stroke="#1e2530" stroke-width="7"/>
+  <line x1="405" y1="470" x2="595" y2="470" stroke="#1e2530" stroke-width="7"/>
+  <ellipse cx="500" cy="470" rx="44" ry="95" fill="none" stroke="#1e2530" stroke-width="7"/>
+  <path d="M 405,470 A 95,60 0 0 0 595,470" fill="none" stroke="#1e2530" stroke-width="7"/>
+  <path d="M 405,470 A 95,60 0 0 1 595,470" fill="none" stroke="#1e2530" stroke-width="7"/>
+
+  <!-- Silhouette du haut (verte) -->
+  <circle cx="500" cy="300" r="42" fill="#2E7D32"/>
+  <path d="M 425,395 Q 425,320 500,320 Q 575,320 575,395 Z" fill="#2E7D32"/>
+
+  <!-- Silhouette gauche (verte) -->
+  <circle cx="345" cy="475" r="36" fill="#2E7D32"/>
+  <path d="M 280,565 Q 280,500 345,500 Q 410,500 410,565 Z" fill="#2E7D32"/>
+
+  <!-- Silhouette droite (marine) -->
+  <circle cx="655" cy="475" r="36" fill="#1e2530"/>
+  <path d="M 590,565 Q 590,500 655,500 Q 720,500 720,565 Z" fill="#1e2530"/>
+
+  <!-- Poignée de main -->
+  <path d="M 400,610 L 470,655 Q 500,672 530,655 L 600,610"
+        fill="none" stroke="#ffffff" stroke-width="30" stroke-linecap="round"/>
+  <path d="M 400,610 L 470,655" fill="none" stroke="#2E7D32" stroke-width="24" stroke-linecap="round"/>
+  <path d="M 600,610 L 530,655" fill="none" stroke="#1e2530" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="500" cy="660" r="20" fill="#ffffff" stroke="#1e2530" stroke-width="6"/>
+</svg>
