@@ -239,23 +239,20 @@
         </div>
       </div>
 
-      <!-- Ligne 3 : Date naissance (3 sélecteurs) + Sexe -->
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Date de naissance *</label>
-          <div style="display:grid;grid-template-columns:64px 1fr 80px;gap:6px;">
-            <select class="form-input" id="fond-jour" style="padding-left:8px;"><option value="">JJ</option></select>
-            <select class="form-input" id="fond-mois" style="padding-left:8px;"><option value="">Mois</option></select>
-            <select class="form-input" id="fond-annee" style="padding-left:8px;"><option value="">AAAA</option></select>
-          </div>
+      <!-- Ligne 3 : Date de naissance (pleine largeur, 3 sélecteurs) -->
+      <div class="form-group">
+        <label class="form-label">Date de naissance *</label>
+        <div style="display:grid;grid-template-columns:80px 1fr 100px;gap:6px;max-width:360px;">
+          <select class="form-input" id="fond-jour" style="padding-left:8px;"><option value="">JJ</option></select>
+          <select class="form-input" id="fond-mois" style="padding-left:8px;"><option value="">Mois</option></select>
+          <select class="form-input" id="fond-annee" style="padding-left:8px;"><option value="">AAAA</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Sexe *</label><select class="form-input" id="fond-sexe"><option value="">Choisir</option></select></div>
       </div>
 
-      <!-- Ligne 4 : Situation matrimoniale (demi-largeur) + vide -->
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="fond-situation"><option value="">Choisir</option></select></div>
-        <div class="form-group"></div>
+      <!-- Ligne 4 : Sexe + Situation matrimoniale (courtes valeurs, collées côte à côte) -->
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Sexe *</label><select class="form-input" id="fond-sexe" style="width:150px;"><option value="">Choisir</option></select></div>
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="fond-situation" style="width:170px;"><option value="">Choisir</option></select></div>
       </div>
 
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;font-size:14px;padding:12px;" id="btn-fond-suivant">Continuer →</button>
@@ -301,17 +298,17 @@
       </div>
 
       <div class="form-group"><label class="form-label">Nom de l'organisation *</label><input type="text" class="form-input" id="org-nom" placeholder="Ex: Association Fraternité Abidjan"/></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Type d'organisation *</label><select class="form-input" id="org-type"><option value="">Chargement...</option></select></div>
-        <div class="form-group"><label class="form-label">Statut</label><select class="form-input" id="org-statut"><option value="">Chargement...</option></select></div>
-        <div class="form-group">
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;">
+        <div class="form-group" style="margin-bottom:0;flex:1 1 200px;"><label class="form-label">Type d'organisation *</label><select class="form-input" id="org-type" style="width:100%;"><option value="">Chargement...</option></select></div>
+        <div class="form-group" style="margin-bottom:0;flex:1 1 170px;"><label class="form-label">Statut</label><select class="form-input" id="org-statut" style="width:100%;"><option value="">Chargement...</option></select></div>
+        <div class="form-group" style="margin-bottom:0;width:200px;flex:0 0 auto;">
           <label class="form-label">Pays *</label>
-          <select class="form-input" id="org-pays" onchange="afficherArmoiriesPays(this)"><option value="">Chargement...</option></select>
-          <div id="frais-activation-pays" style="display:none;margin-top:8px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:13px;color:#78350f;">
-            <span style="font-weight:700;">Frais d'activation :</span> <span id="frais-activation-montant"></span>
-            <div style="font-size:11.5px;margin-top:3px;color:#92400e;">Ces frais sont à régler une fois votre dossier approuvé par l'équipe UnioNova.</div>
-          </div>
+          <select class="form-input" id="org-pays" style="width:200px;" onchange="afficherArmoiriesPays(this)"><option value="">Chargement...</option></select>
         </div>
+      </div>
+      <div id="frais-activation-pays" style="display:none;margin-bottom:16px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:13px;color:#78350f;">
+        <span style="font-weight:700;">Frais d'activation :</span> <span id="frais-activation-montant"></span>
+        <div style="font-size:11.5px;margin-top:3px;color:#92400e;">Ces frais sont à régler une fois votre dossier approuvé par l'équipe UnioNova.</div>
       </div>
       <div class="form-group"><label class="form-label">N° agrément *</label><input type="text" class="form-input" id="org-agrement" placeholder="Ex: N°0234/MEIS/DGAT"/></div>
 
@@ -471,14 +468,9 @@
     </div>
 
     <div class="form-card">
-      <div class="form-group" style="margin-bottom:16px;">
-        <label class="form-label">Description</label>
-        <div id="orgdet-description" style="font-size:13.5px;line-height:1.6;color:var(--text);"></div>
-      </div>
-      <div class="form-group" style="margin-bottom:4px;">
-        <label class="form-label">Siège social</label>
-        <div id="orgdet-siege" style="font-size:13.5px;line-height:1.6;color:var(--text);"></div>
-      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px;">À propos</div>
+      <div id="orgdet-description" style="font-size:13.5px;line-height:1.6;color:var(--text);margin-bottom:18px;"></div>
+      <div id="orgdet-meta-rows"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:20px;font-size:14px;padding:12px;" id="btn-orgdet-continuer">Continuer →</button>
     </div>
   </div>
@@ -604,23 +596,20 @@
         </div>
       </div>
 
-      <!-- Ligne 3 : Date de naissance (3 sélecteurs) + Sexe -->
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Date de naissance *</label>
-          <div style="display:grid;grid-template-columns:64px 1fr 80px;gap:6px;">
-            <select class="form-input" id="adh-jour" style="padding-left:8px;"><option value="">JJ</option></select>
-            <select class="form-input" id="adh-mois" style="padding-left:8px;"><option value="">Mois</option></select>
-            <select class="form-input" id="adh-annee" style="padding-left:8px;"><option value="">AAAA</option></select>
-          </div>
+      <!-- Ligne 3 : Date de naissance (pleine largeur, 3 sélecteurs) -->
+      <div class="form-group">
+        <label class="form-label">Date de naissance *</label>
+        <div style="display:grid;grid-template-columns:80px 1fr 100px;gap:6px;max-width:360px;">
+          <select class="form-input" id="adh-jour" style="padding-left:8px;"><option value="">JJ</option></select>
+          <select class="form-input" id="adh-mois" style="padding-left:8px;"><option value="">Mois</option></select>
+          <select class="form-input" id="adh-annee" style="padding-left:8px;"><option value="">AAAA</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Sexe *</label><select class="form-input" id="adh-sexe"><option value="">Choisir</option></select></div>
       </div>
 
-      <!-- Ligne 4 : Situation matrimoniale (demi-largeur) -->
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="adh-situation"><option value="">Choisir</option></select></div>
-        <div class="form-group"></div>
+      <!-- Ligne 4 : Sexe + Situation matrimoniale (courtes valeurs, collées côte à côte) -->
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Sexe *</label><select class="form-input" id="adh-sexe" style="width:150px;"><option value="">Choisir</option></select></div>
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Situation matrimoniale *</label><select class="form-input" id="adh-situation" style="width:170px;"><option value="">Choisir</option></select></div>
       </div>
 
       <!-- Ligne 5 : Type de pièce + Numéro -->
@@ -1376,7 +1365,13 @@
       ? `<img src="${urlArmoiries}" style="width:60px;height:60px;object-fit:contain;" alt="Armoiries" />`
       : ''
     document.getElementById('orgdet-description').textContent = org.description || 'Aucune description fournie par cette organisation.'
-    document.getElementById('orgdet-siege').textContent = org.siegeSocial || '—'
+    document.getElementById('orgdet-meta-rows').innerHTML = [
+      { label: 'Siège social', value: org.siegeSocial },
+    ].map(l => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:13px;color:var(--text-muted);">${l.label}</span>
+        <span style="font-size:13px;font-weight:600;text-align:right;">${l.value || '—'}</span>
+      </div>`).join('')
 
     renderSteps(STEPS_REJOINDRE, 2)
     show('sec-org-detail-rejoindre')
