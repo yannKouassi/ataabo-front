@@ -126,12 +126,14 @@
   }
 
   let beneficiairesCourants = []
+  let armoiriesCourantes = null
 
   async function afficherAdherent(num) {
     const res = await fetch(`${API}/beneficiaires/public/adherent/${encodeURIComponent(num)}`)
     if (!res.ok) { afficherErreur('Adhérent introuvable', `Le numéro ${num} ne correspond à aucun adhérent.`); return }
     const d = await res.json()
     beneficiairesCourants = d.beneficiaires || []
+    armoiriesCourantes = d.urlArmoiries || null
 
     const photoHtml = d.photo
       ? `<img src="${d.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.5);flex-shrink:0;"/>`
@@ -186,6 +188,7 @@
     document.getElementById('modal-benef-content').innerHTML = `
       <div class="modal-header">
         <button class="modal-close" onclick="fermerModalBenef()">&times;</button>
+        ${armoiriesCourantes ? `<img src="${armoiriesCourantes}" style="width:26px;height:26px;object-fit:contain;position:absolute;top:16px;right:48px;opacity:.9;"/>` : ''}
         ${photoHtml}
         <div>
           <div style="font-size:16px;font-weight:700;">${b.prenom||''} ${b.nom||''}</div>
@@ -223,7 +226,8 @@
 
     document.getElementById('content').innerHTML = `
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="position:relative;">
+          ${a.urlArmoiries ? `<img src="${a.urlArmoiries}" style="width:30px;height:30px;object-fit:contain;position:absolute;top:16px;right:16px;opacity:.9;"/>` : ''}
           ${photoHtml}
           <div class="card-header-info">
             <h2>${d.prenom||''} ${d.nom||''}</h2>
