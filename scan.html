@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="/img.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UnioNova — Carte scannée</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:Arial,sans-serif; background:#f1f5f9; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+
+    .logo { font-size:22px; font-weight:900; color:#2E7D32; letter-spacing:2px; margin-bottom:6px; }
+    .logo-sub { font-size:12px; color:#64748b; margin-bottom:28px; }
+
+    .card { background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,.10); max-width:440px; width:100%; overflow:hidden; }
+
+    .card-header { background:linear-gradient(135deg,#2E7D32,#1b5e20); padding:24px; color:#fff; display:flex; align-items:center; gap:16px; }
+    .card-header img, .avatar-placeholder { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.5); flex-shrink:0; }
+    .avatar-placeholder { background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:30px; }
+    .card-header-info h2 { font-size:18px; font-weight:700; }
+    .card-header-info .mat { font-size:12px; opacity:.8; font-family:monospace; margin-top:4px; letter-spacing:1px; }
+    .badge { display:inline-block; background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.35); border-radius:20px; padding:2px 10px; font-size:11px; margin-top:6px; }
+
+    .card-body { padding:20px; }
+    .field { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+    .field:last-child { border-bottom:none; }
+    .field-icon { width:28px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#94a3b8; }
+    .field-label { font-size:11px; color:#94a3b8; margin-bottom:2px; }
+    .field-value { font-size:14px; color:#1e293b; font-weight:600; }
+
+    .section-title { font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:1px; padding:14px 20px 6px; background:#f8fafc; border-top:1px solid #e2e8f0; }
+
+    .benef-item { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid #f1f5f9; }
+    .benef-item:last-child { border-bottom:none; }
+    .benef-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #bfdbfe; flex-shrink:0; }
+    .benef-avatar-ph { width:40px; height:40px; border-radius:50%; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:18px; border:2px solid #bfdbfe; flex-shrink:0; }
+    .benef-name { font-size:14px; font-weight:600; color:#1e293b; }
+    .benef-mat { font-size:11px; color:#6366f1; font-family:monospace; margin-top:2px; }
+
+    .empty-benef { padding:20px; text-align:center; color:#94a3b8; font-size:13px; }
+
+    /* Tableau des bénéficiaires (vue adhérent) */
+    .benef-table-wrap { padding:4px 12px 14px; }
+    table.benef-table { width:100%; border-collapse:collapse; }
+    table.benef-table th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.5px; color:#94a3b8; font-weight:700; padding:8px 8px; border-bottom:1px solid #e2e8f0; }
+    table.benef-table td { padding:9px 8px; font-size:13px; color:#1e293b; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    table.benef-table tr:last-child td { border-bottom:none; }
+    table.benef-table .td-name { display:flex; align-items:center; gap:10px; }
+    table.benef-table .td-mat { font-family:monospace; font-size:11.5px; color:#6366f1; }
+    .btn-voir-plus { background:#eff6ff; color:#2E7D32; border:1px solid #bfdbfe; border-radius:8px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .btn-voir-plus:hover { background:#dbeafe; }
+
+    /* Modal détail bénéficiaire */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); align-items:center; justify-content:center; padding:20px; z-index:100; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; max-width:380px; width:100%; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+    .modal-header { background:linear-gradient(135deg,#2E7D32,#1b5e20); padding:22px 20px; color:#fff; display:flex; align-items:center; gap:14px; position:relative; }
+    .modal-close { position:absolute; top:10px; right:12px; background:rgba(255,255,255,.2); border:none; color:#fff; width:26px; height:26px; border-radius:50%; font-size:15px; cursor:pointer; line-height:1; }
+    .modal-avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.5); flex-shrink:0; }
+    .modal-avatar-ph { width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .modal-body { padding:6px 20px 16px; }
+
+    .footer-note { margin-top:20px; font-size:11px; color:#94a3b8; text-align:center; }
+
+    .error-box { background:#fee2e2; color:#b91c1c; border-radius:12px; padding:20px 24px; max-width:440px; width:100%; text-align:center; }
+    .error-box h3 { margin-bottom:8px; }
+
+    .spinner { width:36px; height:36px; border:4px solid #e2e8f0; border-top-color:#2E7D32; border-radius:50%; animation:spin .8s linear infinite; margin:40px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="logo">UnioNova</div>
+  <div class="logo-sub">Plateforme de gestion communautaire</div>
+
+  <div id="loader"><div class="spinner"></div></div>
+  <div id="content" style="display:none;width:100%;max-width:440px;"></div>
+  <div id="error" style="display:none;"></div>
+
+  <p class="footer-note">Informations vérifiées par la plateforme UnioNova</p>
+
+  <div class="modal-overlay" id="modal-benef">
+    <div class="modal-box" id="modal-benef-content"></div>
+  </div>
+
+<script>
+  const params  = new URLSearchParams(window.location.search)
+  const numAdh  = params.get('a')
+  const matBenef = params.get('b')
+
+  const API = window.location.hostname !== 'localhost' ? 'https://ataabo-api-production.up.railway.app/api' : '/api'
+
+  const ICON = {
+    organisation: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+    tel: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+    email: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>`,
+    date: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    user: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    heart: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    badge: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
+  }
+
+  const LABEL_SEXE = { MASCULIN: 'Masculin', FEMININ: 'Féminin', NEUTRE: '—' }
+  const LABEL_SITUATION = { CELIBATAIRE: 'Célibataire', MARIE: 'Marié(e)', DIVORCE: 'Divorcé(e)', VEUF_VEUVE: 'Veuf / Veuve' }
+
+  function champsPersonnels(p) {
+    return `
+      ${p.fonction ? `<div class="field"><div class="field-icon">${ICON.badge}</div><div><div class="field-label">Fonction</div><div class="field-value">${p.fonction}</div></div></div>` : ''}
+      ${p.dateNaissance ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Date de naissance</div><div class="field-value">${new Date(p.dateNaissance).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+      ${p.sexe ? `<div class="field"><div class="field-icon">${ICON.user}</div><div><div class="field-label">Sexe</div><div class="field-value">${LABEL_SEXE[p.sexe] || p.sexe}</div></div></div>` : ''}
+      ${p.situationMatrimoniale ? `<div class="field"><div class="field-icon">${ICON.heart}</div><div><div class="field-label">Situation matrimoniale</div><div class="field-value">${LABEL_SITUATION[p.situationMatrimoniale] || p.situationMatrimoniale}</div></div></div>` : ''}`
+  }
+
+  async function charger() {
+    try {
+      if (numAdh) {
+        await afficherAdherent(numAdh)
+      } else if (matBenef) {
+        await afficherBeneficiaire(matBenef)
+      } else {
+        afficherErreur('QR code invalide', 'Aucun identifiant trouvé dans ce QR code.')
+      }
+    } catch(e) {
+      afficherErreur('Erreur de chargement', e.message)
+    }
+  }
+
+  let beneficiairesCourants = []
+
+  async function afficherAdherent(num) {
+    const res = await fetch(`${API}/beneficiaires/public/adherent/${encodeURIComponent(num)}`)
+    if (!res.ok) { afficherErreur('Adhérent introuvable', `Le numéro ${num} ne correspond à aucun adhérent.`); return }
+    const d = await res.json()
+    beneficiairesCourants = d.beneficiaires || []
+
+    const photoHtml = d.photo
+      ? `<img src="${d.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.5);flex-shrink:0;"/>`
+      : `<div class="avatar-placeholder"></div>`
+
+    const benefsHtml = beneficiairesCourants.length
+      ? `<div class="benef-table-wrap"><table class="benef-table">
+          <thead><tr><th>Bénéficiaire</th><th>Matricule</th><th></th></tr></thead>
+          <tbody>
+            ${beneficiairesCourants.map((b, i) => {
+              const ph = b.photo
+                ? `<img src="${b.photo}" class="benef-avatar"/>`
+                : `<div class="benef-avatar-ph"></div>`
+              return `<tr>
+                <td><div class="td-name">${ph}<span>${b.prenom||''} ${b.nom||''}</span></div></td>
+                <td class="td-mat">${b.matricule||'—'}</td>
+                <td><button class="btn-voir-plus" onclick="voirPlusBeneficiaire(${i})">Voir plus</button></td>
+              </tr>`
+            }).join('')}
+          </tbody>
+        </table></div>`
+      : `<div class="empty-benef">Aucun bénéficiaire enregistré</div>`
+
+    const armoiriesHtml = d.urlArmoiries
+      ? `<img src="${d.urlArmoiries}" style="width:30px;height:30px;object-fit:contain;position:absolute;top:16px;right:16px;opacity:.9;"/>`
+      : ''
+
+    document.getElementById('content').innerHTML = `
+      <div class="card">
+        <div class="card-header" style="position:relative;">
+          ${armoiriesHtml}
+          ${photoHtml}
+          <div class="card-header-info">
+            <h2>${d.prenom||''} ${d.nom||''}</h2>
+            <div class="mat">${d.numAdherent||''}</div>
+            <div class="badge">${d.statut||'ACTIF'}</div>
+            ${d.organisation ? `<div style="font-size:12px;opacity:.85;margin-top:5px;">${d.organisation}</div>` : ''}
+          </div>
+        </div>
+        <div class="section-title">Bénéficiaires (${beneficiairesCourants.length})</div>
+        ${benefsHtml}
+      </div>`
+    show()
+  }
+
+  window.voirPlusBeneficiaire = function(i) {
+    const b = beneficiairesCourants[i]
+    if (!b) return
+    const photoHtml = b.photo
+      ? `<img src="${b.photo}" class="modal-avatar"/>`
+      : `<div class="modal-avatar-ph"></div>`
+    document.getElementById('modal-benef-content').innerHTML = `
+      <div class="modal-header">
+        <button class="modal-close" onclick="fermerModalBenef()">&times;</button>
+        ${photoHtml}
+        <div>
+          <div style="font-size:16px;font-weight:700;">${b.prenom||''} ${b.nom||''}</div>
+          <div class="mat">${b.matricule||''}</div>
+          <div class="badge">BÉNÉFICIAIRE</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        ${b.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">Téléphone</div><div class="field-value">${b.tel}</div></div></div>` : ''}
+        ${b.dateLien ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Désigné le</div><div class="field-value">${new Date(b.dateLien).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+      </div>`
+    document.getElementById('modal-benef').classList.add('open')
+  }
+
+  window.fermerModalBenef = function() {
+    document.getElementById('modal-benef').classList.remove('open')
+  }
+  document.getElementById('modal-benef').addEventListener('click', e => {
+    if (e.target.id === 'modal-benef') fermerModalBenef()
+  })
+
+  async function afficherBeneficiaire(mat) {
+    const res = await fetch(`${API}/beneficiaires/public/beneficiaire/${encodeURIComponent(mat)}`)
+    if (!res.ok) { afficherErreur('Bénéficiaire introuvable', `Le matricule ${mat} est introuvable.`); return }
+    const d = await res.json()
+    const a = d.adherent || {}
+
+    const photoHtml = d.photo
+      ? `<img src="${d.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.5);flex-shrink:0;"/>`
+      : `<div class="avatar-placeholder"></div>`
+
+    const adhPhotoHtml = a.photo
+      ? `<img src="${a.photo}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #bfdbfe;flex-shrink:0;"/>`
+      : `<div class="benef-avatar-ph" style="width:52px;height:52px;"></div>`
+
+    document.getElementById('content').innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          ${photoHtml}
+          <div class="card-header-info">
+            <h2>${d.prenom||''} ${d.nom||''}</h2>
+            <div class="mat">${d.matricule||''}</div>
+            <div class="badge">BÉNÉFICIAIRE</div>
+          </div>
+        </div>
+        <div class="card-body">
+          ${d.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">Téléphone</div><div class="field-value">${d.tel}</div></div></div>` : ''}
+          ${d.dateLien ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Désigné le</div><div class="field-value">${new Date(d.dateLien).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+        </div>
+        <div class="section-title">Adhérent responsable</div>
+        <div class="card-body" style="padding-top:14px;">
+          <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;">
+            ${adhPhotoHtml}
+            <div style="flex:1;">
+              <div class="benef-name">${a.prenom||''} ${a.nom||''}</div>
+              <div class="benef-mat">${a.numAdherent||''}</div>
+              ${a.statut ? `<div class="badge" style="background:#eff6ff;border-color:#bfdbfe;color:#2E7D32;margin-top:4px;">${a.statut}</div>` : ''}
+            </div>
+            ${a.urlArmoiries ? `<img src="${a.urlArmoiries}" style="width:30px;height:30px;object-fit:contain;opacity:.9;flex-shrink:0;"/>` : ''}
+          </div>
+          <div class="field"><div class="field-icon">${ICON.organisation}</div><div><div class="field-label">Organisation</div><div class="field-value">${a.organisation||'—'}</div></div></div>
+          ${a.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">Téléphone</div><div class="field-value">${a.tel}</div></div></div>` : ''}
+          ${a.email ? `<div class="field"><div class="field-icon">${ICON.email}</div><div><div class="field-label">Email</div><div class="field-value" style="font-size:12.5px;">${a.email}</div></div></div>` : ''}
+          ${a.dateEntree ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Membre depuis</div><div class="field-value">${new Date(a.dateEntree).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+          ${champsPersonnels(a)}
+        </div>
+      </div>`
+    show()
+  }
+
+  function afficherErreur(titre, msg) {
+    document.getElementById('loader').style.display = 'none'
+    document.getElementById('error').style.display = 'block'
+    document.getElementById('error').innerHTML = `<div class="error-box"><h3>${titre}</h3><p>${msg}</p></div>`
+  }
+
+  function show() {
+    document.getElementById('loader').style.display = 'none'
+    document.getElementById('content').style.display = 'block'
+  }
+
+  charger()
+</script>
+</body>
+</html>

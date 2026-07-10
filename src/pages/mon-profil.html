@@ -250,7 +250,7 @@
     return map[(code3||'').toUpperCase()] || code3 || ''
   }
 
-  async function imprimerCarte(p, beneficiaires) {
+  async function imprimerCarte(p) {
     const couleur = ctx.couleurPrimaire || '#1a5276'
     const couleurFonce = couleur + 'dd'
     const flag = flagEmoji(ctx.codePays)
@@ -268,19 +268,8 @@
       ? `<img src="${ctx.urlArmoiries}" style="width:100%;height:100%;object-fit:contain;" crossorigin="anonymous"/>`
       : `<span style="font-size:120px;">${flag}</span>`
 
-    // Générer le QR code avec infos bénéficiaires
-    const qrLines = (beneficiaires || []).map(b => {
-      const prenom = b.beneficiaire?.prenPersonne || ''
-      const nom    = b.beneficiaire?.nomPersonne  || ''
-      const sexe   = b.beneficiaire?.sexe?.libSexe || ''
-      const ddn    = b.beneficiaire?.dateNaisPersonne ? new Date(b.beneficiaire.dateNaisPersonne).toLocaleDateString('fr-FR') : ''
-      const tel    = b.beneficiaire?.telPersonne   || ''
-      const email  = b.beneficiaire?.emailPersonne || ''
-      const mat    = b.matricule || ''
-      const lien   = b.dateLien  ? new Date(b.dateLien).toLocaleDateString('fr-FR') : ''
-      return [prenom+' '+nom, sexe, ddn, tel, email, mat, lien].join('|')
-    })
-    const qrText = qrLines.length ? qrLines.join(';;') : 'AUCUN BENEFICIAIRE'
+    // QR code : lien vers la fiche publique scannable de l'adhérent (infos + tableau de ses bénéficiaires)
+    const qrText = `${window.location.origin}/scan.html?a=${encodeURIComponent(ctx.numAdherent || '')}`
 
     const qrContainer = document.createElement('div')
     qrContainer.style.cssText = 'position:absolute;left:-9999px;'
@@ -451,11 +440,8 @@
 
   document.getElementById('btn-carte').addEventListener('click', async () => {
     try {
-      const [p, beneficiaires] = await Promise.all([
-        api.get('/moi/profil'),
-        api.get('/beneficiaires/moi').catch(() => [])
-      ])
-      imprimerCarte(p, beneficiaires)
+      const p = await api.get('/moi/profil')
+      imprimerCarte(p)
     } catch(err) {
       toast.error('Erreur : ' + err.message)
     }

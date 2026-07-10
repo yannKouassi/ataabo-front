@@ -57,6 +57,10 @@ export async function buildHistorique(containerId, limit = 50, module = null, op
           all = all.filter(t => t.libelleTrait && t.libelleTrait.toLowerCase().includes(module.toLowerCase()))
         }
       }
+      if (options.exclude && options.exclude.length) {
+        const excludeKeys = options.exclude.map(e => e.toLowerCase())
+        all = all.filter(t => !t.libelleTrait || !excludeKeys.some(k => t.libelleTrait.toLowerCase().includes(k)))
+      }
       _cache = all.slice(0, limit)
 
       if (!_cache.length) {

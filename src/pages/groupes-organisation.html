@@ -58,6 +58,7 @@
         </table>
       </div>
     </div>
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
 </div>
 
@@ -91,6 +92,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -149,6 +151,7 @@
       await api.delete(`/utilisateurs/groupes/${code}?orgId=${encodeURIComponent(ctx.orgId)}`)
       toast.success('Groupe supprimé.')
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
     }
@@ -185,6 +188,7 @@
       toast.success('Groupe créé !')
       document.getElementById('modal-groupe').style.display = 'none'
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
     } finally {
@@ -193,6 +197,7 @@
   })
 
   charger()
+  buildHistorique('historique-container', 50, ['groupe créé', 'groupe supprimé'])
 </script>
 </body>
 </html>

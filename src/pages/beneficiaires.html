@@ -205,14 +205,7 @@
     const qrDiv = document.createElement('div')
     qrDiv.style.cssText = 'position:absolute;left:-9999px;'
     document.body.appendChild(qrDiv)
-    const qrText = [
-      `N° BENEFICIAIRE: ${matricule}`,
-      `NOM: ${nom.toUpperCase()} ${prenom}`,
-      `ADHERENT: ${numAdh||''}`,
-      `ORGANISATION: ${ctx.nomOrganisation||''}`,
-      tel   ? `TEL: ${tel}`         : '',
-      since ? `DESIGNE LE: ${since}` : '',
-    ].filter(Boolean).join('\n')
+    const qrText = `${window.location.origin}/scan.html?b=${encodeURIComponent(matricule || '')}`
     new QRCode(qrDiv, {
       text: qrText,
       width: 256, height: 256,
