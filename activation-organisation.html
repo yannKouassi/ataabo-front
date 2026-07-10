@@ -213,15 +213,15 @@
   let nomPays = ''
 
   const moyenConfig = {
-    WAVE:          { label: 'Wave',         logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
-    ORANGE_MONNEY: { label: 'Orange Money', logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
-    MTN_MONNEY:    { label: 'MTN MoMo',    logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCDE' },
-    MOOV_MONNEY:   { label: 'Moov Money',  logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
-    OPAY:          { label: 'OPay',         logo: '', bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
-    PALMPAY:       { label: 'PalmPay',      logo: '', bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
-    PAGA:          { label: 'Paga',         logo: '', bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
-    MVOLA:         { label: 'MVola',        logo: '', bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
-    AIRTEL_MONEY:  { label: 'Airtel Money', logo: '', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
+    WAVE:          { label: 'Wave',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+    ORANGE_MONNEY: { label: 'Orange Money', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    bg: '#fefce8', placeholder: 'Ex: MTN241231ABCDE' },
+    MOOV_MONNEY:   { label: 'Moov Money',  bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+    OPAY:          { label: 'OPay',         bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
+    PALMPAY:       { label: 'PalmPay',      bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
+    PAGA:          { label: 'Paga',         bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
+    MVOLA:         { label: 'MVola',        bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
+    AIRTEL_MONEY:  { label: 'Airtel Money', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
   }
 
   // --- Sélection moyen de paiement ---
@@ -270,7 +270,7 @@
 
     container.innerHTML = ''
     moyens.forEach((m, i) => {
-      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, logo: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
+      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
       const card = document.createElement('div')
       card.className = 'pay-method-card'
       card.setAttribute('role', 'radio')
@@ -278,8 +278,8 @@
       card.setAttribute('tabindex', i === 0 ? '0' : '-1')
       card.dataset.placeholder = cfg.placeholder
       card.dataset.label = 'Référence ' + cfg.label
-      const visual = cfg.logo
-        ? `<img src="${cfg.logo}" alt=""/>`
+      const visual = m.urlLogo
+        ? `<img src="${m.urlLogo}" alt=""/>`
         : `<span style="font-size:13px;font-weight:800;color:var(--text);">${cfg.label.slice(0,2).toUpperCase()}</span>`
       card.innerHTML = `
         <div class="pm-logo" style="background:${cfg.bg};display:flex;align-items:center;justify-content:center;">${visual}</div>

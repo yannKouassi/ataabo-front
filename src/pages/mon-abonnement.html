@@ -272,15 +272,15 @@
   let selectedMoyenId = null
 
   const moyenConfig = {
-    WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire, Mali", logo: '/logos/wave.png',         bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
-    ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire, Mali, Madagascar", logo: '/logos/orange-money.png', bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
-    MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire, Bénin", logo: '/logos/mtn-momo.svg',     bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
-    MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire, Bénin, Mali", logo: '/logos/moov-money.png',   bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
-    OPAY:          { label: 'OPay',         sub: 'Nigeria', logo: '', bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
-    PALMPAY:       { label: 'PalmPay',      sub: 'Nigeria', logo: '', bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
-    PAGA:          { label: 'Paga',         sub: 'Nigeria', logo: '', bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
-    MVOLA:         { label: 'MVola',        sub: 'Madagascar', logo: '', bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
-    AIRTEL_MONEY:  { label: 'Airtel Money', sub: 'Madagascar', logo: '', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
+    WAVE:          { label: 'Wave',         sub: "Côte d'Ivoire, Mali", bg: '#f0f9ff', placeholder: 'Ex: W241231ABCDEF' },
+    ORANGE_MONNEY: { label: 'Orange Money', sub: "Côte d'Ivoire, Mali, Madagascar", bg: '#fff7ed', placeholder: 'Ex: CI241231ABCDEF' },
+    MTN_MONNEY:    { label: 'MTN MoMo',    sub: "Côte d'Ivoire, Bénin", bg: '#fefce8', placeholder: 'Ex: MTN241231ABCD' },
+    MOOV_MONNEY:   { label: 'Moov Money',  sub: "Côte d'Ivoire, Bénin, Mali", bg: '#eff6ff', placeholder: 'Ex: MOOV241231ABCD' },
+    OPAY:          { label: 'OPay',         sub: 'Nigeria', bg: '#dcfce7', placeholder: 'Ex: OP241231ABCDEF' },
+    PALMPAY:       { label: 'PalmPay',      sub: 'Nigeria', bg: '#fdf2f8', placeholder: 'Ex: PP241231ABCDEF' },
+    PAGA:          { label: 'Paga',         sub: 'Nigeria', bg: '#eef2ff', placeholder: 'Ex: PG241231ABCDEF' },
+    MVOLA:         { label: 'MVola',        sub: 'Madagascar', bg: '#fff1f2', placeholder: 'Ex: MV241231ABCDEF' },
+    AIRTEL_MONEY:  { label: 'Airtel Money', sub: 'Madagascar', bg: '#fef2f2', placeholder: 'Ex: AM241231ABCDEF' },
   }
 
   function fmt(n, d) {
@@ -462,14 +462,14 @@
     container.innerHTML = ''
     const liste = Array.isArray(moyensPaiement) ? moyensPaiement : []
     liste.forEach(m => {
-      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, sub: '', logo: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
+      const cfg = moyenConfig[m.libMoyPaye] || { label: m.libMoyPaye, sub: '', bg: '#f1f5f9', placeholder: 'Ex: REF-XXXXXXXX' }
       const card = document.createElement('div')
       card.style.cssText = 'border:2px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s,box-shadow .15s;background:var(--surface);user-select:none;'
       card.dataset.id = m.id
       card.dataset.placeholder = cfg.placeholder
       card.dataset.label = cfg.label
-      const visual = cfg.logo
-        ? `<img src="${cfg.logo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'"/>`
+      const visual = m.urlLogo
+        ? `<img src="${m.urlLogo}" alt="${cfg.label}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'"/>`
         : `<span style="font-size:13px;font-weight:800;color:var(--text);">${cfg.label.slice(0,2).toUpperCase()}</span>`
       card.innerHTML = `
         <div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:${cfg.bg};">
