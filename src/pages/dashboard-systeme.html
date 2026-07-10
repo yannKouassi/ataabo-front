@@ -306,6 +306,15 @@
     </div>`
   }
 
+  // Formate un montant agrégé par devise (ex: {XOF: 20000, NGN: 5000}) sans jamais les additionner entre elles
+  function fmtMontantsParDevise(parDevise) {
+    const entries = Object.entries(parDevise || {}).filter(([, v]) => v)
+    if (!entries.length) return '0'
+    return entries.map(([devise, montant], i) =>
+      `<span style="${i > 0 ? 'font-size:15px;color:var(--text-muted);' : ''}">${montant.toLocaleString('fr-FR', {maximumFractionDigits:0})} ${devise}</span>`
+    ).join('<br/>')
+  }
+
   let chartTypes, chartTop, chartEvolution, chartPaiementsEvo, chartAbonnementsEvo, chartStatutsPaiements, chartPays, chartValidation, chartVisites
   let _toutesLesOrgs = []
   let _dernierStats = null
@@ -318,6 +327,8 @@
   const _GRID_SYS  = { color: 'rgba(148,163,184,0.12)', drawBorder: false }
   const _TICK_SYS  = { color: '#94a3b8', font: { size: 11 } }
   const _ANIM_SYS  = { duration: 600, easing: 'easeInOutQuart' }
+  // Palette cyclique utilisée pour distinguer plusieurs devises sur un même graphique
+  const _COULEURS_DEVISE = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#0ea5e9']
 
   function _gradSys(canvas, hex, a1 = 0.22, a2 = 0.02) {
     const g = canvas.getContext('2d').createLinearGradient(0, 0, 0, 260)
@@ -442,35 +453,53 @@
       }
     })
 
-    // Graphique 4 — évolution montants paiements confirmés
-    const paiEvoData = stats.evolutionPaiementsData || []
+    // Graphique 4 — évolution montants paiements confirmés, un dataset par devise (jamais additionnées entre elles)
+    const paiParDevise = stats.evolutionPaiementsParDevise || {}
+    const devisesPai = Object.keys(paiParDevise)
     if (chartPaiementsEvo) chartPaiementsEvo.destroy()
+    const datasetsPai = devisesPai.length > 1
+      ? devisesPai.map((devise, i) => ({
+          label: `Montant confirmé (${devise})`, data: paiParDevise[devise],
+          backgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + 'cc',
+          hoverBackgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length],
+          borderRadius: 8, borderSkipped: false
+        }))
+      : [{
+          label: devisesPai.length ? `Montant confirmé (${devisesPai[0]})` : 'Montant confirmé',
+          data: devisesPai.length ? paiParDevise[devisesPai[0]] : [],
+          backgroundColor: '#10b981cc', hoverBackgroundColor: '#10b981', borderRadius: 8, borderSkipped: false
+        }]
     chartPaiementsEvo = new Chart(document.getElementById('chart-paiements-evo'), {
       type: 'bar',
-      data: {
-        labels: evoLabels,
-        datasets: [{ label: 'Montant confirmé (XOF)', data: paiEvoData, backgroundColor: '#10b981cc', hoverBackgroundColor: '#10b981', borderRadius: 8, borderSkipped: false }]
-      },
+      data: { labels: evoLabels, datasets: datasetsPai },
       options: {
         maintainAspectRatio: false, animation: _ANIM_SYS,
-        plugins: { tooltip: _TOOLTIP_SYS, legend: { display: false } },
+        plugins: { tooltip: _TOOLTIP_SYS, legend: { display: devisesPai.length > 1 } },
         scales: { x: { grid: { display: false }, ticks: _TICK_SYS, border: { display: false } }, y: { grid: _GRID_SYS, ticks: { ..._TICK_SYS, callback: v => v.toLocaleString('fr-FR') }, border: { display: false }, beginAtZero: true } }
       }
     })
 
-    // Graphique 5 — évolution montants abonnements confirmés par mois (mensuel vs annuel)
-    const abnEvoMensuel = stats.evolutionAbonnementsMensuelData || []
-    const abnEvoAnnuel  = stats.evolutionAbonnementsAnnuelData  || []
+    // Graphique 5 — évolution montants abonnements confirmés par mois (mensuel vs annuel), par devise
+    const abnMensuelParDevise = stats.evolutionAbonnementsMensuelParDevise || {}
+    const abnAnnuelParDevise  = stats.evolutionAbonnementsAnnuelParDevise  || {}
+    const devisesAbn = [...new Set([...Object.keys(abnMensuelParDevise), ...Object.keys(abnAnnuelParDevise)])]
     if (chartAbonnementsEvo) chartAbonnementsEvo.destroy()
+    const datasetsAbn = devisesAbn.length > 1
+      ? devisesAbn.flatMap((devise, i) => [
+          { label: `Mensuel (${devise})`, data: abnMensuelParDevise[devise] || evoLabels.map(() => 0),
+            backgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + 'cc',
+            hoverBackgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length], borderRadius: 8, borderSkipped: false },
+          { label: `Annuel (${devise})`, data: abnAnnuelParDevise[devise] || evoLabels.map(() => 0),
+            backgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + '55',
+            hoverBackgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + '99', borderRadius: 8, borderSkipped: false }
+        ])
+      : [
+          { label: devisesAbn.length ? `Mensuel (${devisesAbn[0]})` : 'Mensuel', data: devisesAbn.length ? abnMensuelParDevise[devisesAbn[0]] : [], backgroundColor: '#6366f1cc', hoverBackgroundColor: '#6366f1', borderRadius: 8, borderSkipped: false },
+          { label: devisesAbn.length ? `Annuel (${devisesAbn[0]})` : 'Annuel',  data: devisesAbn.length ? abnAnnuelParDevise[devisesAbn[0]]  : [], backgroundColor: '#22c55ecc', hoverBackgroundColor: '#22c55e', borderRadius: 8, borderSkipped: false }
+        ]
     chartAbonnementsEvo = new Chart(document.getElementById('chart-abonnements-evo'), {
       type: 'bar',
-      data: {
-        labels: evoLabels,
-        datasets: [
-          { label: 'Mensuel (XOF)', data: abnEvoMensuel, backgroundColor: '#6366f1cc', hoverBackgroundColor: '#6366f1', borderRadius: 8, borderSkipped: false },
-          { label: 'Annuel (XOF)',  data: abnEvoAnnuel,  backgroundColor: '#22c55ecc', hoverBackgroundColor: '#22c55e', borderRadius: 8, borderSkipped: false }
-        ]
-      },
+      data: { labels: evoLabels, datasets: datasetsAbn },
       options: {
         maintainAspectRatio: false, animation: _ANIM_SYS,
         plugins: { tooltip: _TOOLTIP_SYS, legend: { position: 'top', labels: { boxWidth: 10, boxHeight: 10, padding: 14, font: { size: 11 }, color: '#64748b' } } },
@@ -594,11 +623,11 @@
         statCard('En attente de validation', stats.orgsEnAttente ?? 0, '#d97706'),
         statCard('Paiements activation en attente', stats.paiementsEnAttente ?? 0, '#d97706'),
         statCard('Activations confirmées' + suffixe, stats.paiementsConfirmes ?? 0, '#16a34a'),
-        statCard('Droits d\'entrée encaissés' + suffixe, (stats.montantTotalEncaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#16a34a'),
+        statCard('Droits d\'entrée encaissés' + suffixe, fmtMontantsParDevise(stats.montantTotalEncaisseParDevise), '#16a34a'),
         statCard('Abonnements actifs', stats.abonnementsActifs ?? 0, '#6366f1'),
         statCard('Abonnements en attente', stats.abonnementsEnAttente ?? 0, '#d97706'),
-        statCard('Montant abonnements' + suffixe, (stats.montantAbonnementsEncaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#6366f1'),
-        statCard('Total caisse' + suffixe, (stats.montantTotalCaisse ?? 0).toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' XOF', '#0f172a'),
+        statCard('Montant abonnements' + suffixe, fmtMontantsParDevise(stats.montantAbonnementsEncaisseParDevise), '#6366f1'),
+        statCard('Total caisse' + suffixe, fmtMontantsParDevise(stats.montantTotalCaisseParDevise), '#0f172a'),
         statCard('Pays couverts', stats.totalPays ?? 0),
       ].join('')
       dessinerGraphiques(stats)
@@ -914,6 +943,11 @@
     if (!s) return
     const debut = document.getElementById('filtre-debut').value || 'tout'
     const fin   = document.getElementById('filtre-fin').value   || 'tout'
+    // Une ligne par devise pour ne jamais additionner des montants dans des devises différentes
+    const lignesParDevise = (label, parDevise) => {
+      const entries = Object.entries(parDevise || {}).filter(([, v]) => v)
+      return entries.length ? entries.map(([devise, montant]) => [`${label} (${devise})`, montant]) : [[label, 0]]
+    }
     const lignes = [
       ['Indicateur', 'Valeur'],
       ['Organisations actives', s.totalOrganisations ?? 0],
@@ -923,11 +957,11 @@
       ['En attente de validation', s.orgsEnAttente ?? 0],
       ['Paiements activation en attente', s.paiementsEnAttente ?? 0],
       ['Activations confirmées (période)', s.paiementsConfirmes ?? 0],
-      ['Droits d\'entrée encaissés (XOF)', s.montantTotalEncaisse ?? 0],
+      ...lignesParDevise('Droits d\'entrée encaissés', s.montantTotalEncaisseParDevise),
       ['Abonnements actifs', s.abonnementsActifs ?? 0],
       ['Abonnements en attente', s.abonnementsEnAttente ?? 0],
-      ['Montant abonnements (XOF)', s.montantAbonnementsEncaisse ?? 0],
-      ['Total caisse (XOF)', s.montantTotalCaisse ?? 0],
+      ...lignesParDevise('Montant abonnements', s.montantAbonnementsEncaisseParDevise),
+      ...lignesParDevise('Total caisse', s.montantTotalCaisseParDevise),
       ['Pays couverts', s.totalPays ?? 0],
     ]
     if (_toutesLesOrgs.length) {

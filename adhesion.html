@@ -258,36 +258,7 @@
         <div class="form-group"></div>
       </div>
 
-      <div class="form-section-title">Mot de passe</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" class="form-input" id="fond-password" placeholder="6 à 10 caractères"/></div>
-        <div class="form-group"><label class="form-label">Confirmer *</label><input type="password" class="form-input" id="fond-confirm" placeholder="••••••"/></div>
-      </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;font-size:14px;padding:12px;" id="btn-fond-suivant">Continuer →</button>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════ -->
-  <!-- FLUX CRÉER — Étape 2 : Confirmation email fondateur -->
-  <!-- ════════════════════════════════════════════ -->
-  <div class="section" id="sec-fond-otp">
-    <div class="form-card">
-      <div class="otp-wrap">
-        <div style="font-size:48px; margin-bottom:12px;">✉️</div>
-        <div style="font-size:18px; font-weight:800; margin-bottom:8px;">Vérifiez votre email</div>
-        <div style="font-size:13.5px; color:var(--text-muted);">Un code à 6 chiffres a été envoyé à<br/><strong id="fond-email-display"></strong></div>
-        <div class="err-box" id="err-fond-otp" style="text-align:left;"></div>
-        <div class="otp-input" id="fond-otp-inputs">
-          <input type="text" maxlength="1" inputmode="numeric"/>
-          <input type="text" maxlength="1" inputmode="numeric"/>
-          <input type="text" maxlength="1" inputmode="numeric"/>
-          <input type="text" maxlength="1" inputmode="numeric"/>
-          <input type="text" maxlength="1" inputmode="numeric"/>
-          <input type="text" maxlength="1" inputmode="numeric"/>
-        </div>
-        <button class="btn btn-primary" style="min-width:200px;justify-content:center;padding:12px;" id="btn-fond-otp-valider">Confirmer mon email</button>
-        <div class="otp-resend" onclick="renvoyerOtpFond()">Pas reçu ? <span>Renvoyer le code</span></div>
-      </div>
     </div>
   </div>
 
@@ -429,10 +400,6 @@
       <div class="progress-steps" style="max-width:440px; margin:24px auto 0;">
         <div class="progress-item p-done">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Compte créé et email confirmé
-        </div>
-        <div class="progress-item p-done">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           Organisation enregistrée et email confirmé
         </div>
         <div class="progress-item p-pending">
@@ -445,7 +412,7 @@
         </div>
         <div class="progress-item p-wait">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Activation de votre organisation
+          Vous recevrez un email pour créer votre mot de passe une fois votre dossier validé
         </div>
       </div>
       <div style="margin-top:28px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
@@ -678,7 +645,6 @@
 
 <script type="module">
   import { api } from '/src/js/api.js'
-  import { saveLogin, saveContexte } from '/src/js/auth.js'
   import { chargerTraductions, appliquerTraductions } from '/src/js/i18n.js'
   import { initTheme } from '/src/js/theme.js'
   import { initTraductionAuto } from '/src/js/translator.js'
@@ -698,7 +664,7 @@
 
   // ─── STATE ───────────────────────────────────────────
   let mode = null
-  let fondEmail = '', fondPassword = ''
+  let fondDataStored = null
   let orgCreeId = null, orgCreeEmail = ''
   let selectedOrg = null
   let toutesOrgs = []
@@ -1015,7 +981,7 @@
   })()
 
   // ─── INDICATEUR D'ÉTAPES ─────────────────────────────
-  const STEPS_CREER = ['Organisation','Votre compte','Confirmation','Email org','Finalisation']
+  const STEPS_CREER = ['Organisation','Fondateur','Email org','Finalisation']
   const STEPS_REJOINDRE = ['Choisir','Conditions','Formulaire','Confirmation']
   let orgAConditions = false
   let conditionsAccepteesLe = null
@@ -1048,8 +1014,7 @@
     const backMap = {
       'sec-org-infos':    () => { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) },
       'sec-fond-infos':   () => { renderSteps(STEPS_CREER, 1); show('sec-org-infos', false) },
-      'sec-fond-otp':     () => { renderSteps(STEPS_CREER, 2); show('sec-fond-infos', false) },
-      'sec-org-otp':      () => { renderSteps(STEPS_CREER, 3); show('sec-fond-otp', false) },
+      'sec-org-otp':      () => { renderSteps(STEPS_CREER, 2); show('sec-fond-infos', false) },
       'sec-liste-orgs':   () => { document.getElementById('steps-bar').style.display = 'none'; show('sec-choix', false) },
       'sec-conditions-adhesion': () => { renderSteps(STEPS_REJOINDRE, 1); show('sec-liste-orgs', false) },
       'sec-form-adhesion':() => {
@@ -1119,7 +1084,7 @@
   // Back depuis fondateur form → org form
   document.getElementById('back-fond').addEventListener('click', () => history.back())
 
-  // ─── FLUX CRÉER — ÉTAPE 2 : INSCRIPTION FONDATEUR ────
+  // ─── FLUX CRÉER — ÉTAPE 2 : INFOS FONDATEUR (sans mot de passe) ─
   document.getElementById('btn-fond-suivant').addEventListener('click', async () => {
     const btn = document.getElementById('btn-fond-suivant')
     hideErr('err-fond')
@@ -1134,80 +1099,38 @@
     const naissance = (jour && mois && annee) ? `${annee}-${mois}-${jour}` : ''
     const sexe      = document.getElementById('fond-sexe').value
     const situation = document.getElementById('fond-situation').value
-    const password  = document.getElementById('fond-password').value
-    const confirm   = document.getElementById('fond-confirm').value
 
-    if (!nom || !prenom || !email || !sexe || !situation || !password) {
+    if (!nom || !prenom || !email || !sexe || !situation) {
       return showErr('err-fond', 'Veuillez remplir tous les champs obligatoires.')
     }
     if (!jour || !mois || !annee) {
       return showErr('err-fond', 'Veuillez renseigner votre date de naissance complète.')
     }
-    if (password !== confirm) return showErr('err-fond', 'Les mots de passe ne correspondent pas.')
+
+    fondDataStored = {
+      nomFondateur: nom,
+      prenomFondateur: prenom,
+      emailFondateur: email,
+      telFondateur: telNum ? `${indicatif}${telNum}` : null,
+      dateNaissanceFondateur: naissance,
+      sexeFondateurId: sexe,
+      situationMatrimonialeFondateurId: situation,
+    }
 
     btn.disabled = true; btn.textContent = 'Envoi en cours...'
     try {
-      await api.post('/inscription', { nom, prenom, email, password, confirmPassword: confirm, dateNaissance: naissance, libSexe: sexe, situationMatrimoniale: situation, tel: telNum ? `${indicatif}${telNum}` : null })
-      fondEmail = email
-      fondPassword = password
-      document.getElementById('fond-email-display').textContent = email
-      setupOtpInputs('fond-otp-inputs')
-      renderSteps(STEPS_CREER, 3)
-      show('sec-fond-otp')
-    } catch(e) {
-      // Vérifier silencieusement le statut pour adapter l'affichage (sans révéler si l'email existe)
-      try {
-        const statut = await api.get(`/inscription/statut?email=${encodeURIComponent(email)}`)
-        if (statut.statut === 'ACTIF') {
-          // Compte déjà actif, pas encore d'organisation → reprendre ici sans passer par le login
-          const errEl = document.getElementById('err-fond')
-          errEl.innerHTML = `
-            <div style="margin-bottom:8px;">Saisissez votre mot de passe pour continuer.</div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <input type="password" id="fond-reprendre-mdp" class="form-input" placeholder="Mot de passe" style="max-width:220px;"/>
-              <button class="btn btn-primary btn-sm" id="btn-reprendre-org">Reprendre →</button>
-            </div>
-            <div id="err-reprendre" style="color:#b91c1c;font-size:12px;margin-top:6px;display:none;"></div>`
-          errEl.style.display = 'block'
-          document.getElementById('btn-reprendre-org').addEventListener('click', async () => {
-            const mdp = document.getElementById('fond-reprendre-mdp').value
-            if (!mdp) return
-            try {
-              const loginData = await api.post('/connexion', { email, password: mdp })
-              localStorage.setItem('accessToken', loginData.accessToken)
-              if (loginData.refreshToken) localStorage.setItem('refreshToken', loginData.refreshToken)
-              fondEmail = email
-              // Compte existant → soumettre l'org directement
-              await soumettreOrganisation()
-            } catch {
-              document.getElementById('err-reprendre').textContent = 'Mot de passe incorrect.'
-              document.getElementById('err-reprendre').style.display = 'block'
-            }
-          })
-        } else if (statut.statut === 'EN_ATTENTE_VERIFICATION') {
-          fondEmail = email
-          fondPassword = password
-          document.getElementById('fond-email-display').textContent = email
-          setupOtpInputs('fond-otp-inputs')
-          renderSteps(STEPS_CREER, 3)
-          show('sec-fond-otp')
-        } else {
-          showErr('err-fond', e.message || 'Erreur lors de l\'inscription.')
-        }
-      } catch {
-        showErr('err-fond', e.message || 'Erreur lors de l\'inscription.')
-      }
+      await soumettreOrganisation()
     } finally {
       btn.disabled = false; btn.textContent = 'Continuer →'
     }
   })
 
-  // ─── FLUX CRÉER — ÉTAPE 3 : OTP FONDATEUR → puis soumettre org ─
+  // ─── FLUX CRÉER — Soumission de l'organisation (infos org + fondateur, sans authentification) ─
   async function soumettreOrganisation() {
-    if (!orgDataStored) return
+    if (!orgDataStored || !fondDataStored) return
     try {
       const fd = new FormData()
-      fd.append('data', new Blob([JSON.stringify(orgDataStored)], { type: 'application/json' }))
+      fd.append('data', new Blob([JSON.stringify({ ...orgDataStored, ...fondDataStored })], { type: 'application/json' }))
       fd.append('file', docFile)
       const logo = document.getElementById('org-logo').files[0]
       if (logo) fd.append('logo', logo)
@@ -1216,52 +1139,11 @@
       orgCreeEmail = orgDataStored.emailAssociation
       document.getElementById('org-email-display').textContent = orgCreeEmail
       setupOtpInputs('org-otp-inputs')
-      renderSteps(STEPS_CREER, 4)
+      renderSteps(STEPS_CREER, 3)
       show('sec-org-otp')
     } catch(e) {
-      // Revenir sur le formulaire org pour afficher l'erreur
-      renderSteps(STEPS_CREER, 1)
-      show('sec-org-infos')
-      showErr('err-org', e.message || 'Erreur lors de la création de l\'organisation.')
+      showErr('err-fond', e.message || 'Erreur lors de la création de l\'organisation.')
     }
-  }
-
-  document.getElementById('btn-fond-otp-valider').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-fond-otp-valider')
-    hideErr('err-fond-otp')
-    const code = getOtp('fond-otp-inputs')
-    if (code.length !== 6) return showErr('err-fond-otp', 'Saisissez les 6 chiffres du code.')
-
-    btn.disabled = true; btn.textContent = 'Vérification...'
-    try {
-      const loginResp = await api.post('/activation', { email: fondEmail, code })
-      saveLogin(loginResp)
-      // Compte confirmé → maintenant soumettre l'organisation
-      btn.textContent = 'Création de l\'organisation...'
-      await soumettreOrganisation()
-    } catch(e) {
-      showErr('err-fond-otp', e.message || 'Code invalide ou expiré.')
-    } finally {
-      btn.disabled = false; btn.textContent = 'Confirmer mon email'
-    }
-  })
-
-  window.renvoyerOtpFond = async () => {
-    try {
-      const jour   = document.getElementById('fond-jour').value
-      const mois   = document.getElementById('fond-mois').value
-      const annee  = document.getElementById('fond-annee').value
-      await api.post('/inscription', {
-        nom: document.getElementById('fond-nom').value,
-        prenom: document.getElementById('fond-prenom').value,
-        email: fondEmail, password: fondPassword, confirmPassword: fondPassword,
-        dateNaissance: (jour && mois && annee) ? `${annee}-${mois}-${jour}` : '',
-        libSexe: document.getElementById('fond-sexe').value,
-        situationMatrimoniale: document.getElementById('fond-situation').value,
-        tel: document.getElementById('fond-tel-num').value ? `${document.getElementById('fond-indicatif').value}${document.getElementById('fond-tel-num').value.trim()}` : null
-      })
-      alert('Un nouveau code a été envoyé.')
-    } catch(e) {}
   }
 
   window.renvoyerOtpOrg = async () => {
@@ -1340,7 +1222,7 @@
     btn.disabled = true; btn.textContent = 'Vérification...'
     try {
       await api.post(`/organisations/${orgCreeId}/confirmer-email`, { code })
-      renderSteps(STEPS_CREER, 5)
+      renderSteps(STEPS_CREER, 4)
       show('sec-succes-creation')
     } catch(e) {
       showErr('err-org-otp', e.message || 'Code invalide ou expiré.')
@@ -1417,7 +1299,7 @@
         const bandeauDE = document.getElementById('bandeau-droit-entree')
         const bandeauDEMsg = document.getElementById('bandeau-droit-entree-msg')
         if (montantEntree > 0) {
-          const devise = org.devise || org.monnaie || 'XOF'
+          const devise = org.devise || org.pays?.monnaie?.codeIso || 'XOF'
           bandeauDEMsg.textContent = `Pour rejoindre ${org.nomOrganisation || org.libAssociation}, vous devrez payer un droit d'entrée de ${montantEntree.toLocaleString('fr-FR')} ${devise} après acceptation de votre dossier.`
           bandeauDE.style.display = 'block'
         } else {

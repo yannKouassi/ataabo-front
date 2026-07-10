@@ -378,7 +378,7 @@
     document.getElementById('stat-retard-count').textContent  = retard.length
 
     const devises = [...new Set(actifs.map(a => a.devise).filter(Boolean))]
-    const devise  = devises.length === 1 ? devises[0] : 'XOF'
+    const devise  = devises.length === 1 ? devises[0] : (devises.length > 1 ? 'multi-devises' : 'XOF')
 
     document.getElementById('stat-attente-montant').textContent = fmt(somme(enAttente), devise)
     document.getElementById('stat-actif-montant').textContent   = fmt(somme(actifs), devise)

@@ -223,7 +223,7 @@
         type: 'danger',
         icon: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
         titre: 'Solde trésorerie négatif',
-        texte: `Le solde est de ${(stats.soldeTresorerie ?? 0).toLocaleString('fr-FR')} XOF. Les décaissements dépassent les cotisations encaissées sur la période.`
+        texte: `Le solde est de ${(stats.soldeTresorerie ?? 0).toLocaleString('fr-FR')} ${ctx.devise || 'XOF'}. Les décaissements dépassent les cotisations encaissées sur la période.`
       })
     }
 
@@ -368,7 +368,7 @@
       data: {
         labels: labelsCot,
         datasets: [{
-          label: 'Montant (XOF)',
+          label: `Montant (${ctx.devise || 'XOF'})`,
           data: stats.graphCotisationsData || [],
           backgroundColor: '#10b981cc',
           hoverBackgroundColor: '#10b981',
@@ -513,10 +513,10 @@
         kpiCard('Membres bannis',            fmt(stats.membresBanis),           '#dc2626'),
         kpiCard('Demandes en attente',       fmt(stats.demandesEnAttente),      '#d97706', '/src/pages/adhesions.html'),
         kpiCard('Cotisations (période)',     fmt(stats.cotisationsMois),        'var(--primary)', '/src/pages/cotisations.html'),
-        kpiCard('Montant cotisations (XOF)', fmt(stats.montantCotisationsMois), '#16a34a'),
+        kpiCard(`Montant cotisations (${ctx.devise || 'XOF'})`, fmt(stats.montantCotisationsMois), '#16a34a'),
         kpiCard('Déclarations en attente',  fmt(stats.declarationsEnAttente),  '#7c3aed', '/src/pages/activites.html'),
         kpiCard('Événements à venir',        fmt(stats.evenementsAvenir),       'var(--primary)'),
-        kpiCard('Solde trésorerie (XOF)',    fmt(stats.soldeTresorerie),        (stats.soldeTresorerie ?? 0) >= 0 ? '#059669' : '#dc2626'),
+        kpiCard(`Solde trésorerie (${ctx.devise || 'XOF'})`,    fmt(stats.soldeTresorerie),        (stats.soldeTresorerie ?? 0) >= 0 ? '#059669' : '#dc2626'),
       ].join('')
 
       // Dernières demandes
@@ -594,11 +594,11 @@
       ['Membres bannis',             s.membresBanis ?? 0],
       ['Demandes en attente',        s.demandesEnAttente ?? 0],
       ['Cotisations (période)',       s.cotisationsMois ?? 0],
-      ['Montant cotisations (XOF)',   s.montantCotisationsMois ?? 0],
+      [`Montant cotisations (${ctx.devise || 'XOF'})`,   s.montantCotisationsMois ?? 0],
       ['Déclarations vie en attente', s.declarationsEnAttente ?? 0],
       ['Événements à venir',          s.evenementsAvenir ?? 0],
-      ['Abonnements plateforme (XOF)', s.montantAbonnementsPeriode ?? 0],
-      ['Solde trésorerie (XOF)',       s.soldeTresorerie ?? 0],
+      [`Abonnements plateforme (${ctx.devise || 'XOF'})`, s.montantAbonnementsPeriode ?? 0],
+      [`Solde trésorerie (${ctx.devise || 'XOF'})`,       s.soldeTresorerie ?? 0],
     ]
     const csv = lignes.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
