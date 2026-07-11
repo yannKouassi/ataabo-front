@@ -67,6 +67,12 @@
     .pay-number-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .pay-number { font-size:18px; font-weight:800; color:var(--text); letter-spacing:.02em; }
     .pay-number-label { font-size:11px; color:var(--text-muted); margin-bottom:3px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .otp-wrap { text-align:center; padding:10px 0; }
+    .otp-input { display:flex; gap:10px; justify-content:center; margin:20px 0; }
+    .otp-input input { width:44px; height:52px; text-align:center; font-size:20px; font-weight:700; border:2px solid var(--border); border-radius:10px; background:var(--surface); outline:none; transition:border-color .15s; }
+    .otp-input input:focus { border-color:var(--primary); }
+    .otp-resend { font-size:13px; color:var(--text-muted); margin-top:8px; cursor:pointer; }
+    .otp-resend span { color:var(--primary); font-weight:600; }
     .pm-card { border:2px solid var(--border); border-radius:10px; padding:8px 10px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:border-color .15s; background:var(--surface); user-select:none; }
     .pm-card.selectionne { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
     .pm-logo { width:32px; height:32px; border-radius:7px; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f1f5f9; }
@@ -201,10 +207,27 @@
           <div id="dd-doc-name" style="font-size:12px;color:var(--text-muted);margin-top:6px;"></div>
         </div>
       </div>
+      <div id="otp-demande" style="display:none;">
+        <div class="otp-wrap">
+          <div style="font-size:40px;">📧</div>
+          <p style="font-size:13.5px;color:var(--text-muted);margin:10px 0 0;">Un code a été envoyé à l'adresse email de votre demande :<br/><strong id="dd-email-display" style="color:var(--text);"></strong></p>
+          <div class="err-box" id="err-dd-otp"></div>
+          <div class="otp-input" id="dd-otp-inputs">
+            <input type="text" maxlength="1" inputmode="numeric"/>
+            <input type="text" maxlength="1" inputmode="numeric"/>
+            <input type="text" maxlength="1" inputmode="numeric"/>
+            <input type="text" maxlength="1" inputmode="numeric"/>
+            <input type="text" maxlength="1" inputmode="numeric"/>
+            <input type="text" maxlength="1" inputmode="numeric"/>
+          </div>
+          <div class="otp-resend" onclick="renvoyerOtpDemande()">Pas reçu ? <span>Renvoyer le code</span></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="modal-demande-cancel">Annuler</button>
       <button class="btn btn-primary" id="btn-soumettre-demande">Soumettre</button>
+      <button class="btn btn-primary" id="btn-confirmer-email-demande" style="display:none;">Confirmer l'email</button>
     </div>
   </div>
 </div>
@@ -353,6 +376,33 @@
 
   // ── Soumission d'une demande ─────────────────────────
   const modalDemande = document.getElementById('modal-demande')
+  let demandeCreeId = null
+  let demandeCreeEmail = ''
+
+  function getOtp(containerId) {
+    return Array.from(document.querySelectorAll(`#${containerId} input`))
+      .map(i => i.value).join('')
+  }
+
+  function setupOtpInputs(containerId) {
+    const inputs = Array.from(document.querySelectorAll(`#${containerId} input`))
+    inputs.forEach((inp, idx) => {
+      inp.value = ''
+      inp.addEventListener('input', () => {
+        if (inp.value && idx < inputs.length - 1) inputs[idx+1].focus()
+      })
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !inp.value && idx > 0) inputs[idx-1].focus()
+      })
+      inp.addEventListener('paste', e => {
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'')
+        inputs.forEach((inp2, i) => { inp2.value = pasted[i] || '' })
+        inputs[Math.min(pasted.length, inputs.length-1)].focus()
+        e.preventDefault()
+      })
+    })
+  }
+
   function resetFormDemande() {
     document.getElementById('dd-nom').value = ''
     document.getElementById('dd-type-demandeur').value = 'PARTICULIER'
@@ -364,10 +414,14 @@
     document.getElementById('dd-motif').value = ''
     document.getElementById('dd-doc-name').textContent = ''
     documentFichier = null
+    demandeCreeId = null
     document.getElementById('err-demande').style.display = 'none'
     document.getElementById('success-demande').style.display = 'none'
     document.getElementById('form-demande').style.display = 'block'
+    document.getElementById('otp-demande').style.display = 'none'
     document.getElementById('btn-soumettre-demande').style.display = 'inline-block'
+    document.getElementById('btn-confirmer-email-demande').style.display = 'none'
+    document.getElementById('modal-demande-cancel').textContent = 'Annuler'
     majTypeDonDemande()
   }
   function majTypeDonDemande() {
@@ -420,13 +474,16 @@
       const fd = new FormData()
       fd.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
       fd.append('document', documentFichier)
-      await api.upload('/demandes-dons', fd)
+      const demande = await api.upload('/demandes-dons', fd)
+      demandeCreeId = demande.id
+      demandeCreeEmail = data.email
+      document.getElementById('dd-email-display').textContent = demandeCreeEmail
       document.getElementById('form-demande').style.display = 'none'
+      document.getElementById('otp-demande').style.display = 'block'
       btn.style.display = 'none'
-      const successEl = document.getElementById('success-demande')
-      successEl.textContent = 'Votre demande a été soumise et est désormais visible publiquement. Merci !'
-      successEl.style.display = 'block'
-      chargerDemandes()
+      document.getElementById('btn-confirmer-email-demande').style.display = 'inline-block'
+      document.getElementById('modal-demande-cancel').textContent = 'Fermer'
+      setupOtpInputs('dd-otp-inputs')
     } catch (e) {
       errEl.textContent = e.message
       errEl.style.display = 'block'
@@ -434,6 +491,44 @@
       btn.disabled = false; btn.textContent = 'Soumettre'
     }
   })
+
+  document.getElementById('btn-confirmer-email-demande').addEventListener('click', async () => {
+    const errEl = document.getElementById('err-dd-otp')
+    errEl.style.display = 'none'
+    const code = getOtp('dd-otp-inputs')
+    if (code.length !== 6) {
+      errEl.textContent = 'Saisissez les 6 chiffres du code.'
+      errEl.style.display = 'block'
+      return
+    }
+    const btn = document.getElementById('btn-confirmer-email-demande')
+    btn.disabled = true; btn.textContent = 'Vérification…'
+    try {
+      await api.post(`/demandes-dons/${demandeCreeId}/confirmer-email`, { code })
+      document.getElementById('otp-demande').style.display = 'none'
+      btn.style.display = 'none'
+      const successEl = document.getElementById('success-demande')
+      successEl.textContent = 'Email confirmé ! Votre demande est désormais visible publiquement. Merci !'
+      successEl.style.display = 'block'
+      chargerDemandes()
+    } catch (e) {
+      errEl.textContent = e.message || 'Code invalide ou expiré.'
+      errEl.style.display = 'block'
+    } finally {
+      btn.disabled = false; btn.textContent = 'Confirmer l\'email'
+    }
+  })
+
+  window.renvoyerOtpDemande = async () => {
+    if (!demandeCreeId) return
+    try {
+      await api.post(`/demandes-dons/${demandeCreeId}/renvoyer-otp`)
+      const resend = document.querySelector('#otp-demande .otp-resend span')
+      const original = resend.textContent
+      resend.textContent = 'Code envoyé !'
+      setTimeout(() => { resend.textContent = original }, 3000)
+    } catch (e) { toast.error(e.message) }
+  }
 
   // ── Contribution publique ────────────────────────────
   const modalContribuer = document.getElementById('modal-contribuer')

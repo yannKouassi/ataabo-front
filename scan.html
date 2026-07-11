@@ -100,15 +100,57 @@
     badge: `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
   }
 
-  const LABEL_SEXE = { MASCULIN: 'Masculin', FEMININ: 'Féminin', NEUTRE: '—' }
-  const LABEL_SITUATION = { CELIBATAIRE: 'Célibataire', MARIE: 'Marié(e)', DIVORCE: 'Divorcé(e)', VEUF_VEUVE: 'Veuf / Veuve' }
+  // Langue de la page : dérivée du pays de l'organisation de l'adhérent (même convention que mon-profil.html)
+  const PAYS_LANGUE_DEFAULT = { CIV: 'fr', BEN: 'fr', MLI: 'fr', NGA: 'en', MDG: 'fr' }
+  let langue = 'fr'
+  function definirLangue(codePays) {
+    langue = PAYS_LANGUE_DEFAULT[codePays] || 'fr'
+    document.documentElement.lang = langue
+    document.title = L().titrePage
+    document.querySelector('.logo-sub').textContent = L().plateforme
+    document.querySelector('.footer-note').textContent = L().infosVerifiees
+  }
+
+  const LABELS = {
+    fr: {
+      titrePage: 'UnioNova — Carte scannée', plateforme: 'Plateforme de gestion communautaire',
+      infosVerifiees: 'Informations vérifiées par la plateforme UnioNova',
+      qrInvalideTitre: 'QR code invalide', qrInvalideMsg: 'Aucun identifiant trouvé dans ce QR code.',
+      adherentIntrouvableTitre: 'Adhérent introuvable', adherentIntrouvableMsg: n => `Le numéro ${n} ne correspond à aucun adhérent.`,
+      beneficiaireIntrouvableTitre: 'Bénéficiaire introuvable', beneficiaireIntrouvableMsg: m => `Le matricule ${m} est introuvable.`,
+      erreurChargementTitre: 'Erreur de chargement',
+      fonction: 'Fonction', dateNaissance: 'Date de naissance', sexe: 'Sexe', situationMatrimoniale: 'Situation matrimoniale',
+      beneficiaires: n => `Bénéficiaires (${n})`, beneficiaire: 'Bénéficiaire', matricule: 'Matricule', voirPlus: 'Voir plus',
+      aucunBeneficiaire: 'Aucun bénéficiaire enregistré', telephone: 'Téléphone', designeLe: 'Désigné le',
+      beneficiaireBadge: 'BÉNÉFICIAIRE', organisation: 'Organisation', email: 'Email', membreDepuis: 'Membre depuis',
+      adherentResponsable: 'Adhérent responsable', localeDate: 'fr-FR',
+      LABEL_SEXE: { MASCULIN: 'Masculin', FEMININ: 'Féminin', NEUTRE: '—' },
+      LABEL_SITUATION: { CELIBATAIRE: 'Célibataire', MARIE: 'Marié(e)', DIVORCE: 'Divorcé(e)', VEUF_VEUVE: 'Veuf / Veuve' }
+    },
+    en: {
+      titrePage: 'UnioNova — Scanned card', plateforme: 'Community management platform',
+      infosVerifiees: 'Information verified by the UnioNova platform',
+      qrInvalideTitre: 'Invalid QR code', qrInvalideMsg: 'No identifier found in this QR code.',
+      adherentIntrouvableTitre: 'Member not found', adherentIntrouvableMsg: n => `Member number ${n} was not found.`,
+      beneficiaireIntrouvableTitre: 'Beneficiary not found', beneficiaireIntrouvableMsg: m => `Reference ${m} was not found.`,
+      erreurChargementTitre: 'Loading error',
+      fonction: 'Role', dateNaissance: 'Date of birth', sexe: 'Gender', situationMatrimoniale: 'Marital status',
+      beneficiaires: n => `Beneficiaries (${n})`, beneficiaire: 'Beneficiary', matricule: 'Reference', voirPlus: 'View more',
+      aucunBeneficiaire: 'No beneficiary registered', telephone: 'Phone', designeLe: 'Designated on',
+      beneficiaireBadge: 'BENEFICIARY', organisation: 'Organisation', email: 'Email', membreDepuis: 'Member since',
+      adherentResponsable: 'Responsible member', localeDate: 'en-GB',
+      LABEL_SEXE: { MASCULIN: 'Male', FEMININ: 'Female', NEUTRE: '—' },
+      LABEL_SITUATION: { CELIBATAIRE: 'Single', MARIE: 'Married', DIVORCE: 'Divorced', VEUF_VEUVE: 'Widowed' }
+    }
+  }
+  function L() { return LABELS[langue] }
 
   function champsPersonnels(p) {
     return `
-      ${p.fonction ? `<div class="field"><div class="field-icon">${ICON.badge}</div><div><div class="field-label">Fonction</div><div class="field-value">${p.fonction}</div></div></div>` : ''}
-      ${p.dateNaissance ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Date de naissance</div><div class="field-value">${new Date(p.dateNaissance).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
-      ${p.sexe ? `<div class="field"><div class="field-icon">${ICON.user}</div><div><div class="field-label">Sexe</div><div class="field-value">${LABEL_SEXE[p.sexe] || p.sexe}</div></div></div>` : ''}
-      ${p.situationMatrimoniale ? `<div class="field"><div class="field-icon">${ICON.heart}</div><div><div class="field-label">Situation matrimoniale</div><div class="field-value">${LABEL_SITUATION[p.situationMatrimoniale] || p.situationMatrimoniale}</div></div></div>` : ''}`
+      ${p.fonction ? `<div class="field"><div class="field-icon">${ICON.badge}</div><div><div class="field-label">${L().fonction}</div><div class="field-value">${p.fonction}</div></div></div>` : ''}
+      ${p.dateNaissance ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">${L().dateNaissance}</div><div class="field-value">${new Date(p.dateNaissance).toLocaleDateString(L().localeDate)}</div></div></div>` : ''}
+      ${p.sexe ? `<div class="field"><div class="field-icon">${ICON.user}</div><div><div class="field-label">${L().sexe}</div><div class="field-value">${L().LABEL_SEXE[p.sexe] || p.sexe}</div></div></div>` : ''}
+      ${p.situationMatrimoniale ? `<div class="field"><div class="field-icon">${ICON.heart}</div><div><div class="field-label">${L().situationMatrimoniale}</div><div class="field-value">${L().LABEL_SITUATION[p.situationMatrimoniale] || p.situationMatrimoniale}</div></div></div>` : ''}`
   }
 
   async function charger() {
@@ -118,10 +160,10 @@
       } else if (matBenef) {
         await afficherBeneficiaire(matBenef)
       } else {
-        afficherErreur('QR code invalide', 'Aucun identifiant trouvé dans ce QR code.')
+        afficherErreur(L().qrInvalideTitre, L().qrInvalideMsg)
       }
     } catch(e) {
-      afficherErreur('Erreur de chargement', e.message)
+      afficherErreur(L().erreurChargementTitre, e.message)
     }
   }
 
@@ -130,8 +172,9 @@
 
   async function afficherAdherent(num) {
     const res = await fetch(`${API}/beneficiaires/public/adherent/${encodeURIComponent(num)}`)
-    if (!res.ok) { afficherErreur('Adhérent introuvable', `Le numéro ${num} ne correspond à aucun adhérent.`); return }
+    if (!res.ok) { afficherErreur(L().adherentIntrouvableTitre, L().adherentIntrouvableMsg(num)); return }
     const d = await res.json()
+    definirLangue(d.codePays)
     beneficiairesCourants = d.beneficiaires || []
     armoiriesCourantes = d.urlArmoiries || null
 
@@ -141,7 +184,7 @@
 
     const benefsHtml = beneficiairesCourants.length
       ? `<div class="benef-table-wrap"><table class="benef-table">
-          <thead><tr><th>Bénéficiaire</th><th>Matricule</th><th></th></tr></thead>
+          <thead><tr><th>${L().beneficiaire}</th><th>${L().matricule}</th><th></th></tr></thead>
           <tbody>
             ${beneficiairesCourants.map((b, i) => {
               const ph = b.photo
@@ -150,12 +193,12 @@
               return `<tr>
                 <td><div class="td-name">${ph}<span>${b.prenom||''} ${b.nom||''}</span></div></td>
                 <td class="td-mat">${b.matricule||'—'}</td>
-                <td><button class="btn-voir-plus" onclick="voirPlusBeneficiaire(${i})">Voir plus</button></td>
+                <td><button class="btn-voir-plus" onclick="voirPlusBeneficiaire(${i})">${L().voirPlus}</button></td>
               </tr>`
             }).join('')}
           </tbody>
         </table></div>`
-      : `<div class="empty-benef">Aucun bénéficiaire enregistré</div>`
+      : `<div class="empty-benef">${L().aucunBeneficiaire}</div>`
 
     const armoiriesHtml = d.urlArmoiries
       ? `<img src="${d.urlArmoiries}" style="width:30px;height:30px;object-fit:contain;position:absolute;top:16px;right:16px;opacity:.9;"/>`
@@ -173,7 +216,7 @@
             ${d.organisation ? `<div style="font-size:12px;opacity:.85;margin-top:5px;">${d.organisation}</div>` : ''}
           </div>
         </div>
-        <div class="section-title">Bénéficiaires (${beneficiairesCourants.length})</div>
+        <div class="section-title">${L().beneficiaires(beneficiairesCourants.length)}</div>
         ${benefsHtml}
       </div>`
     show()
@@ -193,12 +236,12 @@
         <div>
           <div style="font-size:16px;font-weight:700;">${b.prenom||''} ${b.nom||''}</div>
           <div class="mat">${b.matricule||''}</div>
-          <div class="badge">BÉNÉFICIAIRE</div>
+          <div class="badge">${L().beneficiaireBadge}</div>
         </div>
       </div>
       <div class="modal-body">
-        ${b.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">Téléphone</div><div class="field-value">${b.tel}</div></div></div>` : ''}
-        ${b.dateLien ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Désigné le</div><div class="field-value">${new Date(b.dateLien).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+        ${b.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">${L().telephone}</div><div class="field-value">${b.tel}</div></div></div>` : ''}
+        ${b.dateLien ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">${L().designeLe}</div><div class="field-value">${new Date(b.dateLien).toLocaleDateString(L().localeDate)}</div></div></div>` : ''}
       </div>`
     document.getElementById('modal-benef').classList.add('open')
   }
@@ -212,9 +255,10 @@
 
   async function afficherBeneficiaire(mat) {
     const res = await fetch(`${API}/beneficiaires/public/beneficiaire/${encodeURIComponent(mat)}`)
-    if (!res.ok) { afficherErreur('Bénéficiaire introuvable', `Le matricule ${mat} est introuvable.`); return }
+    if (!res.ok) { afficherErreur(L().beneficiaireIntrouvableTitre, L().beneficiaireIntrouvableMsg(mat)); return }
     const d = await res.json()
     const a = d.adherent || {}
+    definirLangue(a.codePays)
 
     const photoHtml = d.photo
       ? `<img src="${d.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.5);flex-shrink:0;"/>`
@@ -232,14 +276,14 @@
           <div class="card-header-info">
             <h2>${d.prenom||''} ${d.nom||''}</h2>
             <div class="mat">${d.matricule||''}</div>
-            <div class="badge">BÉNÉFICIAIRE</div>
+            <div class="badge">${L().beneficiaireBadge}</div>
           </div>
         </div>
         <div class="card-body">
-          ${d.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">Téléphone</div><div class="field-value">${d.tel}</div></div></div>` : ''}
-          ${d.dateLien ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Désigné le</div><div class="field-value">${new Date(d.dateLien).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+          ${d.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">${L().telephone}</div><div class="field-value">${d.tel}</div></div></div>` : ''}
+          ${d.dateLien ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">${L().designeLe}</div><div class="field-value">${new Date(d.dateLien).toLocaleDateString(L().localeDate)}</div></div></div>` : ''}
         </div>
-        <div class="section-title">Adhérent responsable</div>
+        <div class="section-title">${L().adherentResponsable}</div>
         <div class="card-body" style="padding-top:14px;">
           <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;">
             ${adhPhotoHtml}
@@ -250,10 +294,10 @@
             </div>
             ${a.urlArmoiries ? `<img src="${a.urlArmoiries}" style="width:30px;height:30px;object-fit:contain;opacity:.9;flex-shrink:0;"/>` : ''}
           </div>
-          <div class="field"><div class="field-icon">${ICON.organisation}</div><div><div class="field-label">Organisation</div><div class="field-value">${a.organisation||'—'}</div></div></div>
-          ${a.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">Téléphone</div><div class="field-value">${a.tel}</div></div></div>` : ''}
-          ${a.email ? `<div class="field"><div class="field-icon">${ICON.email}</div><div><div class="field-label">Email</div><div class="field-value" style="font-size:12.5px;">${a.email}</div></div></div>` : ''}
-          ${a.dateEntree ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">Membre depuis</div><div class="field-value">${new Date(a.dateEntree).toLocaleDateString('fr-FR')}</div></div></div>` : ''}
+          <div class="field"><div class="field-icon">${ICON.organisation}</div><div><div class="field-label">${L().organisation}</div><div class="field-value">${a.organisation||'—'}</div></div></div>
+          ${a.tel ? `<div class="field"><div class="field-icon">${ICON.tel}</div><div><div class="field-label">${L().telephone}</div><div class="field-value">${a.tel}</div></div></div>` : ''}
+          ${a.email ? `<div class="field"><div class="field-icon">${ICON.email}</div><div><div class="field-label">${L().email}</div><div class="field-value" style="font-size:12.5px;">${a.email}</div></div></div>` : ''}
+          ${a.dateEntree ? `<div class="field"><div class="field-icon">${ICON.date}</div><div><div class="field-label">${L().membreDepuis}</div><div class="field-value">${new Date(a.dateEntree).toLocaleDateString(L().localeDate)}</div></div></div>` : ''}
           ${champsPersonnels(a)}
         </div>
       </div>`

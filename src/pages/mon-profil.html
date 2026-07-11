@@ -245,12 +245,33 @@
     return String.fromCodePoint(...[...c2].map(c => 127397 + c.charCodeAt(0)))
   }
 
-  function nomPays(code3) {
-    const map = { CIV:"Côte d'Ivoire", BEN:'Bénin', SEN:'Sénégal', CMR:'Cameroun', MLI:'Mali', BFA:'Burkina Faso', GHA:'Ghana', FRA:'France', GIN:'Guinée', TGO:'Togo', NER:'Niger', TCH:'Tchad', COD:'RD Congo', MDG:'Madagascar' }
+  function nomPays(code3, langue) {
+    const mapFr = { CIV:"Côte d'Ivoire", BEN:'Bénin', SEN:'Sénégal', CMR:'Cameroun', MLI:'Mali', BFA:'Burkina Faso', GHA:'Ghana', FRA:'France', GIN:'Guinée', TGO:'Togo', NER:'Niger', TCH:'Tchad', COD:'RD Congo', MDG:'Madagascar' }
+    const mapEn = { CIV:"Ivory Coast", BEN:'Benin', SEN:'Senegal', CMR:'Cameroon', MLI:'Mali', BFA:'Burkina Faso', GHA:'Ghana', FRA:'France', GIN:'Guinea', TGO:'Togo', NER:'Niger', TCH:'Chad', COD:'DR Congo', MDG:'Madagascar', NGA:'Nigeria' }
+    const map = langue === 'en' ? mapEn : mapFr
     return map[(code3||'').toUpperCase()] || code3 || ''
   }
 
+  // Langue de la carte imprimée : dérivée du pays de l'organisation (même convention que le sélecteur de pays du site)
+  const PAYS_LANGUE_DEFAULT = { CIV: 'fr', BEN: 'fr', MLI: 'fr', NGA: 'en', MDG: 'fr' }
+  const LABELS = {
+    fr: {
+      recto: 'Recto', verso: 'Verso', dateNaissance: 'Date de naissance', sexe: 'Sexe', nom: 'Nom',
+      situation: 'Situation', telephone: 'Téléphone', numAdherent: 'N° adhérent', groupe: 'Groupe',
+      pays: 'Pays', membreDepuis: 'Membre depuis', carteDeMembre: 'Carte de membre',
+      titreCarte: 'Carte de membre', membre: 'Membre'
+    },
+    en: {
+      recto: 'Front', verso: 'Back', dateNaissance: 'Date of birth', sexe: 'Gender', nom: 'Name',
+      situation: 'Marital status', telephone: 'Phone', numAdherent: 'Member No.', groupe: 'Group',
+      pays: 'Country', membreDepuis: 'Member since', carteDeMembre: 'Membership card',
+      titreCarte: 'Membership card', membre: 'Member'
+    }
+  }
+
   async function imprimerCarte(p) {
+    const langue = PAYS_LANGUE_DEFAULT[ctx.codePays] || 'fr'
+    const L = LABELS[langue]
     const couleur = ctx.couleurPrimaire || '#1a5276'
     const couleurFonce = couleur + 'dd'
     const flag = flagEmoji(ctx.codePays)
@@ -258,12 +279,12 @@
     const photoHtml = p.urlPhotoDemandeur
       ? `<img src="${p.urlPhotoDemandeur}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" crossorigin="anonymous"/>`
       : `<span style="font-size:22px;font-weight:800;color:#fff;">${initiales}</span>`
-    const dateNaiss = p.dateNaissance ? new Date(p.dateNaissance).toLocaleDateString('fr-FR') : '—'
+    const dateNaiss = p.dateNaissance ? new Date(p.dateNaissance).toLocaleDateString(langue === 'en' ? 'en-GB' : 'fr-FR') : '—'
     const sexe = p.libSexe ? String(p.libSexe) : '—'
     const situation = p.situationMatrimoniale ? String(p.situationMatrimoniale) : null
     const tel = p.tel || '—'
-    const fonction = ctx.libelleFonction || ctx.libelleGroupe || 'Membre'
-    const paysNom = ctx.libPays || nomPays(ctx.codePays)
+    const fonction = ctx.libelleFonction || ctx.libelleGroupe || L.membre
+    const paysNom = ctx.libPays || nomPays(ctx.codePays, langue)
     const versoBg = ctx.urlArmoiries
       ? `<img src="${ctx.urlArmoiries}" style="width:100%;height:100%;object-fit:contain;" crossorigin="anonymous"/>`
       : `<span style="font-size:120px;">${flag}</span>`
@@ -314,11 +335,11 @@
     document.body.removeChild(qrContainer)
 
     const html = `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${langue}">
 <head>
 <meta charset="UTF-8"/>
   <link rel="icon" type="image/png" href="/img.png">
-<title>Carte de membre — ${p.prenom} ${p.nom}</title>
+<title>${L.titreCarte} — ${p.prenom} ${p.nom}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#f0f0f0; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:Arial,sans-serif; }
@@ -369,7 +390,7 @@
 <div class="page">
 
   <div>
-    <div class="label">Recto</div>
+    <div class="label">${L.recto}</div>
     <div class="carte recto">
       <div class="v-bg" style="opacity:.13;">${versoBg}</div>
       <div class="r-top">
@@ -382,11 +403,11 @@
           <div class="r-name">${ctx.numAdherent||'—'}</div>
           <div class="r-role">${fonction}</div>
           <div class="r-grid">
-            <div class="r-field"><label>Date de naissance</label><span>${dateNaiss}</span></div>
-            <div class="r-field"><label>Sexe</label><span>${sexe}</span></div>
-            <div class="r-field"><label>Nom</label><span>${(p.nom||'').toUpperCase()} ${p.prenom||''}</span></div>
-            <div class="r-field"><label>Situation</label><span>${situation||'—'}</span></div>
-            <div class="r-field" style="grid-column:1/-1"><label>Téléphone</label><span>${tel}</span></div>
+            <div class="r-field"><label>${L.dateNaissance}</label><span>${dateNaiss}</span></div>
+            <div class="r-field"><label>${L.sexe}</label><span>${sexe}</span></div>
+            <div class="r-field"><label>${L.nom}</label><span>${(p.nom||'').toUpperCase()} ${p.prenom||''}</span></div>
+            <div class="r-field"><label>${L.situation}</label><span>${situation||'—'}</span></div>
+            <div class="r-field" style="grid-column:1/-1"><label>${L.telephone}</label><span>${tel}</span></div>
           </div>
         </div>
         <div class="r-photo">${photoHtml}</div>
@@ -399,7 +420,7 @@
   </div>
 
   <div>
-    <div class="label">Verso</div>
+    <div class="label">${L.verso}</div>
     <div class="carte verso">
       <div class="v-bg">${versoBg}</div>
       <div class="v-content">
@@ -407,11 +428,11 @@
           ${qrSrc ? `<img src="${qrSrc}" crossorigin="anonymous"/>` : ''}
         </div>
         <div class="v-right">
-          <div class="v-row"><label>N° adhérent</label><span>${ctx.numAdherent||'—'}</span></div>
-          <div class="v-row"><label>Groupe</label><span>${ctx.libelleGroupe||'—'}</span></div>
-          <div class="v-row"><label>Pays</label><span>${paysNom}</span></div>
-          ${ctx.dateEntree ? `<div class="v-row"><label>Membre depuis</label><span>${new Date(ctx.dateEntree).toLocaleDateString('fr-FR')}</span></div>` : ''}
-          <div class="v-title">Carte de membre</div>
+          <div class="v-row"><label>${L.numAdherent}</label><span>${ctx.numAdherent||'—'}</span></div>
+          <div class="v-row"><label>${L.groupe}</label><span>${ctx.libelleGroupe||'—'}</span></div>
+          <div class="v-row"><label>${L.pays}</label><span>${paysNom}</span></div>
+          ${ctx.dateEntree ? `<div class="v-row"><label>${L.membreDepuis}</label><span>${new Date(ctx.dateEntree).toLocaleDateString(langue === 'en' ? 'en-GB' : 'fr-FR')}</span></div>` : ''}
+          <div class="v-title">${L.carteDeMembre}</div>
         </div>
       </div>
     </div>

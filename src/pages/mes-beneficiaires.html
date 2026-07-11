@@ -135,8 +135,8 @@
               data-prenom="${b.beneficiaire?.prenPersonne||''}"
               data-nom="${b.beneficiaire?.nomPersonne||''}"
               data-photo="${b.beneficiaire?.urlPhoto||''}"
-              data-since="${b.dateLien ? new Date(b.dateLien).toLocaleDateString('fr-FR') : ''}"
-              data-ddn="${b.beneficiaire?.dateNaisPersonne ? new Date(b.beneficiaire.dateNaisPersonne).toLocaleDateString('fr-FR') : ''}"
+              data-since-raw="${b.dateLien || ''}"
+              data-ddn-raw="${b.beneficiaire?.dateNaisPersonne || ''}"
               data-sexe="${b.beneficiaire?.sexe?.libSexe||''}"
               data-tel="${b.beneficiaire?.telPersonne||''}"
               onclick="imprimerCarte(this)">🪪 Carte</button>` : ''}
@@ -212,15 +212,35 @@
     return String.fromCodePoint(...[...c2].map(c => 127397 + c.charCodeAt(0)))
   }
 
+  // Langue de la carte imprimée : dérivée du pays de l'organisation (même convention que mon-profil.html)
+  const PAYS_LANGUE_DEFAULT = { CIV: 'fr', BEN: 'fr', MLI: 'fr', NGA: 'en', MDG: 'fr' }
+  const LABELS = {
+    fr: {
+      recto: 'Recto', verso: 'Verso', dateNaissance: 'Date de naissance', sexe: 'Sexe', nom: 'Nom',
+      telephone: 'Téléphone', designeLe: 'Désigné le', beneficiaire: 'Bénéficiaire',
+      numBeneficiaire: 'N° bénéficiaire', numAdherent: 'N° adhérent', organisation: 'Organisation',
+      pays: 'Pays', titreCarte: 'Carte bénéficiaire', localeDate: 'fr-FR'
+    },
+    en: {
+      recto: 'Front', verso: 'Back', dateNaissance: 'Date of birth', sexe: 'Gender', nom: 'Name',
+      telephone: 'Phone', designeLe: 'Designated on', beneficiaire: 'Beneficiary',
+      numBeneficiaire: 'Beneficiary No.', numAdherent: 'Member No.', organisation: 'Organisation',
+      pays: 'Country', titreCarte: 'Beneficiary card', localeDate: 'en-GB'
+    }
+  }
+
   window.imprimerCarte = async function(btn) {
     const matricule = btn.dataset.mat
     const prenom    = btn.dataset.prenom
     const nom       = btn.dataset.nom
     const photo     = btn.dataset.photo
-    const since     = btn.dataset.since
-    const ddn       = btn.dataset.ddn
     const sexe      = btn.dataset.sexe === 'MASCULIN' ? 'M' : btn.dataset.sexe === 'FEMININ' ? 'F' : btn.dataset.sexe || '—'
     const tel       = btn.dataset.tel
+
+    const langue = PAYS_LANGUE_DEFAULT[ctx.codePays] || 'fr'
+    const L = LABELS[langue]
+    const since = btn.dataset.sinceRaw ? new Date(btn.dataset.sinceRaw).toLocaleDateString(L.localeDate) : ''
+    const ddn   = btn.dataset.ddnRaw ? new Date(btn.dataset.ddnRaw).toLocaleDateString(L.localeDate) : ''
 
     const couleur     = ctx.couleurPrimaire || '#1a5276'
     const couleurFonce = couleur + 'dd'
@@ -282,9 +302,9 @@
     document.body.removeChild(qrDiv)
 
     const html = `<!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"/>
+<html lang="${langue}"><head><meta charset="UTF-8"/>
   <link rel="icon" type="image/png" href="/img.png">
-<title>Carte bénéficiaire — ${prenom} ${nom}</title>
+<title>${L.titreCarte} — ${prenom} ${nom}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#f0f0f0; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:Arial,sans-serif; }
@@ -335,7 +355,7 @@
 <div class="page">
 
   <div>
-    <div class="label">Recto</div>
+    <div class="label">${L.recto}</div>
     <div class="carte recto">
       <div class="v-bg" style="opacity:.13;">${versoBg}</div>
       <div class="r-top">
@@ -346,13 +366,13 @@
       <div class="r-body">
         <div class="r-infos">
           <div class="r-name">${matricule}</div>
-          <div class="r-role">Bénéficiaire</div>
+          <div class="r-role">${L.beneficiaire}</div>
           <div class="r-grid">
-            <div class="r-field"><label>Date de naissance</label><span>${ddn||'—'}</span></div>
-            <div class="r-field"><label>Sexe</label><span>${sexe}</span></div>
-            <div class="r-field"><label>Nom</label><span>${nom.toUpperCase()} ${prenom}</span></div>
-            ${tel ? `<div class="r-field"><label>Téléphone</label><span>${tel}</span></div>` : '<div class="r-field"></div>'}
-            ${since ? `<div class="r-field" style="grid-column:1/-1"><label>Désigné le</label><span>${since}</span></div>` : ''}
+            <div class="r-field"><label>${L.dateNaissance}</label><span>${ddn||'—'}</span></div>
+            <div class="r-field"><label>${L.sexe}</label><span>${sexe}</span></div>
+            <div class="r-field"><label>${L.nom}</label><span>${nom.toUpperCase()} ${prenom}</span></div>
+            ${tel ? `<div class="r-field"><label>${L.telephone}</label><span>${tel}</span></div>` : '<div class="r-field"></div>'}
+            ${since ? `<div class="r-field" style="grid-column:1/-1"><label>${L.designeLe}</label><span>${since}</span></div>` : ''}
           </div>
         </div>
         <div class="r-photo">${photoHtml}</div>
@@ -365,7 +385,7 @@
   </div>
 
   <div>
-    <div class="label">Verso</div>
+    <div class="label">${L.verso}</div>
     <div class="carte verso">
       <div class="v-bg">${versoBg}</div>
       <div class="v-content">
@@ -373,11 +393,11 @@
           ${qrSrc ? `<img src="${qrSrc}" crossorigin="anonymous"/>` : ''}
         </div>
         <div class="v-right">
-          <div class="v-row"><label>N° bénéficiaire</label><span>${matricule}</span></div>
-          <div class="v-row"><label>N° adhérent</label><span>${ctx.numAdherent||'—'}</span></div>
-          <div class="v-row"><label>Organisation</label><span>${(ctx.nomOrganisation||'').substring(0,30)}</span></div>
-          <div class="v-row"><label>Pays</label><span>${paysNom}</span></div>
-          ${since ? `<div class="v-row"><label>Désigné le</label><span>${since}</span></div>` : ''}
+          <div class="v-row"><label>${L.numBeneficiaire}</label><span>${matricule}</span></div>
+          <div class="v-row"><label>${L.numAdherent}</label><span>${ctx.numAdherent||'—'}</span></div>
+          <div class="v-row"><label>${L.organisation}</label><span>${(ctx.nomOrganisation||'').substring(0,30)}</span></div>
+          <div class="v-row"><label>${L.pays}</label><span>${paysNom}</span></div>
+          ${since ? `<div class="v-row"><label>${L.designeLe}</label><span>${since}</span></div>` : ''}
           <div style="font-size:6px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:6px;">${ctx.nomPlateforme||'UnioNova'}</div>
         </div>
       </div>
