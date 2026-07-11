@@ -49,6 +49,12 @@
     /* Org avatar */
     .org-avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--primary); color: #fff; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; flex-shrink: 0; }
 
+    .btn-voir-plus { font-size: 11px; color: var(--primary); font-weight: 600; cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; }
+    .detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: var(--text-muted); }
+    .detail-row span:last-child { font-weight: 700; text-align: right; }
+
     @media (max-width: 767px) {
       [style*="grid-template-columns:2fr 1fr"],
       [style*="grid-template-columns: 2fr 1fr"] { grid-template-columns: 1fr !important; }
@@ -191,17 +197,34 @@
   </main>
 </div>
 
+<!-- Modal : détail d'un paiement avant confirmation -->
+<div class="modal-overlay" id="modal-paiement-detail" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">Détail du paiement</span>
+      <button class="modal-close" id="modal-paiement-detail-close">&times;</button>
+    </div>
+    <div class="modal-body" id="paiement-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn-rejeter" id="paiement-detail-rejeter">Rejeter</button>
+      <button class="btn-confirmer" id="paiement-detail-confirmer">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { requireContexte, getContexte, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { buildHistorique } from '/src/js/historique.js'
+  import { confirmDialog } from '/src/js/confirmDialog.js'
+  import { toast } from '/src/js/toast.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
-  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+  document.getElementById('btn-logout').addEventListener('click', async () => { if (await confirmDialog('Se déconnecter ?')) logout() })
 
   const perm = getPermission('/admin/paiements-activation')
 
@@ -331,47 +354,52 @@
         <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
         <td>
           ${statut === 'PENDING' && perm.peutEcrire ? `
-            <div style="display:flex;gap:6px;">
-              <button class="btn-confirmer" data-action="confirmer">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                Confirmer
-              </button>
-              <button class="btn-rejeter" data-action="rejeter">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                Rejeter
-              </button>
-            </div>
+            <button class="btn-voir-plus" data-action="voir-plus">Voir plus</button>
           ` : '<span style="color:var(--text-muted);font-size:12px;">—</span>'}
         </td>
       </tr>`
     }).join('')
 
-    const iconOk = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`
-    const iconX  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
-
-    tbody.querySelectorAll('[data-action="confirmer"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.closest('tr').dataset.id
-        if (!confirm("Confirmer ce paiement ? L'organisation sera activée.")) return
-        btn.disabled = true; btn.innerHTML = '…'
-        try {
-          await api.put(`/paiements/${id}/confirmer`, {})
-          await charger()
-        } catch(err) { alert(err.message); btn.disabled = false; btn.innerHTML = iconOk + ' Confirmer' }
-      })
+    tbody.querySelectorAll('[data-action="voir-plus"]').forEach(btn => {
+      btn.addEventListener('click', () => ouvrirDetailPaiement(btn.closest('tr').dataset.id))
     })
+  }
 
-    tbody.querySelectorAll('[data-action="rejeter"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.closest('tr').dataset.id
-        if (!confirm('Rejeter ce paiement ?')) return
-        btn.disabled = true; btn.innerHTML = '…'
-        try {
-          await api.put(`/paiements/${id}/rejeter`, {})
-          await charger()
-        } catch(err) { alert(err.message); btn.disabled = false; btn.innerHTML = iconX + ' Rejeter' }
-      })
-    })
+  const modalPaiementDetail = document.getElementById('modal-paiement-detail')
+  function ouvrirDetailPaiement(id) {
+    const p = tousPaiements.find(x => x.idPaiement === id)
+    if (!p) return
+    const date = p.dateCreation ? new Date(p.dateCreation).toLocaleString('fr-FR') : '—'
+    document.getElementById('paiement-detail-body').innerHTML = `
+      <div class="detail-row"><span>Organisation</span><span>${p.orgNom || '—'}</span></div>
+      <div class="detail-row"><span>Pays</span><span>${p.orgPays || '—'}</span></div>
+      <div class="detail-row"><span>Email organisation</span><span>${p.orgEmail || '—'}</span></div>
+      <div class="detail-row"><span>Montant déclaré</span><span>${formatMontant(p.montantPaye, p.devise)}</span></div>
+      <div class="detail-row"><span>Référence</span><span>${p.transactionId || '—'}</span></div>
+      <div class="detail-row"><span>Déclaré le</span><span>${date}</span></div>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;cursor:pointer;font-size:12.5px;color:var(--text);">
+        <input type="checkbox" id="chk-verif-paiement" style="margin-top:2px;width:15px;height:15px;cursor:pointer;accent-color:var(--primary);"/>
+        <span>J'ai vérifié le paiement de <strong>${formatMontant(p.montantPaye, p.devise)}</strong> (référence <strong>${p.transactionId || '—'}</strong>) et je confirme l'avoir reçu.</span>
+      </label>
+    `
+    const btnConfirmer = document.getElementById('paiement-detail-confirmer')
+    btnConfirmer.disabled = true
+    document.getElementById('chk-verif-paiement').addEventListener('change', (e) => { btnConfirmer.disabled = !e.target.checked })
+    btnConfirmer.onclick = () => traiterPaiement(id, 'confirmer')
+    document.getElementById('paiement-detail-rejeter').onclick = () => traiterPaiement(id, 'rejeter')
+    modalPaiementDetail.style.display = 'flex'
+  }
+  document.getElementById('modal-paiement-detail-close').addEventListener('click', () => { modalPaiementDetail.style.display = 'none' })
+
+  async function traiterPaiement(id, action) {
+    const message = action === 'confirmer' ? "Confirmer ce paiement ? L'organisation sera activée." : 'Rejeter ce paiement ?'
+    if (!await confirmDialog(message, { danger: action === 'rejeter', okText: action === 'confirmer' ? 'Confirmer' : 'Rejeter' })) return
+    try {
+      await api.put(`/paiements/${id}/${action}`, {})
+      modalPaiementDetail.style.display = 'none'
+      toast.success(action === 'confirmer' ? 'Paiement confirmé.' : 'Paiement rejeté.')
+      await charger()
+    } catch(err) { toast.error(err.message) }
   }
 
   function dessinerGraphiques() {

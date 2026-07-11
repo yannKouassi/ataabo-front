@@ -14,12 +14,24 @@ function getLangue() {
   return localStorage.getItem('langue') || navigator.language?.slice(0, 2) || 'fr'
 }
 
+// fetch() échoue sans réponse HTTP (serveur injoignable, connexion coupée, upload trop lourd
+// interrompu par le serveur) → le navigateur lève "Failed to fetch". On traduit en message clair.
+const MSG_RESEAU = 'Impossible de contacter le serveur. Vérifiez votre connexion internet et réessayez. Si vous envoyiez des fichiers, réduisez leur taille.'
+
+async function fetchOuErreurReseau(url, options) {
+  try {
+    return await fetch(url, options)
+  } catch {
+    throw new Error(MSG_RESEAU)
+  }
+}
+
 async function request(method, path, body = null) {
   const headers = { 'Content-Type': 'application/json', 'Accept-Language': getLangue() }
   const token = getToken()
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(BASE + path, {
+  const res = await fetchOuErreurReseau(BASE + path, {
     method,
     headers,
     body: body ? JSON.stringify(body) : null
@@ -86,9 +98,9 @@ export const api = {
   // Upload multipart (method optionnel, 'POST' par défaut)
   async upload(path, formData, method = 'POST') {
     const token = getToken()
-    const headers = {}
+    const headers = { 'Accept-Language': getLangue() }
     if (token) headers['Authorization'] = `Bearer ${token}`
-    const res = await fetch(BASE + path, { method, headers, body: formData })
+    const res = await fetchOuErreurReseau(BASE + path, { method, headers, body: formData })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: 'Erreur upload' }))
       throw new Error(err.message || 'Erreur upload')

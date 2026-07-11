@@ -516,6 +516,7 @@
         kpiCard(`Montant cotisations (${ctx.devise || 'XOF'})`, fmt(stats.montantCotisationsMois), '#16a34a'),
         kpiCard('Déclarations en attente',  fmt(stats.declarationsEnAttente),  '#7c3aed', '/src/pages/activites.html'),
         kpiCard('Événements à venir',        fmt(stats.evenementsAvenir),       'var(--primary)'),
+        kpiCard(`Sorties (${ctx.devise || 'XOF'})`,             fmt(stats.totalSorties),            '#dc2626'),
         kpiCard(`Solde trésorerie (${ctx.devise || 'XOF'})`,    fmt(stats.soldeTresorerie),        (stats.soldeTresorerie ?? 0) >= 0 ? '#059669' : '#dc2626'),
       ].join('')
 
@@ -598,6 +599,9 @@
       ['Déclarations vie en attente', s.declarationsEnAttente ?? 0],
       ['Événements à venir',          s.evenementsAvenir ?? 0],
       [`Abonnements plateforme (${ctx.devise || 'XOF'})`, s.montantAbonnementsPeriode ?? 0],
+      [`Décaissements membres (${ctx.devise || 'XOF'})`,  s.totalDecaissementsPeriode ?? 0],
+      [`Dons émis (${ctx.devise || 'XOF'})`,              s.totalDonsEmisPeriode ?? 0],
+      [`Sorties (${ctx.devise || 'XOF'})`,                s.totalSorties ?? 0],
       [`Solde trésorerie (${ctx.devise || 'XOF'})`,       s.soldeTresorerie ?? 0],
     ]
     const csv = lignes.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')

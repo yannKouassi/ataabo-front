@@ -13,6 +13,7 @@ const ICONS = {
   '/adherents':           `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
   '/paiements':           `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
   '/dons':                `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+  '/admin/dons':          `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
   '/evenements':          `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
   '/activites':           `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
   '/moi':                 `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
@@ -336,6 +337,7 @@ const NAV_PAGES = {
     // Dons
     '/dons/emission':                 '/src/pages/dons-emission.html',
     '/dons/reception':                '/src/pages/dons-reception.html',
+    '/dons/demandes':                 '/src/pages/dons-demandes.html',
     // Événements de vie (déclarations adhérents) — menu direct /evenements
     // Activités org (admin) — menu direct /activites
     // Mon espace
@@ -373,6 +375,7 @@ const NAV_PAGES = {
     '/admin/organisations-en-attente': '/src/pages/admin-organisations-attente.html',
     '/admin/organisations':            '/src/pages/admin-organisations-attente.html',
     '/admin/paiements-activation':     '/src/pages/admin-paiements-activation.html',
+    '/admin/dons':                     '/src/pages/admin-demandes-dons.html',
     '/admin/abonnements':              '/src/pages/admin-abonnements.html',
 }
 

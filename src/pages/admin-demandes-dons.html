@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="/img.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UnioNova — Demandes de dons</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    .stat-card { padding: 20px 22px; display: flex; align-items: center; gap: 16px; }
+    .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stat-body { flex: 1; min-width: 0; }
+    .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .stat-value { font-size: 26px; font-weight: 800; line-height: 1; }
+
+    .btn-confirmer { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #166534; border: 1px solid #86efac; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-confirmer:hover { background: #bbf7d0; }
+    .btn-confirmer:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-rejeter { display: inline-flex; align-items: center; gap: 5px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-rejeter:hover { background: #fecaca; }
+    .btn-rejeter:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-cloturer { display: inline-flex; align-items: center; gap: 5px; background: var(--surface-2, #f1f5f9); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .btn-cloturer:hover { border-color: var(--primary); color: var(--primary); }
+
+    tr[data-statut="PENDING"] { background: #fffbeb; }
+    tr[data-statut="PENDING"]:hover { background: #fef3c7; }
+    tr[data-statut] td:first-child { border-left: 3px solid transparent; padding-left: 14px; }
+    tr[data-statut="PENDING"] td:first-child { border-left-color: #f59e0b; }
+
+    .org-avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--primary); color: #fff; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; flex-shrink: 0; }
+    .don-type-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .don-type-badge.financier { background: var(--primary-light); color: var(--primary); }
+    .don-type-badge.materiel { background: #fff3e0; color: #e65100; }
+    .btn-voir-plus { font-size: 11px; color: var(--primary); font-weight: 600; cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; }
+    .detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: var(--text-muted); }
+    .detail-row span:last-child { font-weight: 700; text-align: right; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">UnioNova</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar-search" style="visibility:hidden;"></div>
+    <div class="topbar-actions"></div>
+  </header>
+
+  <main class="main-content">
+    <div style="margin-bottom:24px;">
+      <div class="page-title">Demandes de dons</div>
+      <div class="page-subtitle">Confirmation des contributions déclarées et clôture des demandes de dons publiques</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;margin-bottom:24px;">
+      <div class="card stat-card">
+        <div class="stat-icon" style="background:#fef3c7;">
+          <svg width="22" height="22" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-label">Contributions en attente</div>
+          <div class="stat-value" style="color:#d97706;" id="stat-pending-count">0</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon" style="background:var(--primary-light);">
+          <svg width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-label">Demandes ouvertes</div>
+          <div class="stat-value" style="color:var(--primary);" id="stat-demandes-count">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contributions en attente -->
+    <div class="card" style="margin-bottom:24px;">
+      <div style="padding:20px 24px 12px;font-size:15px;font-weight:700;">Contributions en attente de confirmation</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Contributeur</th>
+              <th>Pour</th>
+              <th>Montant / Apport</th>
+              <th>Moyen</th>
+              <th>Référence</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-contributions">
+            <tr><td colspan="8"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Demandes ouvertes -->
+    <div class="card">
+      <div style="padding:20px 24px 12px;font-size:15px;font-weight:700;">Demandes de dons ouvertes</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Demandeur</th>
+              <th>Pays</th>
+              <th>Progression / Motif</th>
+              <th>Justificatif</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-demandes">
+            <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<!-- Modal : détail d'une contribution avant confirmation -->
+<div class="modal-overlay" id="modal-contrib-detail" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">Détail de la contribution</span>
+      <button class="modal-close" id="modal-contrib-detail-close">&times;</button>
+    </div>
+    <div class="modal-body" id="contrib-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn-rejeter" id="contrib-detail-rejeter">Rejeter</button>
+      <button class="btn-confirmer" id="contrib-detail-confirmer">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
+  import { confirmDialog } from '/src/js/confirmDialog.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', async () => { if (await confirmDialog('Se déconnecter ?')) logout() })
+
+  const perm = getPermission('/admin/dons')
+
+  function fmtMontant(m, devise) {
+    if (m == null) return '—'
+    return new Intl.NumberFormat('fr-FR').format(m) + (devise ? ' ' + devise : '')
+  }
+
+  // ── Contributions en attente ──────────────────────────
+  let contributionsCache = []
+
+  async function chargerContributions() {
+    const tbody = document.getElementById('tbody-contributions')
+    try {
+      contributionsCache = await api.get('/contributions-dons/en-attente')
+      document.getElementById('stat-pending-count').textContent = contributionsCache.length
+
+      if (!contributionsCache.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Aucune contribution en attente</p></div></td></tr>`
+        return
+      }
+
+      tbody.innerHTML = contributionsCache.map(c => {
+        const demande = c.demandeDon || {}
+        const estFinancier = demande.typeDon === 'FINANCIER'
+        const montant = estFinancier
+          ? fmtMontant(c.montant, demande.devise)
+          : (c.descriptionApport || '—')
+        const date = c.dateCreation ? new Date(c.dateCreation).toLocaleDateString('fr-FR') : '—'
+        const initiale = (c.nomContributeur || '?')[0].toUpperCase()
+        return `<tr data-id="${c.id}" data-statut="PENDING">
+          <td><span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? 'Don financier' : 'Don matériel'}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="org-avatar">${initiale}</div>
+              <div>
+                <div style="font-weight:700;font-size:13px;">${c.nomContributeur || '—'}</div>
+                <div style="font-size:11px;color:var(--text-muted);">${c.typeContributeur === 'ORGANISATION' ? 'Organisation' : (c.emailContact || 'Particulier')}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:13px;color:var(--text-muted);">${demande.nomDemandeur || '—'}</td>
+          <td style="font-weight:800;font-size:14px;color:var(--primary);">${montant}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${c.libelleMoyenPaye || '—'}</td>
+          <td style="font-size:12px;color:var(--text-muted);font-family:monospace;">${c.reference || '—'}</td>
+          <td style="font-size:13px;color:var(--text-muted);">${date}</td>
+          <td>
+            ${perm.peutEcrire ? `
+              <button class="btn-voir-plus" data-action="voir-plus">Voir plus</button>
+            ` : '<span style="color:var(--text-muted);font-size:12px;">—</span>'}
+          </td>
+        </tr>`
+      }).join('')
+
+      tbody.querySelectorAll('[data-action="voir-plus"]').forEach(btn => {
+        btn.addEventListener('click', () => ouvrirDetailContribution(btn.closest('tr').dataset.id))
+      })
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="color:#b91c1c;padding:20px;">${err.message}</td></tr>`
+    }
+  }
+
+  const modalContribDetail = document.getElementById('modal-contrib-detail')
+  function ouvrirDetailContribution(id) {
+    const c = contributionsCache.find(x => x.id === id)
+    if (!c) return
+    const demande = c.demandeDon || {}
+    const estFinancier = demande.typeDon === 'FINANCIER'
+    const date = c.dateCreation ? new Date(c.dateCreation).toLocaleString('fr-FR') : '—'
+    document.getElementById('contrib-detail-body').innerHTML = `
+      <div class="detail-row"><span>Type</span><span>${estFinancier ? 'Don financier' : 'Don matériel'}</span></div>
+      <div class="detail-row"><span>Contributeur</span><span>${c.nomContributeur || '—'}</span></div>
+      <div class="detail-row"><span>Statut contributeur</span><span>${c.typeContributeur === 'ORGANISATION' ? 'Organisation' : 'Particulier'}</span></div>
+      ${c.emailContact ? `<div class="detail-row"><span>Email contact</span><span>${c.emailContact}</span></div>` : ''}
+      <div class="detail-row"><span>Pour la demande</span><span>${demande.nomDemandeur || '—'}</span></div>
+      <div class="detail-row"><span>${estFinancier ? 'Montant' : 'Apport'}</span><span>${estFinancier ? fmtMontant(c.montant, demande.devise) : (c.descriptionApport || '—')}</span></div>
+      ${estFinancier ? `<div class="detail-row"><span>Moyen de paiement</span><span>${c.libelleMoyenPaye || '—'}</span></div>` : ''}
+      <div class="detail-row"><span>Référence</span><span>${c.reference || '—'}</span></div>
+      <div class="detail-row"><span>Déclarée le</span><span>${date}</span></div>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;cursor:pointer;font-size:12.5px;color:var(--text);">
+        <input type="checkbox" id="chk-verif-contrib" style="margin-top:2px;width:15px;height:15px;cursor:pointer;accent-color:var(--primary);"/>
+        <span>J'ai vérifié ${estFinancier ? `le paiement de <strong>${fmtMontant(c.montant, demande.devise)}</strong>` : `l'apport décrit`} (référence <strong>${c.reference || '—'}</strong>) et je confirme l'avoir reçu.</span>
+      </label>
+    `
+    const btnConfirmer = document.getElementById('contrib-detail-confirmer')
+    btnConfirmer.disabled = true
+    document.getElementById('chk-verif-contrib').addEventListener('change', (e) => { btnConfirmer.disabled = !e.target.checked })
+    btnConfirmer.onclick = () => traiterContribution(id, 'confirmer')
+    document.getElementById('contrib-detail-rejeter').onclick = () => traiterContribution(id, 'rejeter')
+    modalContribDetail.style.display = 'flex'
+  }
+  document.getElementById('modal-contrib-detail-close').addEventListener('click', () => { modalContribDetail.style.display = 'none' })
+
+  async function traiterContribution(id, action) {
+    const message = action === 'confirmer' ? 'Confirmer cette contribution ?' : 'Rejeter cette contribution ?'
+    if (!await confirmDialog(message, { danger: action === 'rejeter', okText: action === 'confirmer' ? 'Confirmer' : 'Rejeter' })) return
+    try {
+      await api.put(`/contributions-dons/${id}/${action}`, {})
+      modalContribDetail.style.display = 'none'
+      toast.success(action === 'confirmer' ? 'Contribution confirmée.' : 'Contribution rejetée.')
+      chargerContributions(); chargerDemandes()
+      rafraichirHistorique('historique-container')
+    } catch(err) { toast.error(err.message) }
+  }
+
+  // ── Demandes ouvertes (clôture manuelle) ──────────────
+  async function chargerDemandes() {
+    const tbody = document.getElementById('tbody-demandes')
+    try {
+      const demandes = await api.get('/demandes-dons')
+      document.getElementById('stat-demandes-count').textContent = demandes.length
+
+      if (!demandes.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucune demande ouverte</p></div></td></tr>`
+        return
+      }
+
+      tbody.innerHTML = demandes.map(d => {
+        const estFinancier = d.typeDon === 'FINANCIER'
+        const pct = estFinancier && d.montantSouhaite ? Math.min(100, Math.round((d.montantCollecte || 0) / d.montantSouhaite * 100)) : 0
+        const progression = estFinancier
+          ? `${fmtMontant(d.montantCollecte, d.devise)} / ${fmtMontant(d.montantSouhaite, d.devise)} (${pct}%)`
+          : d.motif
+        return `<tr data-id="${d.id}">
+          <td><span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? 'Don financier' : 'Don matériel'}</span></td>
+          <td style="font-weight:700;font-size:13px;">${d.nomDemandeur}</td>
+          <td style="font-size:13px;color:var(--text-muted);">${d.libPays || ''}</td>
+          <td style="font-size:12.5px;color:var(--text-muted);max-width:280px;">${progression}</td>
+          <td><a href="${d.urlJustificatif}" target="_blank" rel="noopener" style="font-size:12px;color:var(--primary);">Voir</a></td>
+          <td>
+            ${perm.peutEcrire ? `<button class="btn-cloturer" data-action="cloturer">Clôturer</button>` : '<span style="color:var(--text-muted);font-size:12px;">—</span>'}
+          </td>
+        </tr>`
+      }).join('')
+
+      tbody.querySelectorAll('[data-action="cloturer"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.closest('tr').dataset.id
+          if (!await confirmDialog('Clôturer cette demande de don ? Elle ne sera plus visible publiquement.', { danger: true, okText: 'Clôturer' })) return
+          btn.disabled = true; btn.textContent = '…'
+          try {
+            await api.put(`/demandes-dons/${id}/cloturer`, {})
+            toast.success('Demande clôturée.')
+            chargerDemandes()
+          } catch(err) { toast.error(err.message); btn.disabled = false; btn.textContent = 'Clôturer' }
+        })
+      })
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;">${err.message}</td></tr>`
+    }
+  }
+
+  chargerContributions()
+  chargerDemandes()
+  buildHistorique('historique-container', 30, 'demande de don', { orgId: 'PLATEFORME', titre: 'Historique des demandes de dons' })
+</script>
+</body>
+</html>

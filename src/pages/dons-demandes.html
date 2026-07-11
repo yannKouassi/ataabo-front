@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="/img.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UnioNova — Demandes de dons</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+  <style>
+    .dons-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:18px; margin-top:20px; }
+    .don-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; display:flex; flex-direction:column; gap:10px; }
+    .don-card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .don-type-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+    .don-type-badge.financier { background:var(--primary-light); color:var(--primary); }
+    .don-type-badge.materiel { background:#fff3e0; color:#e65100; }
+    .don-pays { font-size:12px; color:var(--text-muted); font-weight:600; }
+    .don-nom { font-size:15px; font-weight:800; }
+    .don-motif { font-size:13px; color:var(--text-muted); line-height:1.5; flex:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .don-voir-plus { font-size:12px; color:var(--primary); font-weight:600; cursor:pointer; background:none; border:none; padding:0; text-align:left; margin-top:-6px; }
+    .don-voir-plus:hover { text-decoration:underline; }
+    .don-progress-bar { height:8px; border-radius:6px; background:var(--border); overflow:hidden; }
+    .don-progress-fill { height:100%; background:var(--primary); border-radius:6px; }
+    .don-progress-label { display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); font-weight:600; }
+    .don-card-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; }
+    .don-justif-link { font-size:12px; color:var(--primary); text-decoration:none; font-weight:600; }
+    .don-justif-link:hover { text-decoration:underline; }
+    .pm-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .pay-number-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .pay-number { font-size:18px; font-weight:800; color:var(--text); letter-spacing:.02em; }
+    .pay-number-label { font-size:11px; color:var(--text-muted); margin-bottom:3px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .pm-card { border:2px solid var(--border); border-radius:10px; padding:8px 10px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:border-color .15s; background:var(--surface); user-select:none; }
+    .pm-card.selectionne { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+    .pm-logo { width:32px; height:32px; border-radius:7px; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f1f5f9; }
+    .pm-logo img { width:100%; height:100%; object-fit:contain; }
+    .pm-label { font-size:12px; font-weight:700; color:var(--text); }
+    .detail-body p { font-size:13.5px; line-height:1.7; color:var(--text); white-space:pre-wrap; }
+    .detail-meta { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar-search" style="visibility:hidden;"></div>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar"></div>
+        <div class="topbar-user-info"><div class="topbar-user-name" id="topbar-name"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="page-title">Demandes de dons</div>
+        <div class="page-subtitle">Demandes de dons publiques ouvertes en <span id="page-pays"></span> — contribuez au nom de votre organisation</div>
+      </div>
+      <span style="font-size:13px;color:var(--text-muted);" id="compteur-demandes"></span>
+    </div>
+
+    <div class="dons-grid" id="dons-grid">
+      <div class="empty-state"><p>Chargement…</p></div>
+    </div>
+
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
+  </main>
+</div>
+
+<!-- Modal : détail d'une demande (Voir plus) -->
+<div class="modal-overlay" id="modal-detail" style="display:none;">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title" id="detail-titre">Détail de la demande</span>
+      <button class="modal-close" id="modal-detail-close">&times;</button>
+    </div>
+    <div class="modal-body detail-body">
+      <div class="detail-meta" id="detail-badges"></div>
+      <p id="detail-motif"></p>
+    </div>
+    <div class="modal-footer">
+      <a class="btn btn-secondary" id="detail-justif-link" href="#" target="_blank" rel="noopener">Voir le justificatif</a>
+      <button class="btn btn-primary" id="detail-btn-contribuer">Je contribue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal : contribuer au nom de l'organisation -->
+<div class="modal-overlay" id="modal-contribuer" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-contribuer-title">Je contribue</span>
+      <button class="modal-close" id="modal-contribuer-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="err-contribuer" style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;"></div>
+      <div id="success-contribuer" style="background:var(--primary-light);color:var(--primary);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;"></div>
+      <div id="form-contribuer">
+        <div class="pay-number-block">
+          <div>
+            <div class="pay-number-label">Numéro du demandeur — envoyez le don ici</div>
+            <div class="pay-number" id="ct-tel-value">—</div>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="ct-btn-copier" style="flex-shrink:0;">Copier</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:8px 0 16px;line-height:1.5;">
+          Envoyez d'abord le don à ce numéro depuis le compte de l'organisation, puis déclarez-le ci-dessous avec la référence de la transaction.
+        </p>
+        <div class="form-group" id="ct-montant-wrap">
+          <label class="form-label">Montant *</label>
+          <input class="form-input" type="number" min="1" id="ct-montant" placeholder="Montant de la contribution"/>
+        </div>
+        <div class="form-group" id="ct-moyen-wrap">
+          <label class="form-label">Moyen de paiement</label>
+          <div class="pm-grid" id="ct-moyens-grid"></div>
+        </div>
+        <div class="form-group" id="ct-description-wrap">
+          <label class="form-label">Description de l'apport *</label>
+          <textarea class="form-input" id="ct-description" rows="2" placeholder="Ce que l'organisation apporte"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Référence (optionnel)</label>
+          <input class="form-input" id="ct-reference" placeholder="Référence de transfert, etc."/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-contribuer-cancel">Annuler</button>
+      <button class="btn btn-primary" id="btn-envoyer-contribution">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
+  import { confirmDialog } from '/src/js/confirmDialog.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  const user = getUser()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', async () => { if (await confirmDialog('Se déconnecter ?')) logout() })
+
+  const perm = getPermission('/dons/demandes')
+  document.getElementById('page-pays').textContent = ctx.libPays || ''
+
+  const MOYEN_LABELS = {
+    WAVE: 'Wave', ORANGE_MONNEY: 'Orange Money', MTN_MONNEY: 'MTN MoMo', MOOV_MONNEY: 'Moov Money',
+    OPAY: 'OPay', PALMPAY: 'PalmPay', PAGA: 'Paga', MVOLA: 'MVola', AIRTEL_MONEY: 'Airtel Money',
+  }
+
+  let demandesCache = []
+  let demandeSelectionnee = null
+  let selectedMoyenId = null
+
+  function fmtMontant(m, devise) {
+    if (m == null) return '—'
+    return new Intl.NumberFormat('fr-FR').format(m) + (devise ? ' ' + devise : '')
+  }
+
+  function carteDemande(d) {
+    const estFinancier = d.typeDon === 'FINANCIER'
+    const pct = estFinancier && d.montantSouhaite ? Math.min(100, Math.round((d.montantCollecte || 0) / d.montantSouhaite * 100)) : 0
+    return `
+      <div class="don-card">
+        <div class="don-card-top">
+          <span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? 'Don financier' : 'Don matériel'}</span>
+          <span class="don-pays">${d.libPays || ''}</span>
+        </div>
+        <div class="don-nom">${d.nomDemandeur}</div>
+        <div class="don-motif">${d.motif}</div>
+        <button class="don-voir-plus" onclick="ouvrirDetail('${d.id}')">Voir plus</button>
+        ${estFinancier ? `
+          <div>
+            <div class="don-progress-bar"><div class="don-progress-fill" style="width:${pct}%;"></div></div>
+            <div class="don-progress-label"><span>${fmtMontant(d.montantCollecte, d.devise)}</span><span>Objectif : ${fmtMontant(d.montantSouhaite, d.devise)}</span></div>
+          </div>` : ''}
+        <div class="don-card-footer">
+          <a class="don-justif-link" href="${d.urlJustificatif}" target="_blank" rel="noopener">Voir le justificatif</a>
+          ${perm.peutEcrire ? `<button class="btn btn-primary btn-sm" onclick="ouvrirContribution('${d.id}')">Je contribue</button>` : ''}
+        </div>
+      </div>`
+  }
+
+  async function chargerDemandes() {
+    const grid = document.getElementById('dons-grid')
+    grid.innerHTML = `<div class="empty-state"><p>Chargement…</p></div>`
+    try {
+      demandesCache = await api.get(`/demandes-dons?codePays=${encodeURIComponent(ctx.codePays || '')}`)
+      document.getElementById('compteur-demandes').textContent = `${demandesCache.length} demande${demandesCache.length > 1 ? 's' : ''} ouverte${demandesCache.length > 1 ? 's' : ''}`
+      if (!demandesCache.length) {
+        grid.innerHTML = `<div class="empty-state"><p>Aucune demande de don ouverte pour le moment.</p></div>`
+        return
+      }
+      grid.innerHTML = demandesCache.map(carteDemande).join('')
+    } catch (e) {
+      grid.innerHTML = `<div class="empty-state" style="color:#b91c1c;"><p>Erreur : ${e.message}</p></div>`
+    }
+  }
+
+  // ── Détail (Voir plus) ───────────────────────────────
+  const modalDetail = document.getElementById('modal-detail')
+  window.ouvrirDetail = function (id) {
+    const d = demandesCache.find(x => x.id === id)
+    if (!d) return
+    const estFinancier = d.typeDon === 'FINANCIER'
+    document.getElementById('detail-titre').textContent = d.nomDemandeur
+    document.getElementById('detail-badges').innerHTML = `
+      <span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? 'Don financier' : 'Don matériel'}</span>
+      <span class="don-pays">${d.libPays || ''}</span>
+      ${estFinancier ? `<span class="don-pays">Objectif : ${fmtMontant(d.montantSouhaite, d.devise)}</span>` : ''}`
+    document.getElementById('detail-motif').textContent = d.motif
+    document.getElementById('detail-justif-link').href = d.urlJustificatif
+    const btnContribuer = document.getElementById('detail-btn-contribuer')
+    btnContribuer.style.display = perm.peutEcrire ? 'inline-block' : 'none'
+    btnContribuer.onclick = () => { modalDetail.style.display = 'none'; ouvrirContribution(id) }
+    modalDetail.style.display = 'flex'
+  }
+  document.getElementById('modal-detail-close').addEventListener('click', () => { modalDetail.style.display = 'none' })
+
+  // ── Contribution organisation ────────────────────────
+  const modalContribuer = document.getElementById('modal-contribuer')
+
+  async function chargerMoyensPaiement(codePays) {
+    const grid = document.getElementById('ct-moyens-grid')
+    grid.innerHTML = ''
+    selectedMoyenId = null
+    try {
+      const moyens = await api.get(`/referentiel/moyens-paiement?codePays=${encodeURIComponent(codePays || '')}`)
+      moyens.forEach(m => {
+        const label = MOYEN_LABELS[m.libMoyPaye] || m.libMoyPaye
+        const card = document.createElement('div')
+        card.className = 'pm-card'
+        card.dataset.id = m.id
+        const visual = m.urlLogo
+          ? `<img src="${m.urlLogo}" alt="${label}"/>`
+          : `<span style="font-size:11px;font-weight:800;">${label.slice(0,2).toUpperCase()}</span>`
+        card.innerHTML = `<div class="pm-logo">${visual}</div><span class="pm-label">${label}</span>`
+        card.addEventListener('click', () => {
+          selectedMoyenId = m.id
+          grid.querySelectorAll('.pm-card').forEach(c => c.classList.remove('selectionne'))
+          card.classList.add('selectionne')
+        })
+        grid.appendChild(card)
+      })
+    } catch (e) { console.error('Moyens de paiement :', e) }
+  }
+
+  window.ouvrirContribution = function (id) {
+    demandeSelectionnee = demandesCache.find(d => d.id === id)
+    if (!demandeSelectionnee) return
+    const financier = demandeSelectionnee.typeDon === 'FINANCIER'
+    document.getElementById('modal-contribuer-title').textContent = `Je contribue — ${demandeSelectionnee.nomDemandeur}`
+    document.getElementById('ct-tel-value').textContent = demandeSelectionnee.telephone || '—'
+    document.getElementById('ct-montant').value = ''
+    document.getElementById('ct-description').value = ''
+    document.getElementById('ct-reference').value = ''
+    document.getElementById('ct-montant-wrap').style.display = financier ? 'block' : 'none'
+    document.getElementById('ct-moyen-wrap').style.display = financier ? 'block' : 'none'
+    document.getElementById('ct-description-wrap').style.display = financier ? 'none' : 'block'
+    document.getElementById('err-contribuer').style.display = 'none'
+    document.getElementById('success-contribuer').style.display = 'none'
+    document.getElementById('form-contribuer').style.display = 'block'
+    document.getElementById('btn-envoyer-contribution').style.display = 'inline-block'
+    if (financier) chargerMoyensPaiement(demandeSelectionnee.codePays)
+    modalContribuer.style.display = 'flex'
+  }
+  document.getElementById('modal-contribuer-close').addEventListener('click', () => { modalContribuer.style.display = 'none' })
+  document.getElementById('modal-contribuer-cancel').addEventListener('click', () => { modalContribuer.style.display = 'none' })
+
+  document.getElementById('btn-envoyer-contribution').addEventListener('click', async () => {
+    if (!demandeSelectionnee) return
+    const errEl = document.getElementById('err-contribuer')
+    errEl.style.display = 'none'
+    const financier = demandeSelectionnee.typeDon === 'FINANCIER'
+    const payload = {
+      orgId: ctx.orgId,
+      montant: financier ? parseFloat(document.getElementById('ct-montant').value) || null : null,
+      descriptionApport: !financier ? document.getElementById('ct-description').value : null,
+      moyenPaiementId: financier ? selectedMoyenId : null,
+      reference: document.getElementById('ct-reference').value || null,
+    }
+    if (financier && (!payload.montant || payload.montant <= 0)) {
+      errEl.textContent = 'Le montant doit être positif.'
+      errEl.style.display = 'block'
+      return
+    }
+    if (financier && !payload.moyenPaiementId) {
+      errEl.textContent = 'Veuillez choisir un moyen de paiement.'
+      errEl.style.display = 'block'
+      return
+    }
+    if (!financier && !payload.descriptionApport) {
+      errEl.textContent = 'Veuillez décrire l\'apport.'
+      errEl.style.display = 'block'
+      return
+    }
+    const btn = document.getElementById('btn-envoyer-contribution')
+    btn.disabled = true; btn.textContent = 'Envoi…'
+    try {
+      await api.post(`/contributions-dons/organisation/${demandeSelectionnee.id}`, payload)
+      document.getElementById('form-contribuer').style.display = 'none'
+      btn.style.display = 'none'
+      const successEl = document.getElementById('success-contribuer')
+      successEl.textContent = 'Contribution enregistrée, en attente de confirmation par la plateforme.'
+      successEl.style.display = 'block'
+      toast.success('Contribution envoyée !')
+      rafraichirHistorique('historique-container')
+    } catch (e) {
+      errEl.textContent = e.message
+      errEl.style.display = 'block'
+    } finally {
+      btn.disabled = false; btn.textContent = 'Envoyer'
+    }
+  })
+
+  document.getElementById('ct-btn-copier').addEventListener('click', () => {
+    const tel = document.getElementById('ct-tel-value').textContent
+    if (!tel || tel === '—') return
+    navigator.clipboard.writeText(tel).then(() => toast.success('Numéro copié !'))
+  })
+
+  chargerDemandes()
+  buildHistorique('historique-container', 30, 'demande de don')
+</script>
+</body>
+</html>
