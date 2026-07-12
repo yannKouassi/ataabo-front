@@ -127,7 +127,7 @@
   import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -195,6 +195,7 @@
             btn.textContent = '✓ Enregistré'
             btn.style.color = '#166534'
             setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
+            rafraichirHistorique('historique-container')
           } catch(err) {
             btn.textContent = 'Erreur'
             btn.style.color = '#b91c1c'
@@ -243,6 +244,7 @@
             await api.put(`/pays/${code}/paliers-abonnement`, body)
             btn.textContent = '✓ Enregistré'; btn.style.color = '#166534'
             setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
+            rafraichirHistorique('historique-container')
           } catch(err) {
             btn.textContent = 'Erreur'; btn.style.color = '#b91c1c'
             setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.color = ''; btn.disabled = false }, 2500)
@@ -278,6 +280,7 @@
       progress.style.display = 'none'
       document.getElementById('ok-plat').textContent = 'Logo mis à jour.'
       document.getElementById('ok-plat').style.display = 'block'
+      rafraichirHistorique('historique-container')
     } catch(err) {
       progress.style.display = 'none'
       errEl.textContent = err.message
@@ -296,6 +299,7 @@
       })
       okEl.textContent = 'Plateforme mise à jour avec succès.'
       okEl.style.display = 'block'
+      rafraichirHistorique('historique-container')
     } catch(err) {
       errEl.textContent = err.message
       errEl.style.display = 'block'
@@ -303,7 +307,7 @@
   })
 
   charger()
-  buildHistorique('historique-container', 50, 'plateforme', { orgId: 'PLATEFORME' })
+  buildHistorique('historique-container', 50, ['modification plateforme', 'paliers abonnement'], { orgId: 'PLATEFORME' })
 </script>
 </body>
 </html>

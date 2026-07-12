@@ -125,7 +125,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -228,6 +228,7 @@
       await api.delete(`/evenements/${id}`)
       toast.success('Événement supprimé.')
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
   }
 
@@ -257,6 +258,7 @@
       }
       document.getElementById('modal-evt').style.display = 'none'
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       errEl.textContent = err.message
       errEl.style.display = 'block'

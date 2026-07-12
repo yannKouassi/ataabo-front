@@ -216,7 +216,7 @@
   import { requireContexte, getContexte, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
   import { confirmDialog } from '/src/js/confirmDialog.js'
   import { toast } from '/src/js/toast.js'
 
@@ -399,6 +399,7 @@
       modalPaiementDetail.style.display = 'none'
       toast.success(action === 'confirmer' ? 'Paiement confirmé.' : 'Paiement rejeté.')
       await charger()
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
   }
 

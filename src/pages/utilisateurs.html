@@ -98,7 +98,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -203,6 +203,7 @@
       }
       if (btn) { btn.disabled = false; btn.textContent = res.actif ? 'Désactiver' : 'Activer' }
       toast.success(res.actif ? 'Compte activé.' : 'Compte désactivé.')
+      rafraichirHistorique('historique-container')
     } catch(err) {
       if (btn) { btn.disabled = false; btn.textContent = actuelActif ? 'Désactiver' : 'Activer' }
       toast.error(err.message)
@@ -215,6 +216,7 @@
       await api.delete(`/utilisateurs/${id}/acces`)
       toast.success('Accès supprimé.')
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
     }

@@ -216,7 +216,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -318,6 +318,7 @@
         description: document.getElementById('f-description').value,
       })
       toast.success('Informations mises à jour !')
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
   })
 
@@ -350,6 +351,7 @@
       }
       saveContexte(newCtx)
       toast.success('Apparence mise à jour !')
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
     finally { btn.disabled = false; btn.textContent = 'Appliquer' }
   })
@@ -361,6 +363,7 @@
         frequenceCotisation: document.getElementById('f-cotisation-frequence').value,
       })
       toast.success('Paramètres de cotisation sauvegardés !')
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
   })
 
@@ -369,6 +372,7 @@
       const montant = parseFloat(document.getElementById('f-entree-montant').value) || 0
       await api.put(`/organisations/${ctx.orgId}/montant-entree`, { montantEntree: montant })
       toast.success('Droit d\'entrée sauvegardé !')
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
   })
 
@@ -433,6 +437,7 @@
     try {
       await api.put(`/organisations/${ctx.orgId}/localisation`, { latitudeAssoc: lat, longitudeAssoc: lng })
       toast.success('Localisation mise à jour !')
+      rafraichirHistorique('historique-container')
     } catch(err) { toast.error(err.message) }
   })
 
@@ -477,6 +482,7 @@
     try {
       await api.post(`/activites/${ctx.orgId}/tarifs`, tarifs)
       toast.success('Tarifs enregistrés !')
+      rafraichirHistorique('historique-container')
     } catch(e) { toast.error(e.message) }
   })
 

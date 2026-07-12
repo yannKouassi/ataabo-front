@@ -111,7 +111,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -189,6 +189,7 @@
       document.getElementById('modal-modifier').style.display = 'none'
       toast.success('Filiation modifiée.')
       chercher()
+      rafraichirHistorique('historique-container')
     } catch(e) { err.textContent = e.message; err.style.display = 'block' }
   })
 
@@ -198,6 +199,7 @@
       await api.delete(`/filiations/${id}`)
       toast.success('Filiation supprimée.')
       chercher()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
     }

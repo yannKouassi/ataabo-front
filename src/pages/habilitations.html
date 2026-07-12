@@ -76,7 +76,7 @@
 
 <script type="module">
   import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
@@ -194,6 +194,7 @@
           }))
           toast.success('Permissions mises à jour ! Les utilisateurs de ce groupe doivent se reconnecter pour voir les changements.')
           chargerPermissions(groupeId, libelleGroupe)
+          rafraichirHistorique('historique-container')
         } catch(err) {
           toast.error(err.message)
         }

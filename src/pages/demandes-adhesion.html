@@ -108,7 +108,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -275,6 +275,7 @@
       document.getElementById('modal-detail').style.display = 'none'
       resetFiltre()
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
     }
@@ -301,6 +302,7 @@
       document.getElementById('modal-detail').style.display = 'none'
       resetFiltre()
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
       btnApprouver.disabled = false
