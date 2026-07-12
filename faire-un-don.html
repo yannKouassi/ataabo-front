@@ -204,7 +204,6 @@
           <label class="form-label">Document justificatif *</label>
           <div class="upload-zone" id="dd-upload-zone">Cliquez pour choisir un fichier (photo, PDF…)</div>
           <input type="file" id="dd-document" style="display:none;" accept="image/*,.pdf"/>
-          <div id="dd-doc-name" style="font-size:12px;color:var(--text-muted);margin-top:6px;"></div>
         </div>
       </div>
       <div id="otp-demande" style="display:none;">
@@ -423,7 +422,8 @@
     document.getElementById('dd-type-don').value = 'FINANCIER'
     document.getElementById('dd-montant').value = ''
     document.getElementById('dd-motif').value = ''
-    document.getElementById('dd-doc-name').textContent = ''
+    document.getElementById('dd-upload-zone').textContent = 'Cliquez pour choisir un fichier (photo, PDF…)'
+    document.getElementById('dd-upload-zone').style.color = ''
     documentFichier = null
     demandeCreeId = null
     document.getElementById('err-demande').style.display = 'none'
@@ -447,7 +447,14 @@
   document.getElementById('dd-upload-zone').addEventListener('click', () => document.getElementById('dd-document').click())
   document.getElementById('dd-document').addEventListener('change', (e) => {
     documentFichier = e.target.files[0] || null
-    document.getElementById('dd-doc-name').textContent = documentFichier ? documentFichier.name : ''
+    const zone = document.getElementById('dd-upload-zone')
+    if (documentFichier) {
+      zone.textContent = '✓ ' + documentFichier.name
+      zone.style.color = 'var(--success, #22c55e)'
+    } else {
+      zone.textContent = 'Cliquez pour choisir un fichier (photo, PDF…)'
+      zone.style.color = ''
+    }
   })
 
   document.getElementById('btn-soumettre-demande').addEventListener('click', async () => {
