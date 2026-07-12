@@ -346,7 +346,7 @@
 
   document.getElementById('btn-rechercher').addEventListener('click', chercher)
   document.getElementById('id-personne-input').addEventListener('keydown', e => { if (e.key === 'Enter') chercher() })
-  buildHistorique('historique-container', 50, 'bénéficiaire')
+  buildHistorique('historique-container', 50, 'bénéficiaire', { orgId: ctx.orgId })
 </script>
 </body>
 </html>

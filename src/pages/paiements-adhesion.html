@@ -510,7 +510,11 @@
   })
 
   charger()
-  buildHistorique('historique-container', 50, 'adhésion')
+  buildHistorique('historique-container', 50, [
+    "adhésion approuvée",
+    "adhésion rejetée",
+    "droit d'entrée confirmé"
+  ], { orgId: ctx.orgId })
 </script>
 </body>
 </html>

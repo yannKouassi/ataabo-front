@@ -205,7 +205,7 @@
 
   document.getElementById('btn-rechercher').addEventListener('click', chercher)
   document.getElementById('num-adherent-input').addEventListener('keydown', e => { if (e.key === 'Enter') chercher() })
-  buildHistorique('historique-container', 50, 'filiation')
+  buildHistorique('historique-container', 50, 'filiation', { orgId: ctx.orgId })
 </script>
 </body>
 </html>
