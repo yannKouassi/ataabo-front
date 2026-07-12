@@ -61,6 +61,12 @@ export async function buildHistorique(containerId, limit = 50, module = null, op
         const excludeKeys = options.exclude.map(e => e.toLowerCase())
         all = all.filter(t => !t.libelleTrait || !excludeKeys.some(k => t.libelleTrait.toLowerCase().includes(k)))
       }
+      // Les entrées "Habilitation — <groupe> / <menu>" contiennent souvent le nom d'une page
+      // (ex: "Mes bénéficiaires", "Cotisations") et polluent l'historique des autres pages
+      // dont le filtre matche ce même mot. On les exclut partout sauf sur la page habilitations elle-même.
+      if (!options.includeHabilitations) {
+        all = all.filter(t => !t.libelleTrait || !t.libelleTrait.toLowerCase().startsWith('habilitation'))
+      }
       _cache = all.slice(0, limit)
 
       if (!_cache.length) {
