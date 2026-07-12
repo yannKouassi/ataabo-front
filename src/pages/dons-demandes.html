@@ -325,12 +325,14 @@
     const val1 = document.getElementById('ct-reference').value.trim().toUpperCase()
     const val2 = document.getElementById('ct-reference-confirm').value.trim().toUpperCase()
     if (!val2) { hint.style.display = 'none'; return }
+    const iconOk = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>'
+    const iconKo = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
     if (val1 === val2) {
       hint.style.display = 'block'; hint.style.color = '#166534'
-      hint.textContent = '✓ Les deux références correspondent.'
+      hint.innerHTML = `${iconOk} Les deux références correspondent.`
     } else {
       hint.style.display = 'block'; hint.style.color = '#b91c1c'
-      hint.textContent = '✗ Les références ne correspondent pas.'
+      hint.innerHTML = `${iconKo} Les références ne correspondent pas.`
     }
   }
   document.getElementById('ct-reference').addEventListener('input', function () { this.value = this.value.toUpperCase(); checkRefMatch() })

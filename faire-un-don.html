@@ -209,7 +209,12 @@
       </div>
       <div id="otp-demande" style="display:none;">
         <div class="otp-wrap">
-          <div style="font-size:40px;">📧</div>
+          <div style="color:var(--primary);">
+            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m2 6 10 7 10-7"/>
+            </svg>
+          </div>
           <p style="font-size:13.5px;color:var(--text-muted);margin:10px 0 0;">Un code a été envoyé à l'adresse email de votre demande :<br/><strong id="dd-email-display" style="color:var(--text);"></strong></p>
           <div class="err-box" id="err-dd-otp"></div>
           <div class="otp-input" id="dd-otp-inputs">
@@ -462,7 +467,9 @@
     documentFichier = e.target.files[0] || null
     const zone = document.getElementById('dd-upload-zone')
     if (documentFichier) {
-      zone.textContent = '✓ ' + documentFichier.name
+      zone.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        ${documentFichier.name}</span>`
       zone.style.color = 'var(--success, #22c55e)'
     } else {
       zone.textContent = 'Cliquez pour choisir un fichier (photo, PDF…)'
@@ -639,12 +646,14 @@
     const val1 = document.getElementById('ct-reference').value.trim().toUpperCase()
     const val2 = document.getElementById('ct-reference-confirm').value.trim().toUpperCase()
     if (!val2) { hint.style.display = 'none'; return }
+    const iconOk = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>'
+    const iconKo = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
     if (val1 === val2) {
       hint.style.display = 'block'; hint.style.color = '#166534'
-      hint.textContent = '✓ Les deux références correspondent.'
+      hint.innerHTML = `${iconOk} Les deux références correspondent.`
     } else {
       hint.style.display = 'block'; hint.style.color = '#b91c1c'
-      hint.textContent = '✗ Les références ne correspondent pas.'
+      hint.innerHTML = `${iconKo} Les références ne correspondent pas.`
     }
   }
   document.getElementById('ct-reference').addEventListener('input', function () { this.value = this.value.toUpperCase(); checkRefMatch() })
