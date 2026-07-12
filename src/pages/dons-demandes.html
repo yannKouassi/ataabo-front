@@ -25,6 +25,7 @@
     .don-justif-link { font-size:12px; color:var(--primary); text-decoration:none; font-weight:600; }
     .don-justif-link:hover { text-decoration:underline; }
     .pm-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .ref-hint { font-size:11.5px; color:var(--text-muted); margin-top:5px; }
     .pay-number-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .pay-number { font-size:18px; font-weight:800; color:var(--text); letter-spacing:.02em; }
     .pay-number-label { font-size:11px; color:var(--text-muted); margin-bottom:3px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
@@ -125,16 +126,27 @@
           <input class="form-input" type="number" min="1" id="ct-montant" placeholder="Montant de la contribution"/>
         </div>
         <div class="form-group" id="ct-moyen-wrap">
-          <label class="form-label">Moyen de paiement</label>
+          <label class="form-label">Moyen de paiement *</label>
           <div class="pm-grid" id="ct-moyens-grid"></div>
         </div>
         <div class="form-group" id="ct-description-wrap">
           <label class="form-label">Description de l'apport *</label>
           <textarea class="form-input" id="ct-description" rows="2" placeholder="Ce que l'organisation apporte"></textarea>
         </div>
-        <div class="form-group">
-          <label class="form-label">Référence (optionnel)</label>
-          <input class="form-input" id="ct-reference" placeholder="Référence de transfert, etc."/>
+        <div class="form-group" id="ct-reference-wrap">
+          <label class="form-label" id="ct-reference-label">Référence de paiement *</label>
+          <input class="form-input" id="ct-reference" placeholder="Choisissez d'abord un moyen de paiement" disabled style="text-transform:uppercase;font-family:monospace;letter-spacing:.04em;"/>
+        </div>
+        <div class="form-group" id="ct-reference-confirm-wrap">
+          <label class="form-label">Confirmer la référence *</label>
+          <input class="form-input" id="ct-reference-confirm" placeholder="Ressaisissez la même référence" disabled style="text-transform:uppercase;font-family:monospace;letter-spacing:.04em;"/>
+          <div id="ct-ref-match-hint" class="ref-hint" style="display:none;"></div>
+        </div>
+        <div class="form-group" id="ct-verif-wrap" style="display:none;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;">
+            <input type="checkbox" id="ct-verif-checkbox" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:var(--primary);"/>
+            <span>J'ai envoyé la contribution au numéro ci-dessus</span>
+          </label>
         </div>
       </div>
     </div>
@@ -259,6 +271,14 @@
           selectedMoyenId = m.id
           grid.querySelectorAll('.pm-card').forEach(c => c.classList.remove('selectionne'))
           card.classList.add('selectionne')
+          const refInput = document.getElementById('ct-reference')
+          const refConfirm = document.getElementById('ct-reference-confirm')
+          refInput.disabled = false
+          refInput.placeholder = 'Ex: REF-20240601-ABCDEF'
+          refConfirm.disabled = false
+          refConfirm.placeholder = 'Ressaisissez la même référence'
+          document.getElementById('ct-reference-label').innerHTML = 'Référence ' + label + ' *'
+          document.getElementById('ct-ref-match-hint').style.display = 'none'
         })
         grid.appendChild(card)
       })
@@ -273,10 +293,23 @@
     document.getElementById('ct-tel-value').textContent = demandeSelectionnee.telephone || '—'
     document.getElementById('ct-montant').value = ''
     document.getElementById('ct-description').value = ''
-    document.getElementById('ct-reference').value = ''
+    const refInput = document.getElementById('ct-reference')
+    const refConfirm = document.getElementById('ct-reference-confirm')
+    refInput.value = ''
+    refConfirm.value = ''
+    refInput.disabled = true
+    refConfirm.disabled = true
+    refInput.placeholder = "Choisissez d'abord un moyen de paiement"
+    refConfirm.placeholder = 'Ressaisissez la même référence'
+    document.getElementById('ct-reference-label').textContent = 'Référence de paiement *'
+    document.getElementById('ct-ref-match-hint').style.display = 'none'
     document.getElementById('ct-montant-wrap').style.display = financier ? 'block' : 'none'
     document.getElementById('ct-moyen-wrap').style.display = financier ? 'block' : 'none'
     document.getElementById('ct-description-wrap').style.display = financier ? 'none' : 'block'
+    document.getElementById('ct-reference-wrap').style.display = financier ? 'block' : 'none'
+    document.getElementById('ct-reference-confirm-wrap').style.display = financier ? 'block' : 'none'
+    document.getElementById('ct-verif-wrap').style.display = financier ? 'block' : 'none'
+    document.getElementById('ct-verif-checkbox').checked = false
     document.getElementById('err-contribuer').style.display = 'none'
     document.getElementById('success-contribuer').style.display = 'none'
     document.getElementById('form-contribuer').style.display = 'block'
@@ -287,17 +320,35 @@
   document.getElementById('modal-contribuer-close').addEventListener('click', () => { modalContribuer.style.display = 'none' })
   document.getElementById('modal-contribuer-cancel').addEventListener('click', () => { modalContribuer.style.display = 'none' })
 
+  function checkRefMatch() {
+    const hint = document.getElementById('ct-ref-match-hint')
+    const val1 = document.getElementById('ct-reference').value.trim().toUpperCase()
+    const val2 = document.getElementById('ct-reference-confirm').value.trim().toUpperCase()
+    if (!val2) { hint.style.display = 'none'; return }
+    if (val1 === val2) {
+      hint.style.display = 'block'; hint.style.color = '#166534'
+      hint.textContent = '✓ Les deux références correspondent.'
+    } else {
+      hint.style.display = 'block'; hint.style.color = '#b91c1c'
+      hint.textContent = '✗ Les références ne correspondent pas.'
+    }
+  }
+  document.getElementById('ct-reference').addEventListener('input', function () { this.value = this.value.toUpperCase(); checkRefMatch() })
+  document.getElementById('ct-reference-confirm').addEventListener('input', function () { this.value = this.value.toUpperCase(); checkRefMatch() })
+
   document.getElementById('btn-envoyer-contribution').addEventListener('click', async () => {
     if (!demandeSelectionnee) return
     const errEl = document.getElementById('err-contribuer')
     errEl.style.display = 'none'
     const financier = demandeSelectionnee.typeDon === 'FINANCIER'
+    const reference = document.getElementById('ct-reference').value.trim().toUpperCase()
+    const referenceConfirm = document.getElementById('ct-reference-confirm').value.trim().toUpperCase()
     const payload = {
       orgId: ctx.orgId,
       montant: financier ? parseFloat(document.getElementById('ct-montant').value) || null : null,
       descriptionApport: !financier ? document.getElementById('ct-description').value : null,
       moyenPaiementId: financier ? selectedMoyenId : null,
-      reference: document.getElementById('ct-reference').value || null,
+      reference: financier ? (reference || null) : null,
     }
     if (financier && (!payload.montant || payload.montant <= 0)) {
       errEl.textContent = 'Le montant doit être positif.'
@@ -309,8 +360,23 @@
       errEl.style.display = 'block'
       return
     }
+    if (financier && !reference) {
+      errEl.textContent = 'Veuillez saisir la référence de paiement.'
+      errEl.style.display = 'block'
+      return
+    }
+    if (financier && reference !== referenceConfirm) {
+      errEl.textContent = 'Les deux références ne correspondent pas. Vérifiez votre saisie.'
+      errEl.style.display = 'block'
+      return
+    }
     if (!financier && !payload.descriptionApport) {
       errEl.textContent = 'Veuillez décrire l\'apport.'
+      errEl.style.display = 'block'
+      return
+    }
+    if (financier && !document.getElementById('ct-verif-checkbox').checked) {
+      errEl.textContent = 'Veuillez confirmer avoir envoyé la contribution avant de soumettre.'
       errEl.style.display = 'block'
       return
     }
