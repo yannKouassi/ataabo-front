@@ -306,11 +306,22 @@
     return new Intl.NumberFormat('fr-FR').format(m) + (devise ? ' ' + devise : '')
   }
 
+  // Le pays est déjà choisi via le sélecteur global du site (navbar) : on verrouille le champ sur ce
+  // pays quand il est connu, et on ne laisse le choix que si aucun pays n'est encore sélectionné.
   async function chargerPaysFormulaire() {
+    const select = document.getElementById('dd-pays')
+    const codePaysActuel = getCodePays()
     try {
       const pays = await api.get('/referentiel/pays')
-      const optionsFiltre = pays.map(p => `<option value="${p.codePays}">${p.libPays}</option>`).join('')
-      document.getElementById('dd-pays').insertAdjacentHTML('beforeend', optionsFiltre)
+      if (codePaysActuel) {
+        const p = pays.find(x => x.codePays === codePaysActuel)
+        select.innerHTML = `<option value="${codePaysActuel}">${p ? p.libPays : codePaysActuel}</option>`
+        select.value = codePaysActuel
+        select.disabled = true
+      } else {
+        select.innerHTML = '<option value="">Choisir</option>' + pays.map(p => `<option value="${p.codePays}">${p.libPays}</option>`).join('')
+        select.disabled = false
+      }
     } catch (e) { console.error('Pays :', e) }
   }
 
@@ -408,7 +419,7 @@
     document.getElementById('dd-type-demandeur').value = 'PARTICULIER'
     document.getElementById('dd-email').value = ''
     document.getElementById('dd-telephone').value = ''
-    document.getElementById('dd-pays').value = getCodePays() || ''
+    chargerPaysFormulaire()
     document.getElementById('dd-type-don').value = 'FINANCIER'
     document.getElementById('dd-montant').value = ''
     document.getElementById('dd-motif').value = ''
@@ -639,7 +650,6 @@
   })
 
   buildComboboxPays('pays-combobox-container')
-  chargerPaysFormulaire()
   chargerDemandes()
 </script>
 </body>
