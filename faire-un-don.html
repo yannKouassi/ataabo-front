@@ -149,7 +149,7 @@
 <div class="modal-overlay" id="modal-demande" style="display:none;">
   <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <span class="modal-title" id="modal-demande-title">Soumettre une demande de don</span>
+      <span class="modal-title">Soumettre une demande de don</span>
       <button class="modal-close" id="modal-demande-close">&times;</button>
     </div>
     <div class="modal-body">
@@ -158,11 +158,11 @@
       <div id="form-demande">
         <div class="form-row-flex">
           <div class="form-group">
-            <label class="form-label" id="lbl-dd-nom">Nom du demandeur *</label>
+            <label class="form-label">Nom du demandeur *</label>
             <input class="form-input" id="dd-nom" placeholder="Votre nom ou celui de l'établissement"/>
           </div>
           <div class="form-group">
-            <label class="form-label" id="lbl-dd-type">Type de demandeur *</label>
+            <label class="form-label">Type de demandeur *</label>
             <select class="form-input" id="dd-type-demandeur">
               <option value="PARTICULIER">Particulier</option>
               <option value="ETABLISSEMENT">Établissement</option>
@@ -171,21 +171,21 @@
         </div>
         <div class="form-row-flex">
           <div class="form-group">
-            <label class="form-label" id="lbl-dd-email">Email *</label>
+            <label class="form-label">Email *</label>
             <input class="form-input" type="email" id="dd-email" placeholder="email@exemple.com"/>
           </div>
           <div class="form-group">
-            <label class="form-label" id="lbl-dd-tel">Téléphone *</label>
+            <label class="form-label">Téléphone *</label>
             <input class="form-input" id="dd-telephone" placeholder="Numéro où recevoir les dons"/>
           </div>
         </div>
         <div class="form-row-flex">
           <div class="form-group">
-            <label class="form-label" id="lbl-dd-pays">Pays *</label>
+            <label class="form-label">Pays *</label>
             <select class="form-input" id="dd-pays"><option value="">Choisir</option></select>
           </div>
           <div class="form-group">
-            <label class="form-label" id="lbl-dd-type-don">Type de don *</label>
+            <label class="form-label">Type de don *</label>
             <select class="form-input" id="dd-type-don">
               <option value="FINANCIER">Financier</option>
               <option value="MATERIEL">Matériel</option>
@@ -193,7 +193,7 @@
           </div>
         </div>
         <div class="form-group" id="dd-montant-wrap">
-          <label class="form-label" id="lbl-dd-montant">Montant souhaité *</label>
+          <label class="form-label">Montant souhaité *</label>
           <input class="form-input" type="number" min="1" id="dd-montant" placeholder="Objectif à atteindre"/>
         </div>
         <div class="form-group">
@@ -201,7 +201,7 @@
           <textarea class="form-input" id="dd-motif" rows="3" placeholder="Expliquez le besoin"></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label" id="lbl-dd-justif">Document justificatif *</label>
+          <label class="form-label">Document justificatif *</label>
           <div class="upload-zone" id="dd-upload-zone">Cliquez pour choisir un fichier (photo, PDF…)</div>
           <input type="file" id="dd-document" style="display:none;" accept="image/*,.pdf"/>
         </div>
@@ -209,7 +209,7 @@
       <div id="otp-demande" style="display:none;">
         <div class="otp-wrap">
           <div style="font-size:40px;">📧</div>
-          <p id="dd-otp-instr" style="font-size:13.5px;color:var(--text-muted);margin:10px 0 0;">Un code a été envoyé à l'adresse email de votre demande :<br/><strong id="dd-email-display" style="color:var(--text);"></strong></p>
+          <p style="font-size:13.5px;color:var(--text-muted);margin:10px 0 0;">Un code a été envoyé à l'adresse email de votre demande :<br/><strong id="dd-email-display" style="color:var(--text);"></strong></p>
           <div class="err-box" id="err-dd-otp"></div>
           <div class="otp-input" id="dd-otp-inputs">
             <input type="text" maxlength="1" inputmode="numeric"/>
@@ -219,7 +219,7 @@
             <input type="text" maxlength="1" inputmode="numeric"/>
             <input type="text" maxlength="1" inputmode="numeric"/>
           </div>
-          <div class="otp-resend" id="dd-otp-resend" onclick="renvoyerOtpDemande()">Pas reçu ? <span>Renvoyer le code</span></div>
+          <div class="otp-resend" onclick="renvoyerOtpDemande()">Pas reçu ? <span>Renvoyer le code</span></div>
         </div>
       </div>
     </div>
@@ -244,42 +244,42 @@
       <div id="form-contribuer">
         <div class="pay-number-block">
           <div>
-            <div class="pay-number-label" id="ct-num-label">Numéro du demandeur — envoyez votre don ici</div>
+            <div class="pay-number-label">Numéro du demandeur — envoyez votre don ici</div>
             <div class="pay-number" id="ct-tel-value">—</div>
           </div>
           <button type="button" class="btn btn-outline btn-sm" id="ct-btn-copier" style="flex-shrink:0;">Copier</button>
         </div>
-        <p id="ct-instr" style="font-size:12px;color:var(--text-muted);margin:8px 0 16px;line-height:1.5;">
+        <p style="font-size:12px;color:var(--text-muted);margin:8px 0 16px;line-height:1.5;">
           Envoyez d'abord votre don à ce numéro, puis déclarez-le ci-dessous avec la référence de la transaction. Un administrateur vérifiera et confirmera votre contribution.
         </p>
         <div class="form-group">
-          <label class="form-label" id="lbl-ct-nom">Votre nom *</label>
+          <label class="form-label">Votre nom *</label>
           <input class="form-input" id="ct-nom" placeholder="Nom ou nom de l'organisation"/>
         </div>
         <div class="form-group">
-          <label class="form-label" id="lbl-ct-email">Votre email *</label>
+          <label class="form-label">Votre email *</label>
           <input class="form-input" type="email" id="ct-email" placeholder="Pour vous recontacter"/>
         </div>
         <div class="form-group" id="ct-montant-wrap">
-          <label class="form-label" id="lbl-ct-montant">Montant *</label>
+          <label class="form-label">Montant *</label>
           <input class="form-input" type="number" min="1" id="ct-montant" placeholder="Montant de votre contribution"/>
         </div>
         <div class="form-group" id="ct-moyen-wrap">
-          <label class="form-label" id="lbl-ct-moyen">Moyen de paiement *</label>
+          <label class="form-label">Moyen de paiement *</label>
           <div class="pm-grid" id="ct-moyens-grid"></div>
         </div>
         <div class="form-group" id="ct-description-wrap">
-          <label class="form-label" id="lbl-ct-desc">Description de votre apport *</label>
+          <label class="form-label">Description de votre apport *</label>
           <textarea class="form-input" id="ct-description" rows="2" placeholder="Ce que vous apportez"></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label" id="lbl-ct-ref">Référence (optionnel)</label>
+          <label class="form-label">Référence (optionnel)</label>
           <input class="form-input" id="ct-reference" placeholder="Référence de transfert, etc."/>
         </div>
         <div class="form-group" id="ct-verif-wrap" style="display:none;">
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;">
             <input type="checkbox" id="ct-verif-checkbox" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:var(--primary);"/>
-            <span id="lbl-ct-verif">J'ai envoyé ma contribution au numéro ci-dessus</span>
+            <span>J'ai envoyé ma contribution au numéro ci-dessus</span>
           </label>
         </div>
       </div>
@@ -294,149 +294,8 @@
 <script type="module">
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
-  import { buildComboboxPays, getCodePays, getLangue } from '/src/js/i18n.js'
-
-  const langue = getLangue()
-
-  const LABELS = {
-    fr: {
-      pageTitle: 'UnioNova — Faire un don', heroH1: 'Faire un don',
-      heroP: "Consultez les demandes de dons ouvertes et contribuez, financièrement ou matériellement, sans avoir besoin de créer un compte. Chaque contribution est vérifiée avant d'être validée.",
-      btnPage: 'Soumettre une demande', chargement: 'Chargement…',
-      empty: 'Aucune demande de don ouverte pour le moment.',
-      erreur: (m) => `Erreur : ${m}`, compteur: (n) => `${n} demande${n>1?'s':''} ouverte${n>1?'s':''}`,
-      ctaH3: 'Une organisation ou un besoin à soutenir ?',
-      ctaP: "Soumettez une demande de don financier ou matériel, avec un justificatif — elle sera visible ici après vérification.",
-      donFin: 'Don financier', donMat: 'Don matériel', voirPlus: 'Voir plus',
-      voirJustif: 'Voir le justificatif', jeContribue: 'Je contribue', objectif: 'Objectif :',
-      modalDemTitle: 'Soumettre une demande de don',
-      lblNom: 'Nom du demandeur *', lblType: 'Type de demandeur *',
-      optPart: 'Particulier', optEtab: 'Établissement',
-      lblEmail: 'Email *', lblTel: 'Téléphone *', phTel: 'Numéro où recevoir les dons',
-      lblPays: 'Pays *', lblTypeDon: 'Type de don *', optFin: 'Financier', optMat: 'Matériel',
-      lblMontant: 'Montant souhaité *', phMontant: 'Objectif à atteindre',
-      lblMotif: 'Motif *', lblBesoin: 'Description du besoin *', phMotif: 'Expliquez le besoin',
-      lblJustif: 'Document justificatif *', clicFichier: 'Cliquez pour choisir un fichier (photo, PDF…)',
-      otpInstr: "Un code a été envoyé à l'adresse email de votre demande :",
-      otpResend: "Pas reçu ? ", otpResendLink: "Renvoyer le code",
-      btnAnnuler: 'Annuler', btnSoumettre: 'Soumettre', btnFermer: 'Fermer',
-      btnConfEmail: "Confirmer l'email",
-      emailConfirme: "Email confirmé ! Votre demande est désormais visible publiquement. Merci !",
-      errChamps: "Veuillez remplir tous les champs obligatoires, dont le téléphone (les contributeurs enverront leur don à ce numéro).",
-      errMontantPos: "Le montant souhaité doit être positif.", errDoc: "Le document justificatif est obligatoire.",
-      err6ch: "Saisissez les 6 chiffres du code.", errCode: "Code invalide ou expiré.",
-      ctNumLabel: "Numéro du demandeur — envoyez votre don ici", btnCopier: 'Copier',
-      ctInstr: "Envoyez d'abord votre don à ce numéro, puis déclarez-le ci-dessous avec la référence de la transaction. Un administrateur vérifiera et confirmera votre contribution.",
-      lblCtNom: 'Votre nom *', lblCtEmail: 'Votre email *',
-      phCtNom: "Nom ou nom de l'organisation", phCtEmail: 'Pour vous recontacter',
-      lblCtMontant: 'Montant *', phCtMontant: 'Montant de votre contribution',
-      lblCtMoyen: 'Moyen de paiement *', lblCtRef: 'Référence (optionnel)',
-      phCtRef: 'Référence de transfert, etc.', lblCtDesc: 'Description de votre apport *',
-      phCtDesc: 'Ce que vous apportez', btnEnvoyer: 'Envoyer',
-      checkVerif: "J'ai envoyé ma contribution au numéro ci-dessus",
-      merci: "Merci ! Votre contribution est enregistrée et sera confirmée après vérification.",
-      errChampsC: "Veuillez remplir tous les champs obligatoires.",
-      errMontantC: "Le montant doit être positif.", errMoyen: "Veuillez choisir un moyen de paiement.",
-      errDesc: "Veuillez décrire votre apport.",
-      errVerif: "Veuillez confirmer avoir envoyé votre contribution avant de soumettre.",
-      numCopie: 'Numéro copié !', jeContribuePour: (n) => `Je contribue — ${n}`,
-    },
-    en: {
-      pageTitle: 'UnioNova — Make a Donation', heroH1: 'Make a Donation',
-      heroP: "Browse open donation requests and contribute — financially or in kind — without creating an account. Every contribution is verified before being confirmed.",
-      btnPage: 'Submit a request', chargement: 'Loading…',
-      empty: 'No open donation requests at the moment.',
-      erreur: (m) => `Error: ${m}`, compteur: (n) => `${n} open request${n>1?'s':''}`,
-      ctaH3: 'An organization or a need to support?',
-      ctaP: "Submit a financial or material donation request with a supporting document — it will appear here after review.",
-      donFin: 'Financial donation', donMat: 'Material donation', voirPlus: 'See more',
-      voirJustif: 'View document', jeContribue: 'Contribute', objectif: 'Goal:',
-      modalDemTitle: 'Submit a donation request',
-      lblNom: 'Applicant name *', lblType: 'Applicant type *',
-      optPart: 'Individual', optEtab: 'Organization',
-      lblEmail: 'Email *', lblTel: 'Phone *', phTel: 'Number to receive donations',
-      lblPays: 'Country *', lblTypeDon: 'Donation type *', optFin: 'Financial', optMat: 'Material',
-      lblMontant: 'Target amount *', phMontant: 'Goal to reach',
-      lblMotif: 'Purpose *', lblBesoin: 'Description of need *', phMotif: 'Explain the need',
-      lblJustif: 'Supporting document *', clicFichier: 'Click to choose a file (photo, PDF…)',
-      otpInstr: "A code was sent to the email address for your request:",
-      otpResend: "Not received? ", otpResendLink: "Resend code",
-      btnAnnuler: 'Cancel', btnSoumettre: 'Submit', btnFermer: 'Close',
-      btnConfEmail: 'Confirm email',
-      emailConfirme: "Email confirmed! Your request is now publicly visible. Thank you!",
-      errChamps: "Please fill in all required fields, including the phone number (contributors will send their donation to this number).",
-      errMontantPos: "The target amount must be positive.", errDoc: "A supporting document is required.",
-      err6ch: "Enter all 6 digits of the code.", errCode: "Invalid or expired code.",
-      ctNumLabel: "Applicant number — send your donation here", btnCopier: 'Copy',
-      ctInstr: "Send your donation to this number first, then declare it below with the transaction reference. An administrator will verify and confirm your contribution.",
-      lblCtNom: 'Your name *', lblCtEmail: 'Your email *',
-      phCtNom: 'Name or organisation name', phCtEmail: 'To get back to you',
-      lblCtMontant: 'Amount *', phCtMontant: 'Amount of your contribution',
-      lblCtMoyen: 'Payment method *', lblCtRef: 'Reference (optional)',
-      phCtRef: 'Transfer reference, etc.', lblCtDesc: 'Description of your contribution *',
-      phCtDesc: 'What you are contributing', btnEnvoyer: 'Send',
-      checkVerif: 'I have sent my contribution to the number above',
-      merci: "Thank you! Your contribution has been recorded and will be confirmed after verification.",
-      errChampsC: "Please fill in all required fields.",
-      errMontantC: "The amount must be positive.", errMoyen: "Please select a payment method.",
-      errDesc: "Please describe your contribution.",
-      errVerif: "Please confirm you have sent your contribution before submitting.",
-      numCopie: 'Number copied!', jeContribuePour: (n) => `Contribute — ${n}`,
-    }
-  }
-
-  const L = LABELS[langue] || LABELS.fr
-
-  function applyLangue() {
-    document.documentElement.lang = langue
-    document.title = L.pageTitle
-    document.querySelector('.page-hero h1').textContent = L.heroH1
-    document.querySelector('.page-hero p').textContent = L.heroP
-    document.getElementById('btn-faire-demande').textContent = L.btnPage
-    document.querySelector('.cta-inner h3').textContent = L.ctaH3
-    document.querySelector('.cta-inner p').textContent = L.ctaP
-    document.querySelector('.cta-inner .nav-btn-primary').textContent = L.btnPage
-    document.getElementById('detail-justif-link').textContent = L.voirJustif
-    document.getElementById('detail-btn-contribuer').textContent = L.jeContribue
-    document.getElementById('modal-demande-title').textContent = L.modalDemTitle
-    document.getElementById('lbl-dd-nom').textContent = L.lblNom
-    document.getElementById('lbl-dd-type').textContent = L.lblType
-    const selType = document.getElementById('dd-type-demandeur')
-    selType.options[0].text = L.optPart; selType.options[1].text = L.optEtab
-    document.getElementById('lbl-dd-email').textContent = L.lblEmail
-    document.getElementById('lbl-dd-tel').textContent = L.lblTel
-    document.getElementById('dd-telephone').placeholder = L.phTel
-    document.getElementById('lbl-dd-pays').textContent = L.lblPays
-    document.getElementById('lbl-dd-type-don').textContent = L.lblTypeDon
-    const selDon = document.getElementById('dd-type-don')
-    selDon.options[0].text = L.optFin; selDon.options[1].text = L.optMat
-    document.getElementById('lbl-dd-montant').textContent = L.lblMontant
-    document.getElementById('dd-montant').placeholder = L.phMontant
-    document.getElementById('lbl-dd-justif').textContent = L.lblJustif
-    document.getElementById('dd-upload-zone').textContent = L.clicFichier
-    document.getElementById('dd-otp-instr').innerHTML = `${L.otpInstr}<br/><strong id="dd-email-display" style="color:var(--text);"></strong>`
-    document.getElementById('dd-otp-resend').innerHTML = `${L.otpResend}<span>${L.otpResendLink}</span>`
-    document.getElementById('modal-demande-cancel').textContent = L.btnAnnuler
-    document.getElementById('btn-soumettre-demande').textContent = L.btnSoumettre
-    document.getElementById('btn-confirmer-email-demande').textContent = L.btnConfEmail
-    document.getElementById('ct-num-label').textContent = L.ctNumLabel
-    document.getElementById('ct-btn-copier').textContent = L.btnCopier
-    document.getElementById('ct-instr').textContent = L.ctInstr
-    document.getElementById('lbl-ct-nom').textContent = L.lblCtNom
-    document.getElementById('ct-nom').placeholder = L.phCtNom
-    document.getElementById('lbl-ct-email').textContent = L.lblCtEmail
-    document.getElementById('ct-email').placeholder = L.phCtEmail
-    document.getElementById('lbl-ct-montant').textContent = L.lblCtMontant
-    document.getElementById('ct-montant').placeholder = L.phCtMontant
-    document.getElementById('lbl-ct-moyen').textContent = L.lblCtMoyen
-    document.getElementById('lbl-ct-ref').textContent = L.lblCtRef
-    document.getElementById('ct-reference').placeholder = L.phCtRef
-    document.getElementById('lbl-ct-desc').textContent = L.lblCtDesc
-    document.getElementById('ct-description').placeholder = L.phCtDesc
-    document.getElementById('lbl-ct-verif').textContent = L.checkVerif
-    document.getElementById('modal-contribuer-cancel').textContent = L.btnAnnuler
-    document.getElementById('btn-envoyer-contribution').textContent = L.btnEnvoyer
-  }
+  import { buildComboboxPays, getCodePays } from '/src/js/i18n.js'
+  import { initTraductionAuto } from '/src/js/translator.js'
 
   let demandesCache = []
   let demandeSelectionnee = null
@@ -478,39 +337,39 @@
     return `
       <div class="don-card">
         <div class="don-card-top">
-          <span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? L.donFin : L.donMat}</span>
+          <span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? 'Don financier' : 'Don matériel'}</span>
           <span class="don-pays">${d.libPays || ''}</span>
         </div>
         <div class="don-nom">${d.nomDemandeur}</div>
         <div class="don-motif">${d.motif}</div>
-        <button class="don-voir-plus" onclick="ouvrirDetail('${d.id}')">${L.voirPlus}</button>
+        <button class="don-voir-plus" onclick="ouvrirDetail('${d.id}')">Voir plus</button>
         ${estFinancier ? `
           <div class="don-progress-wrap">
             <div class="don-progress-bar"><div class="don-progress-fill" style="width:${pct}%;"></div></div>
-            <div class="don-progress-label"><span>${fmtMontant(d.montantCollecte, d.devise)}</span><span>${L.objectif} ${fmtMontant(d.montantSouhaite, d.devise)}</span></div>
+            <div class="don-progress-label"><span>${fmtMontant(d.montantCollecte, d.devise)}</span><span>Objectif : ${fmtMontant(d.montantSouhaite, d.devise)}</span></div>
           </div>` : ''}
         <div class="don-card-footer">
-          <a class="don-justif-link" href="${d.urlJustificatif}" target="_blank" rel="noopener">${L.voirJustif}</a>
-          <button class="btn btn-primary btn-sm" onclick="ouvrirContribution('${d.id}')">${L.jeContribue}</button>
+          <a class="don-justif-link" href="${d.urlJustificatif}" target="_blank" rel="noopener">Voir le justificatif</a>
+          <button class="btn btn-primary btn-sm" onclick="ouvrirContribution('${d.id}')">Je contribue</button>
         </div>
       </div>`
   }
 
   async function chargerDemandes() {
     const grid = document.getElementById('dons-grid')
-    grid.innerHTML = `<div class="empty-state-dons">${L.chargement}</div>`
+    grid.innerHTML = `<div class="empty-state-dons">Chargement…</div>`
     try {
       const codePays = getCodePays()
       const query = codePays ? `?codePays=${encodeURIComponent(codePays)}` : ''
       demandesCache = await api.get(`/demandes-dons${query}`)
-      document.getElementById('compteur-demandes').textContent = L.compteur(demandesCache.length)
+      document.getElementById('compteur-demandes').textContent = `${demandesCache.length} demande${demandesCache.length > 1 ? 's' : ''} ouverte${demandesCache.length > 1 ? 's' : ''}`
       if (!demandesCache.length) {
-        grid.innerHTML = `<div class="empty-state-dons">${L.empty}</div>`
+        grid.innerHTML = `<div class="empty-state-dons">Aucune demande de don ouverte pour le moment.</div>`
         return
       }
       grid.innerHTML = demandesCache.map(carteDemande).join('')
     } catch (e) {
-      grid.innerHTML = `<div class="empty-state-dons" style="color:#b91c1c;">${L.erreur(e.message)}</div>`
+      grid.innerHTML = `<div class="empty-state-dons" style="color:#b91c1c;">Erreur : ${e.message}</div>`
     }
   }
 
@@ -522,9 +381,9 @@
     const estFinancier = d.typeDon === 'FINANCIER'
     document.getElementById('detail-titre').textContent = d.nomDemandeur
     document.getElementById('detail-badges').innerHTML = `
-      <span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? L.donFin : L.donMat}</span>
+      <span class="don-type-badge ${estFinancier ? 'financier' : 'materiel'}">${estFinancier ? 'Don financier' : 'Don matériel'}</span>
       <span class="don-pays">${d.libPays || ''}</span>
-      ${estFinancier ? `<span class="don-pays">${L.objectif} ${fmtMontant(d.montantSouhaite, d.devise)}</span>` : ''}`
+      ${estFinancier ? `<span class="don-pays">Objectif : ${fmtMontant(d.montantSouhaite, d.devise)}</span>` : ''}`
     document.getElementById('detail-motif').textContent = d.motif
     document.getElementById('detail-justif-link').href = d.urlJustificatif
     document.getElementById('detail-btn-contribuer').onclick = () => { modalDetail.style.display = 'none'; ouvrirContribution(id) }
@@ -571,7 +430,7 @@
     document.getElementById('dd-montant').value = ''
     document.getElementById('dd-motif').value = ''
     const zone = document.getElementById('dd-upload-zone')
-    zone.textContent = L.clicFichier; zone.style.color = ''
+    zone.textContent = 'Cliquez pour choisir un fichier (photo, PDF…)'; zone.style.color = ''
     documentFichier = null
     demandeCreeId = null
     document.getElementById('err-demande').style.display = 'none'
@@ -580,14 +439,13 @@
     document.getElementById('otp-demande').style.display = 'none'
     document.getElementById('btn-soumettre-demande').style.display = 'inline-block'
     document.getElementById('btn-confirmer-email-demande').style.display = 'none'
-    document.getElementById('modal-demande-cancel').textContent = L.btnAnnuler
+    document.getElementById('modal-demande-cancel').textContent = 'Annuler'
     majTypeDonDemande()
   }
   function majTypeDonDemande() {
     const financier = document.getElementById('dd-type-don').value === 'FINANCIER'
     document.getElementById('dd-montant-wrap').style.display = financier ? 'block' : 'none'
-    document.getElementById('dd-motif-label').textContent = financier ? L.lblMotif : L.lblBesoin
-    document.getElementById('dd-motif').placeholder = L.phMotif
+    document.getElementById('dd-motif-label').textContent = financier ? 'Motif *' : 'Description du besoin *'
   }
   document.getElementById('dd-type-don').addEventListener('change', majTypeDonDemande)
   document.getElementById('btn-faire-demande').addEventListener('click', () => { resetFormDemande(); modalDemande.style.display = 'flex' })
@@ -621,13 +479,19 @@
       motif: document.getElementById('dd-motif').value,
     }
     if (!data.nomDemandeur || !data.email || !data.telephone || !data.codePays || !data.motif) {
-      errEl.textContent = L.errChamps; errEl.style.display = 'block'; return
+      errEl.textContent = 'Veuillez remplir tous les champs obligatoires, dont le téléphone (les contributeurs enverront leur don à ce numéro).'
+      errEl.style.display = 'block'
+      return
     }
     if (financier && (!data.montantSouhaite || data.montantSouhaite <= 0)) {
-      errEl.textContent = L.errMontantPos; errEl.style.display = 'block'; return
+      errEl.textContent = 'Le montant souhaité doit être positif.'
+      errEl.style.display = 'block'
+      return
     }
     if (!documentFichier) {
-      errEl.textContent = L.errDoc; errEl.style.display = 'block'; return
+      errEl.textContent = 'Le document justificatif est obligatoire.'
+      errEl.style.display = 'block'
+      return
     }
     const btn = document.getElementById('btn-soumettre-demande')
     btn.disabled = true; btn.textContent = 'Envoi…'
@@ -643,13 +507,13 @@
       document.getElementById('otp-demande').style.display = 'block'
       btn.style.display = 'none'
       document.getElementById('btn-confirmer-email-demande').style.display = 'inline-block'
-      document.getElementById('modal-demande-cancel').textContent = L.btnFermer
+      document.getElementById('modal-demande-cancel').textContent = 'Fermer'
       setupOtpInputs('dd-otp-inputs')
     } catch (e) {
       errEl.textContent = e.message
       errEl.style.display = 'block'
     } finally {
-      btn.disabled = false; btn.textContent = L.btnSoumettre
+      btn.disabled = false; btn.textContent = 'Soumettre'
     }
   })
 
@@ -658,23 +522,25 @@
     errEl.style.display = 'none'
     const code = getOtp('dd-otp-inputs')
     if (code.length !== 6) {
-      errEl.textContent = L.err6ch; errEl.style.display = 'block'; return
+      errEl.textContent = 'Saisissez les 6 chiffres du code.'
+      errEl.style.display = 'block'
+      return
     }
     const btn = document.getElementById('btn-confirmer-email-demande')
-    btn.disabled = true; btn.textContent = '…'
+    btn.disabled = true; btn.textContent = 'Vérification…'
     try {
       await api.post(`/demandes-dons/${demandeCreeId}/confirmer-email`, { code })
       document.getElementById('otp-demande').style.display = 'none'
       btn.style.display = 'none'
       const successEl = document.getElementById('success-demande')
-      successEl.textContent = L.emailConfirme
+      successEl.textContent = 'Email confirmé ! Votre demande est désormais visible publiquement. Merci !'
       successEl.style.display = 'block'
       chargerDemandes()
     } catch (e) {
-      errEl.textContent = e.message || L.errCode
+      errEl.textContent = e.message || 'Code invalide ou expiré.'
       errEl.style.display = 'block'
     } finally {
-      btn.disabled = false; btn.textContent = L.btnConfEmail
+      btn.disabled = false; btn.textContent = 'Confirmer l\'email'
     }
   })
 
@@ -721,7 +587,7 @@
     demandeSelectionnee = demandesCache.find(d => d.id === id)
     if (!demandeSelectionnee) return
     const financier = demandeSelectionnee.typeDon === 'FINANCIER'
-    document.getElementById('modal-contribuer-title').textContent = L.jeContribuePour(demandeSelectionnee.nomDemandeur)
+    document.getElementById('modal-contribuer-title').textContent = `Je contribue — ${demandeSelectionnee.nomDemandeur}`
     document.getElementById('ct-tel-value').textContent = demandeSelectionnee.telephone || '—'
     document.getElementById('ct-nom').value = ''
     document.getElementById('ct-email').value = ''
@@ -757,44 +623,54 @@
       reference: document.getElementById('ct-reference').value || null,
     }
     if (!payload.nomContributeur || !payload.emailContact) {
-      errEl.textContent = L.errChampsC; errEl.style.display = 'block'; return
+      errEl.textContent = 'Veuillez remplir tous les champs obligatoires.'
+      errEl.style.display = 'block'
+      return
     }
     if (financier && (!payload.montant || payload.montant <= 0)) {
-      errEl.textContent = L.errMontantC; errEl.style.display = 'block'; return
+      errEl.textContent = 'Le montant doit être positif.'
+      errEl.style.display = 'block'
+      return
     }
     if (financier && !payload.moyenPaiementId) {
-      errEl.textContent = L.errMoyen; errEl.style.display = 'block'; return
+      errEl.textContent = 'Veuillez choisir un moyen de paiement.'
+      errEl.style.display = 'block'
+      return
     }
     if (!financier && !payload.descriptionApport) {
-      errEl.textContent = L.errDesc; errEl.style.display = 'block'; return
+      errEl.textContent = 'Veuillez décrire votre apport.'
+      errEl.style.display = 'block'
+      return
     }
     if (financier && !document.getElementById('ct-verif-checkbox').checked) {
-      errEl.textContent = L.errVerif; errEl.style.display = 'block'; return
+      errEl.textContent = 'Veuillez confirmer avoir envoyé votre contribution avant de soumettre.'
+      errEl.style.display = 'block'
+      return
     }
     const btn = document.getElementById('btn-envoyer-contribution')
-    btn.disabled = true; btn.textContent = '…'
+    btn.disabled = true; btn.textContent = 'Envoi…'
     try {
       await api.post(`/contributions-dons/publique/${demandeSelectionnee.id}`, payload)
       document.getElementById('form-contribuer').style.display = 'none'
       btn.style.display = 'none'
       const successEl = document.getElementById('success-contribuer')
-      successEl.textContent = L.merci
+      successEl.textContent = 'Merci ! Votre contribution est enregistrée et sera confirmée après vérification.'
       successEl.style.display = 'block'
     } catch (e) {
       errEl.textContent = e.message
       errEl.style.display = 'block'
     } finally {
-      btn.disabled = false; btn.textContent = L.btnEnvoyer
+      btn.disabled = false; btn.textContent = 'Envoyer'
     }
   })
 
   document.getElementById('ct-btn-copier').addEventListener('click', () => {
     const tel = document.getElementById('ct-tel-value').textContent
     if (!tel || tel === '—') return
-    navigator.clipboard.writeText(tel).then(() => toast.success(L.numCopie))
+    navigator.clipboard.writeText(tel).then(() => toast.success('Numéro copié !'))
   })
 
-  applyLangue()
+  initTraductionAuto()
   buildComboboxPays('pays-combobox-container')
   chargerDemandes()
 </script>
