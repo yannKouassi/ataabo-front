@@ -256,6 +256,46 @@ export async function buildSidebar() {
     afficherLogo(ctx.urlLogo)
   }
 
+  // Pays (drapeau/armoiries) + branding plateforme — injectés en JS pour éviter de
+  // toucher le markup de chaque page. Regroupe le nom d'organisation et le pays
+  // dans un même bloc pour garder la mise en page compacte.
+  if (nameEl && !document.getElementById('sidebar-header-info')) {
+    const wrapper = document.createElement('div')
+    wrapper.id = 'sidebar-header-info'
+    wrapper.className = 'sidebar-header-info'
+    nameEl.parentNode.insertBefore(wrapper, nameEl)
+    wrapper.appendChild(nameEl)
+
+    const paysRow = document.createElement('div')
+    paysRow.id = 'sidebar-pays-row'
+    paysRow.className = 'sidebar-pays-row'
+    paysRow.style.display = 'none'
+    paysRow.innerHTML = `<img id="sidebar-armoiries" class="sidebar-armoiries" alt=""/><span id="sidebar-pays-nom" class="sidebar-pays-nom"></span>`
+    wrapper.appendChild(paysRow)
+  }
+
+  if (ctx.libPays) {
+    const paysRow = document.getElementById('sidebar-pays-row')
+    const armoiriesEl = document.getElementById('sidebar-armoiries')
+    const paysNomEl = document.getElementById('sidebar-pays-nom')
+    if (paysRow && paysNomEl) {
+      paysNomEl.textContent = ctx.libPays
+      if (armoiriesEl) armoiriesEl.style.display = ctx.urlArmoiries ? '' : 'none'
+      if (armoiriesEl && ctx.urlArmoiries) armoiriesEl.src = ctx.urlArmoiries
+      paysRow.style.display = 'flex'
+    }
+  }
+
+  const footerEl = document.querySelector('.sidebar-footer')
+  if (footerEl && ctx.orgId !== 'PLATEFORME' && !document.getElementById('sidebar-brand')) {
+    const brand = document.createElement('div')
+    brand.id = 'sidebar-brand'
+    brand.className = 'sidebar-brand'
+    const logoImg = ctx.urlLogoPlateforme ? `<img src="${ctx.urlLogoPlateforme}" alt=""/>` : ''
+    brand.innerHTML = `${logoImg}<span>Propulsé par ${ctx.nomPlateforme || 'UnioNova'}</span>`
+    footerEl.insertBefore(brand, footerEl.firstChild)
+  }
+
   // Construire les menus
   const nav = document.getElementById('sidebar-nav')
   if (!nav) return
