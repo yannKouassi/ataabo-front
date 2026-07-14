@@ -236,13 +236,32 @@
     return val.toLocaleString('fr-FR') + ' ' + (devise || '')
   }
 
-  function somme(liste) {
-    return liste.reduce((acc, p) => acc + (p.montantPaye || 0), 0)
+  // Palette cyclique utilisée pour distinguer plusieurs devises sur un même graphique
+  const _COULEURS_DEVISE = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#0ea5e9']
+
+  // Ne jamais additionner des montants de devises différentes : on agrège par devise
+  // et on affiche une ligne par devise (ex: "50 000 XOF · 120 000 NGN").
+  function sommeParDevise(liste) {
+    const out = {}
+    liste.forEach(p => {
+      const d = p.devise || 'XOF'
+      out[d] = (out[d] || 0) + (p.montantPaye || 0)
+    })
+    return out
   }
 
-  function deviseLabel(liste) {
-    const devises = [...new Set(liste.map(p => p.devise).filter(Boolean))]
-    return devises.length === 1 ? devises[0] : (devises.length > 1 ? 'multi-devises' : 'XOF')
+  function fmtMontantsParDevise(parDevise) {
+    const entries = Object.entries(parDevise || {}).filter(([, v]) => v)
+    if (!entries.length) return '0'
+    return entries.map(([devise, montant], i) =>
+      `<span style="${i > 0 ? 'font-size:15px;color:var(--text-muted);' : ''}">${montant.toLocaleString('fr-FR', {maximumFractionDigits:0})} ${devise}</span>`
+    ).join(' · ')
+  }
+
+  function fmtMontantsParDeviseTexte(parDevise) {
+    const entries = Object.entries(parDevise || {}).filter(([, v]) => v)
+    if (!entries.length) return '0'
+    return entries.map(([devise, montant]) => `${montant.toLocaleString('fr-FR')} ${devise}`).join(' + ')
   }
 
   async function charger() {
@@ -303,13 +322,10 @@
     document.getElementById('stat-accepted-count').textContent = accepted.length
     document.getElementById('stat-refused-count').textContent  = refused.length
 
-    const sommeAccepted = somme(accepted)
-    const devisePrincipale = deviseLabel(tousPaiements)
-
-    document.getElementById('stat-pending-montant').textContent  = formatMontant(somme(pending), deviseLabel(pending))
-    document.getElementById('stat-accepted-montant').textContent = formatMontant(sommeAccepted, deviseLabel(accepted))
-    document.getElementById('stat-refused-montant').textContent  = formatMontant(somme(refused), deviseLabel(refused))
-    document.getElementById('stat-total-montant').textContent    = formatMontant(sommeAccepted, deviseLabel(accepted))
+    document.getElementById('stat-pending-montant').innerHTML  = fmtMontantsParDevise(sommeParDevise(pending))
+    document.getElementById('stat-accepted-montant').innerHTML = fmtMontantsParDevise(sommeParDevise(accepted))
+    document.getElementById('stat-refused-montant').innerHTML  = fmtMontantsParDevise(sommeParDevise(refused))
+    document.getElementById('stat-total-montant').innerHTML    = fmtMontantsParDevise(sommeParDevise(accepted))
 
     // --- Graphiques ---
     dessinerGraphiques()
@@ -318,9 +334,9 @@
     const resumeEl = document.getElementById('resume-filtre')
     const aFiltres = filtreStatut || filtreAnnee || dateDebut || dateFin
     if (aFiltres && liste.length) {
-      const sommeFiltree = somme(liste.filter(p => p.statut === 'ACCEPTED'))
+      const sommeFiltree = sommeParDevise(liste.filter(p => p.statut === 'ACCEPTED'))
       resumeEl.style.display = 'block'
-      resumeEl.textContent = `${liste.length} résultat(s) — Total confirmé sur la sélection : ${formatMontant(sommeFiltree, deviseLabel(liste))}`
+      resumeEl.textContent = `${liste.length} résultat(s) — Total confirmé sur la sélection : ${fmtMontantsParDeviseTexte(sommeFiltree)}`
     } else {
       resumeEl.style.display = 'none'
     }
@@ -421,34 +437,49 @@
         moisMap[annee + '-' + String(m).padStart(2, '0')] = 0
       }
     }
+    // Un sous-total par devise et par mois : jamais additionnées entre elles
+    const moisMapParDevise = {}
+    const moisKeys = Object.keys(moisMap)
     tousPaiements.filter(p => p.statut === 'ACCEPTED' && p.dateCreation).forEach(p => {
       const d = new Date(p.dateCreation)
       const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
-      if (key in moisMap) moisMap[key] += p.montantPaye || 0
+      if (!(key in moisMap)) return
+      const devise = p.devise || 'XOF'
+      if (!moisMapParDevise[devise]) moisMapParDevise[devise] = Object.fromEntries(moisKeys.map(k => [k, 0]))
+      moisMapParDevise[devise][key] += p.montantPaye || 0
     })
-    const moisLabels = Object.keys(moisMap).map(k => {
+    const moisLabels = moisKeys.map(k => {
       const [y, m] = k.split('-')
       return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
     })
-    const moisData = Object.values(moisMap)
+    const devisesPai = Object.keys(moisMapParDevise)
+    const datasetsPai = devisesPai.length > 1
+      ? devisesPai.map((devise, i) => ({
+          label: `Montant confirmé (${devise})`,
+          data: moisKeys.map(k => moisMapParDevise[devise][k]),
+          backgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + 'cc',
+          hoverBackgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length],
+          borderRadius: 8, borderSkipped: false,
+        }))
+      : [{
+          label: devisesPai.length ? `Montant confirmé (${devisesPai[0]})` : 'Montant confirmé',
+          data: devisesPai.length ? moisKeys.map(k => moisMapParDevise[devisesPai[0]][k]) : moisKeys.map(() => 0),
+          backgroundColor: primary + 'cc',
+          hoverBackgroundColor: primary,
+          borderRadius: 8, borderSkipped: false,
+        }]
 
     if (chartMensuel) chartMensuel.destroy()
     chartMensuel = new Chart(document.getElementById('chart-mensuel'), {
       type: 'bar',
       data: {
         labels: moisLabels,
-        datasets: [{
-          label: 'Montant confirmé',
-          data: moisData,
-          backgroundColor: primary + 'cc',
-          hoverBackgroundColor: primary,
-          borderRadius: 8, borderSkipped: false,
-        }]
+        datasets: datasetsPai
       },
       options: {
         animation: { duration: 600, easing: 'easeInOutQuart' },
         plugins: {
-          legend: { display: false },
+          legend: { display: devisesPai.length > 1 },
           tooltip: { backgroundColor: 'rgba(15,23,42,0.85)', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 12, cornerRadius: 10, borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1 }
         },
         scales: {

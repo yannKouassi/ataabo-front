@@ -337,7 +337,25 @@
     return t ? `T${t} <span style="font-size:10px;color:var(--text-muted);">(${d[t]||''})</span>` : '—'
   }
 
-  function somme(liste) { return liste.reduce((a, x) => a + (x.montant || 0), 0) }
+  // Palette cyclique utilisée pour distinguer plusieurs devises sur un même graphique
+  const _COULEURS_DEVISE = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#0ea5e9']
+
+  // Ne jamais additionner des montants de devises différentes : on agrège par devise
+  // et on affiche une ligne par devise (ex: "50 000 XOF · 120 000 NGN").
+  function sommeParDevise(liste) {
+    const out = {}
+    liste.forEach(x => {
+      const d = x.devise || 'XOF'
+      out[d] = (out[d] || 0) + (x.montant || 0)
+    })
+    return out
+  }
+
+  function fmtMontantsParDevise(parDevise) {
+    const entries = Object.entries(parDevise || {}).filter(([, v]) => v)
+    if (!entries.length) return '—'
+    return entries.map(([devise, montant]) => `${montant.toLocaleString('fr-FR')} ${devise}`).join(' · ')
+  }
 
   async function charger() {
     const tbody = document.getElementById('tbody-abonnements')
@@ -377,14 +395,11 @@
     document.getElementById('stat-actif-count').textContent   = actifs.length
     document.getElementById('stat-retard-count').textContent  = retard.length
 
-    const devises = [...new Set(actifs.map(a => a.devise).filter(Boolean))]
-    const devise  = devises.length === 1 ? devises[0] : (devises.length > 1 ? 'multi-devises' : 'XOF')
-
-    document.getElementById('stat-attente-montant').textContent = fmt(somme(enAttente), devise)
-    document.getElementById('stat-actif-montant').textContent   = fmt(somme(actifs), devise)
-    document.getElementById('stat-retard-montant').textContent  = fmt(somme(retard), devise)
-    document.getElementById('stat-total-mensuel').textContent   = fmt(somme(actifs.filter(a => a.periode === 'MENSUEL')), devise)
-    document.getElementById('stat-total-annuel').textContent    = fmt(somme(actifs.filter(a => a.periode === 'ANNUEL')), devise)
+    document.getElementById('stat-attente-montant').textContent = fmtMontantsParDevise(sommeParDevise(enAttente))
+    document.getElementById('stat-actif-montant').textContent   = fmtMontantsParDevise(sommeParDevise(actifs))
+    document.getElementById('stat-retard-montant').textContent  = fmtMontantsParDevise(sommeParDevise(retard))
+    document.getElementById('stat-total-mensuel').textContent   = fmtMontantsParDevise(sommeParDevise(actifs.filter(a => a.periode === 'MENSUEL')))
+    document.getElementById('stat-total-annuel').textContent    = fmtMontantsParDevise(sommeParDevise(actifs.filter(a => a.periode === 'ANNUEL')))
 
     // Bandeau alertes expiration
     const aujourd = new Date(); aujourd.setHours(0,0,0,0)
@@ -765,29 +780,47 @@
       const annee = parseInt(periodeGraph)
       for (let m = 1; m <= 12; m++) moisMap[annee + '-' + String(m).padStart(2, '0')] = 0
     }
-    const mensuelMap = JSON.parse(JSON.stringify(moisMap))
-    const annuelMap  = JSON.parse(JSON.stringify(moisMap))
+    const moisKeys = Object.keys(moisMap)
+    // Un sous-total par devise (mensuel / annuel) : jamais additionnées entre elles
+    const mensuelParDevise = {}
+    const annuelParDevise  = {}
     tousAbonnements.filter(a => a.statut === 'ACTIF' && a.dateDebut).forEach(a => {
       const d = Array.isArray(a.dateDebut)
         ? new Date(a.dateDebut[0], a.dateDebut[1] - 1)
         : new Date(String(a.dateDebut).slice(0,10))
       const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
-      if (a.periode === 'MENSUEL' && key in mensuelMap) mensuelMap[key] += a.montant || 0
-      if (a.periode === 'ANNUEL'  && key in annuelMap)  annuelMap[key]  += a.montant || 0
+      if (!(key in moisMap)) return
+      const devise = a.devise || 'XOF'
+      const cible = a.periode === 'MENSUEL' ? mensuelParDevise : (a.periode === 'ANNUEL' ? annuelParDevise : null)
+      if (!cible) return
+      if (!cible[devise]) cible[devise] = Object.fromEntries(moisKeys.map(k => [k, 0]))
+      cible[devise][key] += a.montant || 0
     })
-    const moisLabels = Object.keys(moisMap).map(k => {
+    const moisLabels = moisKeys.map(k => {
       const [y, m] = k.split('-')
       return new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
     })
+    const devisesAbn = [...new Set([...Object.keys(mensuelParDevise), ...Object.keys(annuelParDevise)])]
+    const datasetsAbn = devisesAbn.length > 1
+      ? devisesAbn.flatMap((devise, i) => [
+          { label: `Mensuel (${devise})`, data: moisKeys.map(k => (mensuelParDevise[devise] || {})[k] || 0),
+            backgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + 'cc',
+            hoverBackgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length], borderRadius: 8, borderSkipped: false },
+          { label: `Annuel (${devise})`, data: moisKeys.map(k => (annuelParDevise[devise] || {})[k] || 0),
+            backgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + '55',
+            hoverBackgroundColor: _COULEURS_DEVISE[i % _COULEURS_DEVISE.length] + '99', borderRadius: 8, borderSkipped: false }
+        ])
+      : [
+          { label: devisesAbn.length ? `Mensuel (${devisesAbn[0]})` : 'Mensuel', data: devisesAbn.length ? moisKeys.map(k => (mensuelParDevise[devisesAbn[0]] || {})[k] || 0) : moisKeys.map(() => 0), backgroundColor: primary + 'cc', hoverBackgroundColor: primary, borderRadius: 8, borderSkipped: false },
+          { label: devisesAbn.length ? `Annuel (${devisesAbn[0]})` : 'Annuel',  data: devisesAbn.length ? moisKeys.map(k => (annuelParDevise[devisesAbn[0]] || {})[k] || 0)  : moisKeys.map(() => 0), backgroundColor: '#10b981cc', hoverBackgroundColor: '#10b981', borderRadius: 8, borderSkipped: false }
+        ]
+
     if (chartMensuel) chartMensuel.destroy()
     chartMensuel = new Chart(document.getElementById('chart-mensuel'), {
       type: 'bar',
       data: {
         labels: moisLabels,
-        datasets: [
-          { label: 'Mensuel', data: Object.values(mensuelMap), backgroundColor: primary + 'cc', hoverBackgroundColor: primary, borderRadius: 8, borderSkipped: false },
-          { label: 'Annuel',  data: Object.values(annuelMap),  backgroundColor: '#10b981cc', hoverBackgroundColor: '#10b981', borderRadius: 8, borderSkipped: false }
-        ]
+        datasets: datasetsAbn
       },
       options: {
         animation: { duration: 600, easing: 'easeInOutQuart' },
