@@ -42,6 +42,32 @@
     }
     .nav-btn-primary:hover { background: var(--primary-dark); }
 
+    .navbar-hamburger {
+      display: none;
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .navbar-hamburger:hover { background: var(--surface-hover, rgba(0,0,0,.04)); }
+
+    .navbar-mobile-menu {
+      display: none;
+      position: fixed;
+      top: 61px; left: 0; right: 0; z-index: 199;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 16px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .navbar-mobile-menu.open { display: flex; }
+    .navbar-mobile-menu .nav-btn-outline,
+    .navbar-mobile-menu .nav-btn-primary { width: 100%; text-align: center; }
+
     .login-center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
 
     .login-wrapper {
@@ -146,7 +172,7 @@
     /* ── RESPONSIVE MOBILE < 640px ── */
     @media (max-width: 639px) {
       .navbar { padding: 10px 16px; }
-      .nav-btn-outline:not([title]), .nav-btn-primary { font-size: 12px; padding: 6px 12px; }
+      .navbar-hamburger { display: flex; }
       .login-center { padding: 0; align-items: flex-start; }
       .login-wrapper {
         flex-direction: column;
@@ -180,10 +206,15 @@
     <button id="btn-theme" class="nav-btn-outline" title="Mode nuit">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
-    <button class="nav-btn-outline" onclick="window.location.href='/accueil.html'">Accueil</button>
-    <button class="nav-btn-primary" onclick="window.location.href='/adhesion.html'">Créer un compte</button>
+    <button id="btn-nav-accueil" class="nav-btn-outline" onclick="window.location.href='/accueil.html'">Accueil</button>
+    <button id="btn-nav-creer-compte" class="nav-btn-primary" onclick="window.location.href='/adhesion.html'">Créer un compte</button>
+    <button class="navbar-hamburger" id="navbar-hamburger" aria-label="Menu" type="button">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </div>
 </nav>
+
+<div class="navbar-mobile-menu" id="navbar-mobile-menu"></div>
 
 <div class="login-center">
 <div class="login-wrapper">
@@ -240,6 +271,36 @@
   import { chargerTraductions, appliquerTraductions, chargerPaysLangues } from '/src/js/i18n.js'
   import { initTheme } from '/src/js/theme.js'
   import { initTraductionAuto } from '/src/js/translator.js'
+
+  // Menu mobile (hamburger) — câblé en tout premier, avant tout appel réseau.
+  const navbarActions = document.querySelector('.navbar-actions')
+  const menuMobile = document.getElementById('navbar-mobile-menu')
+  const btnHamburger = document.getElementById('navbar-hamburger')
+  const controlesRepositionnables = [
+    document.getElementById('btn-theme'),
+    document.getElementById('btn-nav-accueil'),
+    document.getElementById('btn-nav-creer-compte')
+  ]
+  const mqMobile = window.matchMedia('(max-width: 639px)')
+  function ajusterNavbarMobile(e) {
+    const estMobile = e ? e.matches : mqMobile.matches
+    controlesRepositionnables.forEach(el => {
+      if (!el) return
+      if (estMobile && el.parentElement !== menuMobile) menuMobile.appendChild(el)
+      else if (!estMobile && el.parentElement !== navbarActions) navbarActions.insertBefore(el, btnHamburger)
+    })
+  }
+  ajusterNavbarMobile()
+  mqMobile.addEventListener('change', ajusterNavbarMobile)
+
+  window.fermerMenuMobile = () => menuMobile.classList.remove('open')
+  btnHamburger.addEventListener('click', (e) => {
+    e.stopPropagation()
+    menuMobile.classList.toggle('open')
+  })
+  document.addEventListener('click', (e) => {
+    if (!menuMobile.contains(e.target) && e.target !== btnHamburger) fermerMenuMobile()
+  })
 
   initTheme()
 
