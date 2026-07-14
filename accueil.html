@@ -77,6 +77,10 @@
     }
     .navbar-mobile-menu .nav-btn-secondary,
     .navbar-mobile-menu .nav-btn-primary { text-align: center; }
+    #mobile-menu-controles:empty { display: none !important; }
+    #mobile-menu-controles #pays-combobox-container,
+    #mobile-menu-controles #btn-theme { flex-shrink: 0; }
+    #mobile-menu-controles .pays-combobox-dropdown { left: 0; right: auto; }
 
     /* ── HERO ───────────────────────────────────────────────────── */
     .hero-wrapper {
@@ -561,6 +565,7 @@
       .navbar { padding: 0 24px; }
       .nav-link { display: none; }
       .nav-btn-secondary { display: none; }
+      .navbar-actions > .nav-btn-primary { display: none; }
       .navbar-hamburger { display: flex; }
       .how-grid { grid-template-columns: 1fr; border-radius: 16px; }
       .how-step { border-right: none; border-bottom: 1px solid var(--border); }
@@ -574,7 +579,6 @@
     @media (max-width: 639px) {
       .navbar { padding: 0 16px; height: 60px; }
       .navbar-mobile-menu { top: 60px; }
-      #pays-combobox-container { display: none; }
       .hero-wrapper { padding: 48px 16px 40px; }
       .hero h1 { letter-spacing: -.01em; }
       .hero-stat-value { font-size: 18px; }
@@ -638,8 +642,10 @@
 <div class="navbar-mobile-menu" id="navbar-mobile-menu">
   <span class="nav-link" onclick="document.querySelector('.how-section').scrollIntoView({behavior:'smooth'});fermerMenuMobile()">Comment ça marche</span>
   <span class="nav-link" onclick="document.querySelector('.tarifs-section').scrollIntoView({behavior:'smooth'});fermerMenuMobile()">Tarifs</span>
+  <div id="mobile-menu-controles" style="display:flex;gap:10px;align-items:center;"></div>
   <button class="nav-btn-secondary" onclick="window.location.href='/faire-un-don.html'">Faire un don</button>
   <button class="nav-btn-secondary" onclick="window.location.href='/login.html'">Se connecter</button>
+  <button class="nav-btn-primary" onclick="window.location.href='/adhesion.html'">Commencer</button>
 </div>
 
 <!-- HERO -->
@@ -1649,6 +1655,26 @@
   document.addEventListener('click', (e) => {
     if (!menuMobile.contains(e.target) && e.target !== btnHamburger) fermerMenuMobile()
   })
+
+  // Théme + sélecteur de pays : contrôles à ID unique, donc déplacés (pas dupliqués)
+  // dans le burger sur mobile pour rester accessibles.
+  const navbarActions = document.querySelector('.navbar-actions')
+  const mobileMenuControles = document.getElementById('mobile-menu-controles')
+  const controlesRepositionnables = [
+    document.getElementById('pays-combobox-container'),
+    document.getElementById('btn-theme')
+  ]
+  const mqMobile = window.matchMedia('(max-width: 899px)')
+  function ajusterControlesMobile(e) {
+    const estMobile = e ? e.matches : mqMobile.matches
+    controlesRepositionnables.forEach(el => {
+      if (!el) return
+      if (estMobile && el.parentElement !== mobileMenuControles) mobileMenuControles.appendChild(el)
+      else if (!estMobile && el.parentElement !== navbarActions) navbarActions.insertBefore(el, btnHamburger)
+    })
+  }
+  ajusterControlesMobile()
+  mqMobile.addEventListener('change', ajusterControlesMobile)
 
   initTheme()
   await chargerTraductions()
