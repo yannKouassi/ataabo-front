@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/src/css/main.css"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
     body { min-height: 100vh; background: var(--bg); font-family: inherit; overflow-x: hidden; }
 
     /* ── NAVBAR ─────────────────────────────────────────────────── */
@@ -587,8 +588,9 @@
       .tarifs-section { padding: 64px 16px; }
       .tarifs-grid { grid-template-columns: 1fr; gap: 14px; }
       .testimonials-section { padding: 64px 0; }
-      /* Orbit/pays section : contenir sur mobile */
-      #orbit-container { width: 100% !important; height: 220px !important; overflow: hidden; }
+      /* Orbit/pays section : le rayon est recalculé en JS selon la largeur réelle
+         du conteneur (voir orbit-scene), donc aucune contrainte de largeur ici. */
+      #orbit-scene { height: 220px; }
       /* CTA */
       .cta-bottom { margin: 0 12px 48px; padding: 48px 20px; border-radius: 16px; }
       .cta-bottom h2 { font-size: clamp(20px, 6vw, 32px); }
@@ -1459,8 +1461,8 @@
           <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
       </div>
-      <!-- Ellipse décorative SVG (correspond exactement au chemin des cartes) -->
-      <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);overflow:visible;pointer-events:none;" width="460" height="160" viewBox="-230 -80 460 160">
+      <!-- Ellipse décorative SVG (dimensions recalculées en JS pour suivre le rayon réel) -->
+      <svg id="orbit-decor-svg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);overflow:visible;pointer-events:none;max-width:100%;" width="460" height="160" viewBox="-230 -80 460 160">
         <ellipse cx="0" cy="0" rx="220" ry="70" fill="none" stroke="rgba(46,125,50,.18)" stroke-width="1.5" stroke-dasharray="6 4"/>
       </svg>
       <!-- Cards injectées par JS -->
@@ -1496,11 +1498,37 @@
   ]
 
   const scene = document.getElementById('orbit-scene')
+  const decorSvg = document.getElementById('orbit-decor-svg')
+  const decorEllipse = scene.querySelector('ellipse')
   const N = PAYS.length
-  const RX = 220   // rayon horizontal ellipse
-  const RY = 70    // rayon vertical ellipse (profondeur)
-  const CX = 0     // centre X relatif
-  const CY = 0     // centre Y relatif
+  const CARD_HALF_WIDTH = 65   // ~ moitié de la largeur d'une card (min-width:110px + marge)
+  const RATIO_RY = 70 / 220    // aspect de l'ellipse conservé à toutes les tailles
+
+  // Rayon recalculé selon la largeur réelle du conteneur, pour que les cards ne
+  // dépassent jamais sur mobile (au lieu d'un rayon fixe de 220px codé en dur).
+  let RX = 220
+  let RY = 70
+  function recalculerRayons() {
+    const largeurDispo = scene.clientWidth
+    RX = Math.max(60, Math.min(220, largeurDispo / 2 - CARD_HALF_WIDTH))
+    RY = RX * RATIO_RY
+    if (decorEllipse) {
+      decorEllipse.setAttribute('rx', RX)
+      decorEllipse.setAttribute('ry', RY)
+    }
+    if (decorSvg) {
+      const w = RX * 2 + 40, h = RY * 2 + 40
+      decorSvg.setAttribute('width', w)
+      decorSvg.setAttribute('height', h)
+      decorSvg.setAttribute('viewBox', `${-w/2} ${-h/2} ${w} ${h}`)
+    }
+  }
+  recalculerRayons()
+  let _resizeTimer
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeTimer)
+    _resizeTimer = setTimeout(recalculerRayons, 150)
+  })
 
   // Créer les cards
   const cards = PAYS.map((p, i) => {
@@ -1609,12 +1637,8 @@
   import { initTheme } from '/src/js/theme.js'
   import { initTraductionAuto } from '/src/js/translator.js'
 
-  initTheme()
-  await chargerTraductions()
-  appliquerTraductions()
-  initTraductionAuto()
-
-  // Menu mobile (hamburger)
+  // Menu mobile (hamburger) — câblé en tout premier, avant tout appel réseau,
+  // pour ne jamais dépendre d'un chargement (traductions, etc.) qui pourrait traîner.
   const menuMobile = document.getElementById('navbar-mobile-menu')
   const btnHamburger = document.getElementById('navbar-hamburger')
   window.fermerMenuMobile = () => menuMobile.classList.remove('open')
@@ -1625,6 +1649,11 @@
   document.addEventListener('click', (e) => {
     if (!menuMobile.contains(e.target) && e.target !== btnHamburger) fermerMenuMobile()
   })
+
+  initTheme()
+  await chargerTraductions()
+  appliquerTraductions()
+  initTraductionAuto()
 
   const API_BASE = window.location.hostname !== 'localhost'
     ? 'https://ataabo-api-production.up.railway.app/api'

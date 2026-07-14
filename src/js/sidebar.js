@@ -89,8 +89,14 @@ export async function buildSidebar() {
           <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;">Notifications</div>
           <div id="notif-list" style="padding:8px 0;max-height:320px;overflow-y:auto;"></div>
         `
-        btnNotif.parentElement.style.position = 'relative'
-        btnNotif.parentElement.appendChild(panel)
+        // Enveloppe autonome (bouton + panneau) pour pouvoir déplacer les deux ensemble
+        // (ex: vers la sidebar mobile) sans casser le positionnement du panneau.
+        const notifWrapper = document.createElement('span')
+        notifWrapper.id = 'topbar-notif-wrapper'
+        notifWrapper.style.cssText = 'position:relative;display:inline-flex;'
+        btnNotif.parentElement.insertBefore(notifWrapper, btnNotif)
+        notifWrapper.appendChild(btnNotif)
+        notifWrapper.appendChild(panel)
 
         // Toggle panneau
         btnNotif.addEventListener('click', (e) => {
@@ -216,6 +222,42 @@ export async function buildSidebar() {
       }).catch(() => {})
     }
   }
+
+  // ── Sur mobile, regrouper les icônes du topbar (thème, notifications, profil)
+  // dans la sidebar plutôt que de les laisser éparpillées dans le bandeau du haut —
+  // elles deviennent accessibles via le même bouton hamburger que la navigation.
+  // On déplace les éléments réels (pas des clones) pour conserver leurs handlers.
+  const mqMobile = window.matchMedia('(max-width: 767px)')
+  function ajusterControlesMobile(e) {
+    const estMobile = e.matches
+    const sidebarFooter = document.querySelector('.sidebar-footer')
+    const btnTheme = document.getElementById('btn-theme')
+    const notifWrapper = document.getElementById('topbar-notif-wrapper')
+    const topbarUser = document.getElementById('topbar-user')
+    if (!sidebarFooter || !btnTheme) return
+
+    if (estMobile) {
+      let host = document.getElementById('sidebar-mobile-controls')
+      if (!host) {
+        host = document.createElement('div')
+        host.id = 'sidebar-mobile-controls'
+        host.className = 'sidebar-mobile-controls'
+        sidebarFooter.insertBefore(host, sidebarFooter.firstChild)
+      }
+      if (btnTheme) host.appendChild(btnTheme)
+      if (notifWrapper) host.appendChild(notifWrapper)
+      if (topbarUser) host.appendChild(topbarUser)
+    } else {
+      const actionsEl = document.getElementById('topbar-actions') || document.querySelector('.topbar-actions')
+      if (actionsEl) {
+        if (btnTheme) actionsEl.appendChild(btnTheme)
+        if (notifWrapper) actionsEl.appendChild(notifWrapper)
+        if (topbarUser) actionsEl.appendChild(topbarUser)
+      }
+    }
+  }
+  ajusterControlesMobile(mqMobile)
+  mqMobile.addEventListener('change', ajusterControlesMobile)
 
   // ── Topbar : logo plateforme + pays (armoiries) ─────────────────
   // Injecté en JS pour éviter de toucher le markup de chaque page. Placé tout à

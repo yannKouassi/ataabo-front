@@ -284,6 +284,23 @@ img { max-width: 100%; }
   border-top: 1px solid var(--border);
 }
 
+/* Icônes topbar (thème, notifications, profil) déplacées ici sur mobile —
+   voir ajusterControlesMobile() dans sidebar.js */
+.sidebar-mobile-controls {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 4px 14px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 767px) {
+  .sidebar-mobile-controls { display: flex; }
+  .sidebar-mobile-controls .topbar-user { padding: 0; margin-left: 0; }
+  .sidebar-mobile-controls .topbar-user-info { display: block; }
+}
+
 /* =============================================
    TOPBAR
    ============================================= */
@@ -908,8 +925,8 @@ body.sidebar-open .sidebar-backdrop { display: block; }
 
   /* Filtres et barres d'action inline */
   .filter-row,
-  [style*="display:flex"][style*="flex-wrap"] select,
-  [style*="display:flex"][style*="flex-wrap"] input {
+  [style*="display:flex"][style*="flex-wrap"] select:not(.form-input-fixed),
+  [style*="display:flex"][style*="flex-wrap"] input:not(.form-input-fixed) {
     width: 100% !important;
     min-width: 0 !important;
   }
@@ -931,8 +948,10 @@ body.sidebar-open .sidebar-backdrop { display: block; }
     grid-template-columns: 1fr !important;
     max-width: 100% !important;
   }
-  /* width fixes sur selects et inputs inline */
-  select[style*="width"], input[style*="width"] { width: 100% !important; }
+  /* width fixes sur selects et inputs inline — sauf ceux volontairement étroits
+     et associés à un frère qui grandit (ex: indicatif téléphonique + numéro,
+     jour/année d'un sélecteur de date compact) : classe .form-input-fixed */
+  select[style*="width"]:not(.form-input-fixed), input[style*="width"]:not(.form-input-fixed) { width: 100% !important; }
 }
 
 /* =============================================

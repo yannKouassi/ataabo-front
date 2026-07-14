@@ -18,6 +18,11 @@
     .nav-btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
     .nav-btn-primary { font-size:14px; font-weight:700; color:#fff; background:var(--primary); border:none; padding:8px 18px; border-radius:9px; cursor:pointer; transition:opacity .15s; }
     .nav-btn-primary:hover { opacity:.9; }
+    .navbar-hamburger { display:none; width:38px; height:38px; border-radius:8px; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:var(--text); flex-shrink:0; }
+    .navbar-hamburger:hover { background:var(--bg); }
+    .navbar-mobile-menu { display:none; position:fixed; top:68px; left:0; right:0; z-index:99; flex-direction:column; gap:8px; padding:12px 16px 16px; background:var(--surface); border-bottom:1px solid var(--border); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    .navbar-mobile-menu.open { display:flex; }
+    .navbar-mobile-menu .nav-btn-secondary { display:block !important; width:100%; text-align:center; }
 
     .page-hero { max-width:900px; margin:0 auto; padding:56px 24px 32px; text-align:center; }
     .page-hero h1 { font-size:clamp(28px,3vw,40px); font-weight:900; letter-spacing:-.02em; margin-bottom:14px; }
@@ -83,9 +88,11 @@
     .detail-body p { font-size:13.5px; line-height:1.7; color:var(--text); white-space:pre-wrap; }
     .detail-meta { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
 
-    @media (max-width:767px) {
-      .navbar { padding:0 20px; }
-      .navbar-actions span.nav-link { display:none; }
+    @media (max-width:639px) {
+      .navbar { padding:0 16px; height:60px; }
+      .navbar-mobile-menu { top:60px; }
+      #pays-combobox-container, .navbar-actions > .nav-btn-secondary, .navbar-actions > .nav-btn-primary { display:none; }
+      .navbar-hamburger { display:flex; }
     }
   </style>
 </head>
@@ -100,8 +107,16 @@
     <div id="pays-combobox-container"></div>
     <button class="nav-btn-secondary" onclick="window.location.href='/accueil.html'">Accueil</button>
     <button class="nav-btn-primary" id="btn-faire-demande">Soumettre une demande</button>
+    <button class="navbar-hamburger" id="navbar-hamburger" aria-label="Menu" type="button">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </div>
 </nav>
+
+<div class="navbar-mobile-menu" id="navbar-mobile-menu">
+  <button class="nav-btn-primary" onclick="document.getElementById('btn-faire-demande').click();fermerMenuMobile()">Soumettre une demande</button>
+  <button class="nav-btn-secondary" onclick="window.location.href='/accueil.html'">Accueil</button>
+</div>
 
 <div class="page-hero">
   <h1>Faire un don</h1>
@@ -307,6 +322,18 @@
   import { toast } from '/src/js/toast.js'
   import { buildComboboxPays, getCodePays } from '/src/js/i18n.js'
   import { initTraductionAuto } from '/src/js/translator.js'
+
+  // Menu mobile (hamburger) — câblé en premier, avant tout appel réseau.
+  const menuMobile = document.getElementById('navbar-mobile-menu')
+  const btnHamburger = document.getElementById('navbar-hamburger')
+  window.fermerMenuMobile = () => menuMobile.classList.remove('open')
+  btnHamburger.addEventListener('click', (e) => {
+    e.stopPropagation()
+    menuMobile.classList.toggle('open')
+  })
+  document.addEventListener('click', (e) => {
+    if (!menuMobile.contains(e.target) && e.target !== btnHamburger) fermerMenuMobile()
+  })
 
   let demandesCache = []
   let demandeSelectionnee = null
