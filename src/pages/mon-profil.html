@@ -268,6 +268,19 @@
       titreCarte: 'Membership card', membre: 'Member'
     }
   }
+  // Valeurs d'énumérations (sexe, situation matrimoniale) : la fenêtre d'impression est un document
+  // isolé sans initTraductionAuto(), donc ces libellés doivent être traduits localement comme LABELS.
+  const SEXE_LABELS = {
+    fr: { MASCULIN: 'Masculin', FEMININ: 'Féminin', NEUTRE: 'Neutre' },
+    en: { MASCULIN: 'Male', FEMININ: 'Female', NEUTRE: 'Neutral' }
+  }
+  const SITUATION_LABELS = {
+    fr: { CELIBATAIRE: 'Célibataire', MARIE: 'Marié(e)', DIVORCE: 'Divorcé(e)', VEUF_VEUVE: 'Veuf/Veuve' },
+    en: { CELIBATAIRE: 'Single', MARIE: 'Married', DIVORCE: 'Divorced', VEUF_VEUVE: 'Widowed' }
+  }
+  // "Administrateur Organisation" (GRP_ADMIN_ORG) est un groupe système commun à toutes les
+  // organisations ; les groupes personnalisés restent en texte libre saisi par l'organisation.
+  const GROUPE_ADMIN_ORG_LABELS = { fr: 'Administrateur Organisation', en: 'Organization Administrator' }
 
   async function imprimerCarte(p) {
     const langue = PAYS_LANGUE_DEFAULT[ctx.codePays] || 'fr'
@@ -280,10 +293,11 @@
       ? `<img src="${p.urlPhotoDemandeur}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" crossorigin="anonymous"/>`
       : `<span style="font-size:22px;font-weight:800;color:#fff;">${initiales}</span>`
     const dateNaiss = p.dateNaissance ? new Date(p.dateNaissance).toLocaleDateString(langue === 'en' ? 'en-GB' : 'fr-FR') : '—'
-    const sexe = p.libSexe ? String(p.libSexe) : '—'
-    const situation = p.situationMatrimoniale ? String(p.situationMatrimoniale) : null
+    const sexe = p.libSexe ? (SEXE_LABELS[langue][p.libSexe] || String(p.libSexe)) : '—'
+    const situation = p.situationMatrimoniale ? (SITUATION_LABELS[langue][p.situationMatrimoniale] || String(p.situationMatrimoniale)) : null
     const tel = p.tel || '—'
-    const fonction = ctx.libelleFonction || ctx.libelleGroupe || L.membre
+    const libelleGroupe = ctx.codeGroupe === 'GRP_ADMIN_ORG' ? GROUPE_ADMIN_ORG_LABELS[langue] : ctx.libelleGroupe
+    const fonction = ctx.libelleFonction || libelleGroupe || L.membre
     const paysNom = ctx.libPays || nomPays(ctx.codePays, langue)
     const versoBg = ctx.urlArmoiries
       ? `<img src="${ctx.urlArmoiries}" style="width:100%;height:100%;object-fit:contain;" crossorigin="anonymous"/>`
@@ -429,7 +443,7 @@
         </div>
         <div class="v-right">
           <div class="v-row"><label>${L.numAdherent}</label><span>${ctx.numAdherent||'—'}</span></div>
-          <div class="v-row"><label>${L.groupe}</label><span>${ctx.libelleGroupe||'—'}</span></div>
+          <div class="v-row"><label>${L.groupe}</label><span>${libelleGroupe||'—'}</span></div>
           <div class="v-row"><label>${L.pays}</label><span>${paysNom}</span></div>
           ${ctx.dateEntree ? `<div class="v-row"><label>${L.membreDepuis}</label><span>${new Date(ctx.dateEntree).toLocaleDateString(langue === 'en' ? 'en-GB' : 'fr-FR')}</span></div>` : ''}
           <div class="v-title">${L.carteDeMembre}</div>
