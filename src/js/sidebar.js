@@ -286,14 +286,16 @@ export async function buildSidebar() {
     }
   }
 
-  const footerEl = document.querySelector('.sidebar-footer')
-  if (footerEl && ctx.orgId !== 'PLATEFORME' && !document.getElementById('sidebar-brand')) {
+  // Bande de branding plateforme tout en haut de la sidebar, au-dessus du logo/nom
+  // d'organisation — visible immédiatement sans perturber la mise en page existante.
+  const sidebarEl = document.querySelector('.sidebar')
+  if (sidebarEl && ctx.orgId !== 'PLATEFORME' && !document.getElementById('sidebar-brand')) {
     const brand = document.createElement('div')
     brand.id = 'sidebar-brand'
     brand.className = 'sidebar-brand'
     const logoImg = ctx.urlLogoPlateforme ? `<img src="${ctx.urlLogoPlateforme}" alt=""/>` : ''
     brand.innerHTML = `${logoImg}<span>Propulsé par ${ctx.nomPlateforme || 'UnioNova'}</span>`
-    footerEl.insertBefore(brand, footerEl.firstChild)
+    sidebarEl.insertBefore(brand, sidebarEl.firstChild)
   }
 
   // Construire les menus
