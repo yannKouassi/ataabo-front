@@ -217,6 +217,36 @@ export async function buildSidebar() {
     }
   }
 
+  // ── Topbar : logo plateforme + pays (armoiries) ─────────────────
+  // Injecté en JS pour éviter de toucher le markup de chaque page. Placé tout à
+  // gauche de la topbar, devant la barre de recherche (qui reste inchangée).
+  const topbarEl = document.querySelector('.topbar')
+  if (topbarEl && ctx.orgId !== 'PLATEFORME' && !document.getElementById('topbar-brand')) {
+    const brand = document.createElement('div')
+    brand.id = 'topbar-brand'
+    brand.className = 'topbar-brand'
+    const logoImg = ctx.urlLogoPlateforme
+      ? `<img src="${ctx.urlLogoPlateforme}" alt="" class="topbar-brand-logo" title="${ctx.nomPlateforme || 'UnioNova'}"/>`
+      : ''
+    const armoiriesImg = ctx.urlArmoiries
+      ? `<img src="${ctx.urlArmoiries}" alt="" class="topbar-brand-armoiries"/>`
+      : ''
+    const paysNom = ctx.libPays
+      ? `<span class="topbar-brand-pays">${ctx.libPays}</span>`
+      : ''
+    brand.innerHTML = `${logoImg}${armoiriesImg}${paysNom}`
+    topbarEl.insertBefore(brand, topbarEl.firstChild)
+
+    // Certaines pages réservent un emplacement de recherche vide (jamais utilisé,
+    // simplement invisible) — il laisse un grand vide à côté du nouveau bloc. On ne
+    // le masque que s'il est réellement vide, pour ne pas toucher aux pages qui ont
+    // une vraie barre de recherche fonctionnelle.
+    const searchEl = document.querySelector('.topbar-search')
+    if (searchEl && !searchEl.children.length) {
+      searchEl.style.display = 'none'
+    }
+  }
+
   // Logo + nom organisation
   const logoEl = document.getElementById('sidebar-org-logo')
   const nameEl = document.getElementById('sidebar-org-name')
@@ -254,48 +284,6 @@ export async function buildSidebar() {
     })
   } else if (ctx.urlLogo) {
     afficherLogo(ctx.urlLogo)
-  }
-
-  // Pays (drapeau/armoiries) + branding plateforme — injectés en JS pour éviter de
-  // toucher le markup de chaque page. Regroupe le nom d'organisation et le pays
-  // dans un même bloc pour garder la mise en page compacte.
-  if (nameEl && !document.getElementById('sidebar-header-info')) {
-    const wrapper = document.createElement('div')
-    wrapper.id = 'sidebar-header-info'
-    wrapper.className = 'sidebar-header-info'
-    nameEl.parentNode.insertBefore(wrapper, nameEl)
-    wrapper.appendChild(nameEl)
-
-    const paysRow = document.createElement('div')
-    paysRow.id = 'sidebar-pays-row'
-    paysRow.className = 'sidebar-pays-row'
-    paysRow.style.display = 'none'
-    paysRow.innerHTML = `<img id="sidebar-armoiries" class="sidebar-armoiries" alt=""/><span id="sidebar-pays-nom" class="sidebar-pays-nom"></span>`
-    wrapper.appendChild(paysRow)
-  }
-
-  if (ctx.libPays) {
-    const paysRow = document.getElementById('sidebar-pays-row')
-    const armoiriesEl = document.getElementById('sidebar-armoiries')
-    const paysNomEl = document.getElementById('sidebar-pays-nom')
-    if (paysRow && paysNomEl) {
-      paysNomEl.textContent = ctx.libPays
-      if (armoiriesEl) armoiriesEl.style.display = ctx.urlArmoiries ? '' : 'none'
-      if (armoiriesEl && ctx.urlArmoiries) armoiriesEl.src = ctx.urlArmoiries
-      paysRow.style.display = 'flex'
-    }
-  }
-
-  // Bande de branding plateforme tout en haut de la sidebar, au-dessus du logo/nom
-  // d'organisation — visible immédiatement sans perturber la mise en page existante.
-  const sidebarEl = document.querySelector('.sidebar')
-  if (sidebarEl && ctx.orgId !== 'PLATEFORME' && !document.getElementById('sidebar-brand')) {
-    const brand = document.createElement('div')
-    brand.id = 'sidebar-brand'
-    brand.className = 'sidebar-brand'
-    const logoImg = ctx.urlLogoPlateforme ? `<img src="${ctx.urlLogoPlateforme}" alt=""/>` : ''
-    brand.innerHTML = `${logoImg}<span>Propulsé par ${ctx.nomPlateforme || 'UnioNova'}</span>`
-    sidebarEl.insertBefore(brand, sidebarEl.firstChild)
   }
 
   // Construire les menus
