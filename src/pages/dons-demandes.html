@@ -94,9 +94,20 @@
       <p id="detail-motif"></p>
     </div>
     <div class="modal-footer">
-      <a class="btn btn-secondary" id="detail-justif-link" href="#" target="_blank" rel="noopener">Voir le justificatif</a>
+      <button class="btn btn-secondary" id="detail-justif-link">Voir le justificatif</button>
       <button class="btn btn-primary" id="detail-btn-contribuer">Je contribue</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal : justificatif en grand -->
+<div class="modal-overlay" id="modal-justificatif" style="display:none;">
+  <div class="modal" style="max-width:720px;width:90vw;">
+    <div class="modal-header">
+      <span class="modal-title">Justificatif</span>
+      <button class="modal-close" id="modal-justificatif-close">&times;</button>
+    </div>
+    <div class="modal-body" id="justificatif-body" style="padding:0;max-height:80vh;overflow:auto;"></div>
   </div>
 </div>
 
@@ -207,7 +218,7 @@
             <div class="don-progress-label"><span>${fmtMontant(d.montantCollecte, d.devise)}</span><span>Objectif : ${fmtMontant(d.montantSouhaite, d.devise)}</span></div>
           </div>` : ''}
         <div class="don-card-footer">
-          <a class="don-justif-link" href="${d.urlJustificatif}" target="_blank" rel="noopener">Voir le justificatif</a>
+          <button class="don-justif-link" onclick="ouvrirJustificatif('${d.urlJustificatif}')" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;">Voir le justificatif</button>
           ${perm.peutEcrire ? `<button class="btn btn-primary btn-sm" onclick="ouvrirContribution('${d.id}')">Je contribue</button>` : ''}
         </div>
       </div>`
@@ -241,13 +252,34 @@
       <span class="don-pays">${d.libPays || ''}</span>
       ${estFinancier ? `<span class="don-pays">Objectif : ${fmtMontant(d.montantSouhaite, d.devise)}</span>` : ''}`
     document.getElementById('detail-motif').textContent = d.motif
-    document.getElementById('detail-justif-link').href = d.urlJustificatif
+    document.getElementById('detail-justif-link').onclick = () => ouvrirJustificatif(d.urlJustificatif)
     const btnContribuer = document.getElementById('detail-btn-contribuer')
     btnContribuer.style.display = perm.peutEcrire ? 'inline-block' : 'none'
     btnContribuer.onclick = () => { modalDetail.style.display = 'none'; ouvrirContribution(id) }
     modalDetail.style.display = 'flex'
   }
   document.getElementById('modal-detail-close').addEventListener('click', () => { modalDetail.style.display = 'none' })
+
+  // ── Justificatif en grand ──────────────────────────────
+  const modalJustificatif = document.getElementById('modal-justificatif')
+  window.ouvrirJustificatif = function (url) {
+    const body = document.getElementById('justificatif-body')
+    const estPdf = /\.pdf(\?|$)/i.test(url)
+    // Aperçu JPG de la page 1 pour un PDF (même astuce que admin-organisations-attente.html) —
+    // contourne la restriction de livraison PDF de Cloudinary sans avoir besoin de signer l'URL.
+    if (estPdf) {
+      const previewUrl = url.replace('/upload/', '/upload/pg_1,f_jpg,w_1000/')
+      body.innerHTML = `
+        <img src="${previewUrl}" style="width:100%;display:block;" alt="Justificatif (page 1)"/>
+        <div style="text-align:center;padding:10px;">
+          <a href="${url}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Ouvrir le PDF complet ↗</a>
+        </div>`
+    } else {
+      body.innerHTML = `<img src="${url}" style="width:100%;display:block;" alt="Justificatif"/>`
+    }
+    modalJustificatif.style.display = 'flex'
+  }
+  document.getElementById('modal-justificatif-close').addEventListener('click', () => { modalJustificatif.style.display = 'none' })
 
   // ── Contribution organisation ────────────────────────
   const modalContribuer = document.getElementById('modal-contribuer')
