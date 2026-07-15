@@ -427,6 +427,7 @@ const NAV_PAGES = {
     '/admin/situation-matrimoniale':  '/src/pages/admin-referentiel.html?type=situation-matrimoniale',
     '/admin/type-evenements':         '/src/pages/admin-referentiel.html?type=types-evenements',
     '/admin/messages':                '/src/pages/admin-messages.html',
+    '/admin/utilisateurs':            '/src/pages/admin-utilisateurs.html',
     // Organisation
     '/organisation/params/infos':     '/src/pages/params-organisation.html',
     '/organisation/params/groupes':   '/src/pages/groupes-organisation.html',

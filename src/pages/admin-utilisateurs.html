@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="/img.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UnioNova — Utilisateurs plateforme</title>
+  <link rel="stylesheet" href="/src/css/main.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div id="sidebar-org-logo"></div>
+      <div><div class="sidebar-org-name" id="sidebar-org-name">Organisation</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" id="btn-logout">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Déconnexion</span>
+      </div>
+    </div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Nom, prénom ou email..."/>
+    </div>
+    <div class="topbar-actions"></div>
+  </header>
+
+  <main class="main-content">
+    <div style="margin-bottom:24px;">
+      <div class="page-title">Utilisateurs plateforme</div>
+      <div class="page-subtitle" id="subtitle">Chargement…</div>
+    </div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Type :</span>
+        <button class="btn btn-secondary filtre-type active" data-type="">Tous</button>
+        <button class="btn btn-ghost filtre-type" data-type="ADHERENT">Adhérents</button>
+        <button class="btn btn-ghost filtre-type" data-type="LAMBDA">Utilisateurs lambda</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">Créé du :</span>
+        <input type="date" id="filtre-date-debut" class="form-input" style="padding:6px 10px;font-size:13px;width:150px;"/>
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);">au :</span>
+        <input type="date" id="filtre-date-fin" class="form-input" style="padding:6px 10px;font-size:13px;width:150px;"/>
+        <button class="btn btn-sm btn-outline" id="btn-reset-filtres">Réinitialiser</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Organisations</th>
+              <th>Rôle</th>
+              <th>Créé le</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-personnes">
+            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal détail personne -->
+<div class="modal-overlay" id="modal-detail" style="display:none;">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-titre">Détail utilisateur</span>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-fermer-detail">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireContexte, getContexte, logout, applyOrgColor } from '/src/js/auth.js'
+  import { buildSidebar } from '/src/js/sidebar.js'
+  import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
+
+  if (!requireContexte()) throw new Error()
+  const ctx = getContexte()
+  if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
+  buildSidebar()
+  document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  let timerRecherche = null
+  let typeActif = ''
+
+  async function charger() {
+    const tbody = document.getElementById('tbody-personnes')
+    try {
+      const params = new URLSearchParams()
+      const recherche = document.getElementById('search-input').value.trim()
+      const dateDebut = document.getElementById('filtre-date-debut').value
+      const dateFin = document.getElementById('filtre-date-fin').value
+      if (recherche) params.set('recherche', recherche)
+      if (dateDebut) params.set('dateDebut', dateDebut)
+      if (dateFin) params.set('dateFin', dateFin)
+      if (typeActif) params.set('type', typeActif)
+      const qs = params.toString() ? `?${params}` : ''
+
+      const personnes = await api.get(`/admin/personnes${qs}`)
+      document.getElementById('subtitle').textContent =
+        `${personnes.length} utilisateur${personnes.length > 1 ? 's' : ''} sur la plateforme`
+
+      if (!personnes.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucun utilisateur trouvé</p></div></td></tr>`
+        return
+      }
+
+      tbody.innerHTML = personnes.map(p => `
+        <tr style="cursor:pointer;" data-id="${p.idPersonne}">
+          <td style="font-weight:600;">${(p.prenom || '') + ' ' + (p.nom || '')}</td>
+          <td style="font-size:13px;">${p.email || '—'}</td>
+          <td style="font-size:13px;">${p.tel || '—'}</td>
+          <td><span class="badge badge-secondary">${p.nombreOrganisations}</span></td>
+          <td>${p.role === 'ADMIN' ? '<span class="badge badge-warning">Admin</span>' : '<span class="badge badge-secondary">Utilisateur</span>'}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${p.dateCreation ? new Date(p.dateCreation).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>${badgeStatut(p)}</td>
+        </tr>
+      `).join('')
+
+      tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+        tr.addEventListener('click', () => voirDetail(tr.dataset.id))
+      })
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" style="color:#b91c1c;padding:20px;">${err.message}</td></tr>`
+    }
+  }
+
+  function badgeStatut(p) {
+    if (p.bloque) return `<span class="badge badge-danger">Bloqué</span>`
+    if (!p.emailVerified) return `<span class="badge badge-warning">Email non vérifié</span>`
+    return `<span class="badge badge-success">Actif</span>`
+  }
+
+  async function voirDetail(idPersonne) {
+    document.getElementById('modal-titre').textContent = 'Détail utilisateur'
+    document.getElementById('modal-body').innerHTML = `<div class="page-loader"><div class="spinner"></div></div>`
+    document.getElementById('modal-detail').style.display = 'flex'
+
+    try {
+      const p = await api.get(`/admin/personnes/${idPersonne}`)
+      const orgsHtml = p.organisations.length
+        ? p.organisations.map(o => `
+            <div class="card" style="padding:12px 14px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-weight:700;font-size:13.5px;">${o.nomOrganisation || '—'}</span>
+                <span class="badge badge-secondary">${o.statut || '—'}</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:14px;">
+                <span>Fonction : ${o.libelleFonction || '—'}</span>
+                <span>N° adhérent : ${o.numAdherent || '—'}</span>
+                <span>Entrée : ${o.dateEntree ? new Date(o.dateEntree).toLocaleDateString('fr-FR') : '—'}</span>
+              </div>
+            </div>
+          `).join('')
+        : `<div class="empty-state"><p>Aucune organisation rejointe</p></div>`
+
+      document.getElementById('modal-body').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:0;margin-bottom:16px;">
+          ${ligne('Nom complet', (p.prenom || '') + ' ' + (p.nom || ''))}
+          ${ligne('Email', p.email)}
+          ${ligne('Téléphone', p.tel)}
+          ${ligne('Rôle plateforme', p.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur')}
+          ${ligne('Email vérifié', p.emailVerified ? 'Oui' : 'Non')}
+          ${ligne('Bloqué', p.bloque ? 'Oui' : 'Non')}
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
+          Organisations rejointes (${p.organisations.length})
+        </div>
+        ${orgsHtml}
+      `
+    } catch (err) {
+      document.getElementById('modal-body').innerHTML = `<p style="color:#b91c1c;">${err.message}</p>`
+    }
+  }
+
+  function ligne(label, val) {
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;color:var(--text-muted);">${label}</span>
+      <span style="font-size:13.5px;font-weight:600;">${val || '—'}</span>
+    </div>`
+  }
+
+  document.getElementById('modal-close').addEventListener('click', () => document.getElementById('modal-detail').style.display = 'none')
+  document.getElementById('btn-fermer-detail').addEventListener('click', () => document.getElementById('modal-detail').style.display = 'none')
+
+  document.getElementById('search-input').addEventListener('input', () => {
+    clearTimeout(timerRecherche)
+    timerRecherche = setTimeout(charger, 300)
+  })
+
+  document.querySelectorAll('.filtre-type').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filtre-type').forEach(b => b.className = 'btn btn-ghost filtre-type')
+      btn.className = 'btn btn-secondary filtre-type active'
+      typeActif = btn.dataset.type
+      charger()
+    })
+  })
+
+  document.getElementById('filtre-date-debut').addEventListener('change', charger)
+  document.getElementById('filtre-date-fin').addEventListener('change', charger)
+
+  document.getElementById('btn-reset-filtres').addEventListener('click', () => {
+    document.getElementById('search-input').value = ''
+    document.getElementById('filtre-date-debut').value = ''
+    document.getElementById('filtre-date-fin').value = ''
+    typeActif = ''
+    document.querySelectorAll('.filtre-type').forEach(b => b.className = 'btn btn-ghost filtre-type')
+    document.querySelector('.filtre-type[data-type=""]').className = 'btn btn-secondary filtre-type active'
+    charger()
+  })
+
+  charger()
+</script>
+</body>
+</html>
