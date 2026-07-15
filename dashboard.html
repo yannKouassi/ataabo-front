@@ -188,12 +188,15 @@
 </div>
 
 <script type="module">
-  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission, hasMenu } from '/src/js/auth.js'
   import { buildSidebar, getFirstAccessiblePage } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
 
   if (!requireContexte()) throw new Error()
-  if (!getPermission('/dashboard').peutLire) { window.location.href = getFirstAccessiblePage('/dashboard.html'); throw new Error() }
+  // hasMenu() : si AUCUNE permission (ni le menu, ni ses sous-menus) n'existe, le menu est absent
+  // de ctx.menus et getPermission() retombe sur son défaut permissif (peutLire: true, pensé pour
+  // les pages hors système d'habilitations) — il faut donc vérifier la présence en plus du droit.
+  if (!hasMenu('/dashboard') || !getPermission('/dashboard').peutLire) { window.location.href = getFirstAccessiblePage('/dashboard.html'); throw new Error() }
   const ctx = getContexte()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
