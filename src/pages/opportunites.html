@@ -110,7 +110,10 @@
           ${o.type ? `<span class="badge ${TYPE_COULEUR[o.type] || 'badge-secondary'}" style="flex-shrink:0;">${o.type}</span>` : ''}
         </div>
         <div style="font-size:13px;color:var(--text-muted);line-height:1.5;flex:1;">${o.description || ''}</div>
-        ${o.montant ? `<div style="font-size:12.5px;font-weight:600;color:var(--primary);">💰 ${o.montant}</div>` : ''}
+        ${o.montant ? `<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--primary);">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;"><circle cx="12" cy="12" r="8"/><path d="M12 6v12M9 9.5c0-1.1 1.3-2 3-2s3 .9 3 2-1.3 1.5-3 2-3 .9-3 2 1.3 2 3 2 3-.9 3-2"/></svg>
+          ${o.montant}
+        </div>` : ''}
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid var(--border);padding-top:10px;">
           <span style="font-size:11px;color:var(--text-muted);">${o.dateDetection ? new Date(o.dateDetection).toLocaleDateString('fr-FR') : ''}</span>
           ${o.url ? `<a href="${o.url}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="font-size:12px;">En savoir plus →</a>` : ''}
