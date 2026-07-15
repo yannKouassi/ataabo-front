@@ -43,61 +43,114 @@
   </header>
 
   <main class="main-content">
-    <div style="margin-bottom:24px;">
-      <div class="page-title">Recherche d'opportunités</div>
-      <div class="page-subtitle">Découvrez les organisations partenaires et les initiatives disponibles</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+      <div>
+        <div class="page-title">Opportunités</div>
+        <div class="page-subtitle" id="subtitle">Chargement…</div>
+      </div>
+      <button class="btn btn-secondary" id="btn-actualiser">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:6px;">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser maintenant
+      </button>
     </div>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;" id="orgs-grid">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px;" id="opps-grid">
       <div class="page-loader"><div class="spinner"></div></div>
     </div>
   </main>
 </div>
 
 <script type="module">
-  import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
+  import { requireContexte, getContexte, logout, applyOrgColor } from '/src/js/auth.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
+  import { toast } from '/src/js/toast.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
-  const user = getUser()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
 
+  const TYPE_COULEUR = {
+    'Subvention': 'badge-success',
+    'Appel à projets': 'badge-secondary',
+    'Investissement': 'badge-warning',
+  }
+
+  function afficherSujet(derniereMiseAJour) {
+    const nomPays = ctx.libPays || 'votre pays'
+    if (!derniereMiseAJour) {
+      document.getElementById('subtitle').textContent = `Opportunités pour ${nomPays} — jamais actualisé`
+    } else {
+      const d = new Date(derniereMiseAJour).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+      document.getElementById('subtitle').textContent = `Opportunités pour ${nomPays} — dernière mise à jour : ${d}`
+    }
+  }
+
+  function afficherOpportunites(data) {
+    const grid = document.getElementById('opps-grid')
+    afficherSujet(data.derniereMiseAJour)
+
+    if (!data.opportunites || !data.opportunites.length) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <p>Aucune opportunité en cache pour l'instant.</p>
+          <p style="font-size:12.5px;color:var(--text-muted);margin-top:4px;">Cliquez sur "Actualiser maintenant" pour lancer une première recherche.</p>
+        </div>`
+      return
+    }
+
+    grid.innerHTML = data.opportunites.map(o => `
+      <div class="card" style="padding:20px;cursor:default;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="font-weight:700;font-size:14.5px;line-height:1.35;">${o.titre || 'Opportunité'}</div>
+          ${o.type ? `<span class="badge ${TYPE_COULEUR[o.type] || 'badge-secondary'}" style="flex-shrink:0;">${o.type}</span>` : ''}
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.5;flex:1;">${o.description || ''}</div>
+        ${o.montant ? `<div style="font-size:12.5px;font-weight:600;color:var(--primary);">💰 ${o.montant}</div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid var(--border);padding-top:10px;">
+          <span style="font-size:11px;color:var(--text-muted);">${o.dateDetection ? new Date(o.dateDetection).toLocaleDateString('fr-FR') : ''}</span>
+          ${o.url ? `<a href="${o.url}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="font-size:12px;">En savoir plus →</a>` : ''}
+        </div>
+      </div>
+    `).join('')
+  }
+
   async function charger() {
-    const grid = document.getElementById('orgs-grid')
+    const grid = document.getElementById('opps-grid')
     try {
-      const orgs = await api.get('/organisations/actives')
-      if (!orgs || orgs.length === 0) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><p>Aucune organisation disponible pour le moment.</p></div>`
-        return
-      }
-      grid.innerHTML = orgs
-        .filter(o => o.id !== ctx.orgId)
-        .map(o => `
-          <div class="card" style="padding:20px;cursor:default;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-              <div style="width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;">
-                ${(o.nomOrganisation||o.nom||'?')[0].toUpperCase()}
-              </div>
-              <div>
-                <div style="font-weight:700;font-size:14px;">${o.nomOrganisation || o.nom || '—'}</div>
-                <div style="font-size:12px;color:var(--text-muted);">${o.typeOrganisation || ''} · ${o.pays || o.codePays || ''}</div>
-              </div>
-            </div>
-            <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">${(o.description||'Aucune description disponible.').substring(0,120)}${(o.description||'').length>120?'…':''}</div>
-            ${o.emailContact||o.emailAssociation ? `<div style="margin-top:12px;font-size:12px;color:var(--text-muted);">📧 ${o.emailContact||o.emailAssociation}</div>` : ''}
-          </div>
-        `).join('')
-      if (!grid.innerHTML.trim() || grid.innerHTML === '') {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><p>Vous êtes la seule organisation sur la plateforme pour l'instant.</p></div>`
-      }
-    } catch(err) {
+      const data = await api.get(`/opportunites?orgId=${ctx.orgId}`)
+      afficherOpportunites(data)
+    } catch (err) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><p style="color:#b91c1c;">Erreur : ${err.message}</p></div>`
     }
   }
+
+  async function actualiser() {
+    const btn = document.getElementById('btn-actualiser')
+    const grid = document.getElementById('opps-grid')
+    btn.disabled = true
+    btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span> Recherche en cours…`
+    grid.innerHTML = `<div class="page-loader" style="grid-column:1/-1;"><div class="spinner"></div></div>`
+    try {
+      const data = await api.post(`/opportunites/actualiser?orgId=${ctx.orgId}`)
+      afficherOpportunites(data)
+      toast.success('Opportunités actualisées.')
+    } catch (err) {
+      toast.error(err.message)
+      charger()
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:6px;">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg> Actualiser maintenant`
+    }
+  }
+
+  document.getElementById('btn-actualiser').addEventListener('click', actualiser)
 
   charger()
 </script>

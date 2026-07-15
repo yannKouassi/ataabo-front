@@ -56,6 +56,8 @@
         </table>
       </div>
     </div>
+
+    <div class="card" style="margin-top:20px; padding:16px 20px;" id="historique-container"></div>
   </main>
 </div>
 
@@ -96,12 +98,15 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
   document.getElementById('btn-logout').addEventListener('click', () => { if (confirm('Se déconnecter ?')) logout() })
+
+  buildHistorique('historique-container', 50, ['organisation approuvée', 'organisation rejetée'], { orgId: ctx.orgId })
 
   let orgARejeterId = null
 
@@ -201,6 +206,7 @@
         toast.success('Organisation approuvée ! Le fondateur peut maintenant accéder à la plateforme.')
         document.getElementById('modal-detail').style.display = 'none'
         charger()
+        rafraichirHistorique('historique-container')
       } catch(err) {
         toast.error(err.message)
       }
@@ -233,6 +239,7 @@
       toast.success('Dossier rejeté.')
       document.getElementById('modal-rejet').style.display = 'none'
       charger()
+      rafraichirHistorique('historique-container')
     } catch(err) {
       toast.error(err.message)
     }
