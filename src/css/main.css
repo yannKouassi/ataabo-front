@@ -432,6 +432,9 @@ img { max-width: 100%; }
   padding: 28px 28px;
   min-height: calc(100vh - var(--topbar-height));
   flex: 1;
+  /* Item flex de .app-layout : sans min-width:0, il refuse de rétrécir sous
+     le min-content de son contenu (table large…) et élargit toute la page. */
+  min-width: 0;
 }
 
 .page-title { font-size: 24px; font-weight: 700; color: var(--text); }
@@ -913,7 +916,14 @@ body.sidebar-open .sidebar-backdrop { display: block; }
     -webkit-overflow-scrolling: touch;
     overflow-x: auto;
   }
-  table { min-width: 480px; }
+  .table-wrapper table { min-width: 480px; }
+  /* Tables hors .table-wrapper : scroll interne au lieu d'élargir la page */
+  :not(.table-wrapper) > table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
   th, td { padding: 8px 10px; font-size: 12.5px; white-space: nowrap; }
 
   /* Page header */
@@ -943,9 +953,15 @@ body.sidebar-open .sidebar-backdrop { display: block; }
   /* Badge / pill : pas de wrapping */
   .badge { white-space: nowrap; }
 
-  /* ── Grilles inline → colonne unique sur mobile ── */
+  /* Rangées flex inline sans flex-wrap : autoriser le passage à la ligne
+     sur mobile plutôt que de déborder (filtres date, barres d'actions…) */
+  [style*="display:flex"]:not([style*="flex-wrap"]) { flex-wrap: wrap; }
+
+  /* ── Grilles inline → colonne unique sur mobile ──
+     minmax(0,1fr) et non 1fr : un track 1fr ne descend jamais sous le
+     min-content de son contenu (ex. table large), ce qui élargit la page. */
   [style*="grid-template-columns"] {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     max-width: 100% !important;
   }
   /* width fixes sur selects et inputs inline — sauf ceux volontairement étroits

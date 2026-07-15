@@ -20,7 +20,7 @@
     .graphique-body { animation:slideDown .2s ease; }
     @keyframes slideDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
     @media(max-width:767px){
-      #stats-grid { grid-template-columns:1fr 1fr !important; }
+      #stats-grid { grid-template-columns:repeat(2, minmax(0,1fr)) !important; }
       #filtre-bar { flex-direction:column;align-items:stretch !important; }
     }
   </style>

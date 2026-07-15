@@ -70,7 +70,19 @@ async function request(method, path, body = null) {
   return text ? JSON.parse(text) : null
 }
 
-async function tryRefresh() {
+// Verrou anti-course : le refresh token est à usage unique (rotation).
+// Si plusieurs requêtes reçoivent 401 en même temps, elles doivent partager
+// UNE seule tentative de refresh — sinon la 2e consomme un token déjà invalidé
+// et déconnecte l'utilisateur.
+let _refreshEnCours = null
+
+function tryRefresh() {
+  if (_refreshEnCours) return _refreshEnCours
+  _refreshEnCours = _doRefresh().finally(() => { _refreshEnCours = null })
+  return _refreshEnCours
+}
+
+async function _doRefresh() {
   const refreshToken = localStorage.getItem('refreshToken')
   if (!refreshToken) return false
   try {
