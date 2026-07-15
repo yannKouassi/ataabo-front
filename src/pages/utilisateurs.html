@@ -46,10 +46,16 @@
         <div class="page-title">Utilisateurs</div>
         <div class="page-subtitle">Liste des comptes utilisateurs de l'organisation</div>
       </div>
-      <button class="btn btn-outline btn-print" onclick="window.print()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimer
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" id="btn-export-csv">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
+        <button class="btn btn-outline btn-print" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
     </div>
 
     <!-- Filtres -->
@@ -112,6 +118,7 @@
 
   let page = 0, totalPages = 1
   let tousLesUtilisateurs = []
+  let itemsFiltresCache = []
 
   async function charger() {
     const tbody = document.getElementById('tbody-utilisateurs')
@@ -136,6 +143,8 @@
       (u.emailPersonne || '').toLowerCase().includes(recherche) ||
       (u.numAdherent || '').toLowerCase().includes(recherche)
     )
+
+    itemsFiltresCache = items
 
     const pageSize = 20
     totalPages = Math.max(1, Math.ceil(items.length / pageSize))
@@ -180,6 +189,24 @@
       <button class="btn btn-ghost btn-sm" ${page===0?'disabled':''} onclick="changerPage(${page-1})">←</button>
       <button class="btn btn-ghost btn-sm" ${page>=totalPages-1?'disabled':''} onclick="changerPage(${page+1})">→</button>`
   }
+
+  function exporterCSV() {
+    const entete = ['Prénom', 'Nom', 'Email', 'N° Adhérent', 'Groupe / Rôle', 'Statut', 'Depuis']
+    const lignes = itemsFiltresCache.map(u => [
+      u.prenomPersonne || '', u.nomPersonne || '', u.emailPersonne || '', u.numAdherent || '',
+      u.libelleGroupe || '', u.statut || '',
+      u.dateCreation ? new Date(u.dateCreation).toLocaleDateString('fr-FR') : '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    const csv  = '﻿' + [entete.join(';'), ...lignes].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `utilisateurs-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  document.getElementById('btn-export-csv').addEventListener('click', exporterCSV)
 
   function badgeStatut(statut, id) {
     const map   = { ACTIF: 'badge-success', INACTIF: 'badge-secondary', BANNI: 'badge-danger' }

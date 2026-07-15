@@ -49,10 +49,16 @@
         <div class="page-title">Adhérents</div>
         <div class="page-subtitle">Liste des membres de l'organisation</div>
       </div>
-      <button class="btn btn-outline btn-print" onclick="window.print()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimer
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" id="btn-export-csv">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
+        <button class="btn btn-outline btn-print" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
     </div>
 
     <!-- Filtres -->
@@ -162,6 +168,7 @@
   let totalPages = 0
 
   let tousLesAdherents = []
+  let itemsFiltresCache = []
 
   async function charger() {
     const tbody = document.getElementById('tbody-adherents')
@@ -188,6 +195,8 @@
       (a.email || '').toLowerCase().includes(recherche) ||
       (a.numAdherent || '').toLowerCase().includes(recherche)
     )
+
+    itemsFiltresCache = items
 
     if (!items.length) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucun adhérent trouvé</p></div></td></tr>`
@@ -234,6 +243,24 @@
     document.getElementById('pagination-info').textContent = `${debut + 1}–${Math.min(debut + size, items.length)} sur ${items.length} adhérents`
     afficherPagination()
   }
+
+  function exporterCSV() {
+    const entete = ['N° Adhérent', 'Prénom', 'Nom', 'Email', 'Date adhésion', 'Statut']
+    const lignes = itemsFiltresCache.map(a => [
+      a.numAdherent || '', a.prenom || '', a.nom || '', a.email || '',
+      a.dateAdhesion ? new Date(a.dateAdhesion).toLocaleDateString('fr-FR') : '',
+      a.statut || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    const csv  = '﻿' + [entete.join(';'), ...lignes].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `adherents-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  document.getElementById('btn-export-csv').addEventListener('click', exporterCSV)
 
   function badgeStatut(statut) {
     const map   = { ACTIF: 'badge-success', INACTIF: 'badge-secondary', BANNI: 'badge-danger', EN_ATTENTE: 'badge-warning' }

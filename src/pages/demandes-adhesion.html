@@ -48,10 +48,16 @@
         <div class="page-title">Demandes d'adhésion</div>
         <div class="page-subtitle">Gérer les demandes en attente de validation</div>
       </div>
-      <button class="btn btn-outline btn-print" onclick="window.print()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimer
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" id="btn-export-csv">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
+        <button class="btn btn-outline btn-print" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
     </div>
 
     <!-- Filtres statut -->
@@ -121,6 +127,7 @@
   const perm = getPermission(navUrl)
 
   let toutesLesDemandes = [], filtreActif = '', demandeActive = null
+  let itemsFiltresCache = []
 
   async function charger() {
     const tbody = document.getElementById('tbody-demandes')
@@ -149,6 +156,8 @@
       const email = (d.demandeur?.emailPersonne || '').toLowerCase()
       return nom.includes(q) || email.includes(q)
     })
+
+    itemsFiltresCache = items
 
     const tbody = document.getElementById('tbody-demandes')
     if (!items.length) {
@@ -184,6 +193,25 @@
     const l = { EN_ATTENTE: 'En attente', APPROUVE: 'Approuvée', REFUSE: 'Refusée' }
     return `<span class="badge ${m[s] || 'badge-secondary'}">${l[s] || s || '—'}</span>`
   }
+
+  function exporterCSV() {
+    const labels = { EN_ATTENTE: 'En attente', APPROUVE: 'Approuvée', REFUSE: 'Refusée' }
+    const entete = ['Prénom', 'Nom', 'Email', 'Date demande', 'Statut']
+    const lignes = itemsFiltresCache.map(d => [
+      d.demandeur?.prenPersonne || '', d.demandeur?.nomPersonne || '', d.demandeur?.emailPersonne || '',
+      d.dateDemandeAdhesion ? new Date(d.dateDemandeAdhesion).toLocaleDateString('fr-FR') : '',
+      labels[d.statut] || d.statut || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    const csv  = '﻿' + [entete.join(';'), ...lignes].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `demandes-adhesion-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  document.getElementById('btn-export-csv').addEventListener('click', exporterCSV)
 
   function paginationBtns() {
     document.getElementById('pagination-btns').innerHTML = `

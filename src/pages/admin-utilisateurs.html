@@ -40,10 +40,16 @@
         <div class="page-title">Utilisateurs plateforme</div>
         <div class="page-subtitle" id="subtitle">Chargement…</div>
       </div>
-      <button class="btn btn-outline btn-print" onclick="window.print()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimer
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" id="btn-export-csv">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
+        <button class="btn btn-outline btn-print" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
+      </div>
     </div>
 
     <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
@@ -113,6 +119,7 @@
 
   let timerRecherche = null
   let typeActif = ''
+  let personnesCache = []
 
   async function charger() {
     const tbody = document.getElementById('tbody-personnes')
@@ -128,6 +135,7 @@
       const qs = params.toString() ? `?${params}` : ''
 
       const personnes = await api.get(`/admin/personnes${qs}`)
+      personnesCache = personnes
       document.getElementById('subtitle').textContent =
         `${personnes.length} utilisateur${personnes.length > 1 ? 's' : ''} sur la plateforme`
 
@@ -160,6 +168,36 @@
     if (p.bloque) return `<span class="badge badge-danger">Bloqué</span>`
     if (!p.emailVerified) return `<span class="badge badge-warning">Email non vérifié</span>`
     return `<span class="badge badge-success">Actif</span>`
+  }
+
+  function statutTexte(p) {
+    if (p.bloque) return 'Bloqué'
+    if (!p.emailVerified) return 'Email non vérifié'
+    return 'Actif'
+  }
+
+  // ─── Export CSV — contrairement à l'impression, capture toutes les lignes
+  // (filtrées) sans dépendre de la mise en page de l'écran. ──────────────
+  function exporterCSV() {
+    const entete = ['Prénom', 'Nom', 'Email', 'Téléphone', 'Organisations', 'Rôle', 'Créé le', 'Statut']
+    const lignes = personnesCache.map(p => [
+      p.prenom || '',
+      p.nom || '',
+      p.email || '',
+      p.tel || '',
+      p.nombreOrganisations,
+      p.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur',
+      p.dateCreation ? new Date(p.dateCreation).toLocaleDateString('fr-FR') : '',
+      statutTexte(p),
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    const csv  = '﻿' + [entete.join(';'), ...lignes].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `utilisateurs-plateforme-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function voirDetail(idPersonne) {
@@ -210,6 +248,8 @@
       <span style="font-size:13.5px;font-weight:600;">${val || '—'}</span>
     </div>`
   }
+
+  document.getElementById('btn-export-csv').addEventListener('click', exporterCSV)
 
   document.getElementById('modal-close').addEventListener('click', () => document.getElementById('modal-detail').style.display = 'none')
   document.getElementById('btn-fermer-detail').addEventListener('click', () => document.getElementById('modal-detail').style.display = 'none')

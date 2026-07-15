@@ -41,6 +41,10 @@
         <div class="page-subtitle">Dons émis par votre organisation vers d'autres bénéficiaires</div>
       </div>
       <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" id="btn-export-csv">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
         <button class="btn btn-outline btn-print" onclick="window.print()">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Imprimer
@@ -136,6 +140,7 @@
   let page = 0, totalPages = 1
   let donsParId = {}
   let editingDonId = null
+  let itemsCache = []
 
   async function chargerMoyens() {
     try {
@@ -165,6 +170,7 @@
         return
       }
       donsParId = {}
+      itemsCache = items
       items.forEach(d => { donsParId[d.id] = d })
       tbody.innerHTML = items.map(d => `
         <tr>
@@ -191,6 +197,23 @@
 
   const fmt = m => m != null ? new Intl.NumberFormat('fr-FR').format(m) + ' FCFA' : '—'
   window.changerPage = n => { page = n; charger() }
+
+  function exporterCSV() {
+    const entete = ['Bénéficiaire', 'Montant', 'Moyen', 'Date', 'Motif']
+    const lignes = itemsCache.map(d => [
+      d.beneficiaire || '', d.montant != null ? d.montant : '', d.libelleMoyen || '',
+      d.dateDon ? new Date(d.dateDon).toLocaleDateString('fr-FR') : '', d.motif || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    const csv  = '﻿' + [entete.join(';'), ...lignes].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `dons-emission-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  document.getElementById('btn-export-csv').addEventListener('click', exporterCSV)
 
   document.getElementById('btn-nouveau-don').addEventListener('click', () => {
     editingDonId = null
