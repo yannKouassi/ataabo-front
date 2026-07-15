@@ -428,6 +428,14 @@
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="search-org" placeholder="Rechercher par nom, pays, type..."/>
     </div>
+    <div style="margin:12px 0 16px;">
+      <select class="form-input" id="filtre-type-org" style="max-width:220px;">
+        <option value="">Tous les types</option>
+        <option value="ASS">Association</option>
+        <option value="MUT">Mutuelle</option>
+        <option value="ONG">ONG</option>
+      </select>
+    </div>
     <div class="org-list" id="org-list">
       <div style="text-align:center;padding:40px;color:var(--text-muted);"><div class="spinner" style="margin:0 auto 12px;"></div>Chargement...</div>
     </div>
@@ -1296,7 +1304,7 @@
         </div>
         <div style="flex:1;">
           <div class="org-item-name">${org.nomOrganisation || org.libAssociation || '—'}</div>
-          <div class="org-item-meta">${org.typeOrganisation||''} · ${org.libellePays||org.codePays||''}</div>
+          <div class="org-item-meta">${org.typeOrganisation?.libelle || org.typeOrganisation || ''} · ${org.pays?.libPays || org.libellePays || org.codePays || ''}</div>
         </div>
         <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`
       el.addEventListener('click', () => {
@@ -1400,7 +1408,7 @@
       ? `<img src="${org.urlLogo}" style="width:100%;height:100%;object-fit:cover;">`
       : (nom[0] || 'O').toUpperCase()
     document.getElementById('cond-org-nom').textContent = nom
-    document.getElementById('cond-org-meta').textContent = `${org.typeOrganisation || ''} · ${org.libellePays || org.codePays || ''}`
+    document.getElementById('cond-org-meta').textContent = `${org.typeOrganisation?.libelle || org.typeOrganisation || ''} · ${org.pays?.libPays || org.libellePays || org.codePays || ''}`
 
     document.getElementById('cond-liste').innerHTML = conditions.map((c, i) => `
       <div class="condition-card-adh">
@@ -1473,14 +1481,28 @@
     `
   }
 
-  document.getElementById('search-org').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase()
-    afficherOrgs(toutesOrgs.filter(o =>
-      (o.nomOrganisation||'').toLowerCase().includes(q) ||
-      (o.libAssociation||'').toLowerCase().includes(q) ||
-      (o.libellePays||'').toLowerCase().includes(q) ||
-      (o.typeOrganisation||'').toLowerCase().includes(q)
-    ))
+  let filtreTypeActif = ''
+
+  function appliquerFiltresOrgs() {
+    const q = document.getElementById('search-org').value.toLowerCase()
+    const filtrees = toutesOrgs.filter(o => {
+      const typeLibelle = o.typeOrganisation?.libelle || o.typeOrganisation || ''
+      const typeCode = o.typeOrganisation?.code || ''
+      if (filtreTypeActif && typeCode !== filtreTypeActif) return false
+      const paysLibelle = o.pays?.libPays || o.libellePays || ''
+      return (o.nomOrganisation||'').toLowerCase().includes(q) ||
+        (o.libAssociation||'').toLowerCase().includes(q) ||
+        paysLibelle.toLowerCase().includes(q) ||
+        typeLibelle.toLowerCase().includes(q)
+    })
+    afficherOrgs(filtrees)
+  }
+
+  document.getElementById('search-org').addEventListener('input', appliquerFiltresOrgs)
+
+  document.getElementById('filtre-type-org').addEventListener('change', e => {
+    filtreTypeActif = e.target.value
+    appliquerFiltresOrgs()
   })
 
   // ─── FLUX REJOINDRE — FORMULAIRE ADHÉSION ─────────────
