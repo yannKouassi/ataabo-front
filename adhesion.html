@@ -752,7 +752,7 @@
       moisEl.innerHTML += `<option value="${String(i+1).padStart(2,'0')}">${m}</option>`
     })
 
-    const anneeMax = new Date().getFullYear() - 10
+    const anneeMax = new Date().getFullYear() - 18
     for (let a = anneeMax; a >= anneeMax - 90; a--) {
       anneeEl.innerHTML += `<option value="${a}">${a}</option>`
     }
@@ -1011,7 +1011,7 @@
     MOIS.forEach((m, i) => {
       moisEl.innerHTML += `<option value="${String(i+1).padStart(2,'0')}">${m}</option>`
     })
-    const anneeMax = new Date().getFullYear() - 10
+    const anneeMax = new Date().getFullYear() - 18
     for (let a = anneeMax; a >= anneeMax - 90; a--) {
       anneeEl.innerHTML += `<option value="${a}">${a}</option>`
     }
