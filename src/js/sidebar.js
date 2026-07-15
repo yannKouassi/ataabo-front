@@ -457,3 +457,27 @@ function navigate(url) {
   const page = NAV_PAGES[url]
   if (page) window.location.href = page
 }
+
+/**
+ * Première page du menu à laquelle l'utilisateur a réellement un accès en lecture
+ * (parcourt ctx.menus, pas de fallback permissif comme getPermission). Utilisé pour
+ * rediriger silencieusement hors d'une page dont l'accès vient d'être retiré, plutôt
+ * que d'afficher une page d'erreur. `excludePage` évite de rediriger vers la page
+ * courante elle-même (ex: plusieurs URLs logiques pointent vers le même fichier).
+ */
+export function getFirstAccessiblePage(excludePage) {
+  const ctx = getContexte()
+  if (!ctx || !ctx.menus) return '/choisir-org.html'
+  for (const menu of ctx.menus) {
+    if (menu.sousMenus && menu.sousMenus.length > 0) {
+      for (const sous of menu.sousMenus) {
+        const page = NAV_PAGES[sous.url]
+        if (sous.peutLire && page && page !== excludePage) return page
+      }
+    } else {
+      const page = NAV_PAGES[menu.url]
+      if (menu.peutLire && page && page !== excludePage) return page
+    }
+  }
+  return '/choisir-org.html'
+}

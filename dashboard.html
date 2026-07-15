@@ -188,11 +188,12 @@
 </div>
 
 <script type="module">
-  import { requireContexte, getContexte, getUser, logout, applyOrgColor } from '/src/js/auth.js'
-  import { buildSidebar } from '/src/js/sidebar.js'
+  import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
+  import { buildSidebar, getFirstAccessiblePage } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
 
   if (!requireContexte()) throw new Error()
+  if (!getPermission('/dashboard').peutLire) { window.location.href = getFirstAccessiblePage('/dashboard.html'); throw new Error() }
   const ctx = getContexte()
   if (ctx.couleurPrimaire) applyOrgColor(ctx.couleurPrimaire)
   buildSidebar()
