@@ -1446,7 +1446,7 @@
 <!-- PAYS SUPPORTÉS -->
 <section style="padding:80px 0;background:var(--bg-secondary);">
   <div class="container" style="text-align:center;">
-    <p style="font-size:13px;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Disponible dans 5 pays</p>
+    <p style="font-size:13px;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Disponible dans 6 pays</p>
     <h2 style="font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;color:var(--text);margin-bottom:16px;">Une plateforme conçue pour l'Afrique</h2>
     <p style="color:var(--text-muted);max-width:520px;margin:0 auto 48px;">Gérez vos adhérents, cotisations et événements depuis n'importe lequel de nos pays partenaires.</p>
 
@@ -1501,13 +1501,17 @@
       nom: "Nigeria", devise: "NGN · English",
       flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="2" fill="#008751"/><rect x="1" width="1" height="2" fill="#FFF"/><rect x="2" width="1" height="2" fill="#008751"/></svg>`
     },
+    {
+      nom: "Burkina Faso", devise: "XOF · Français",
+      flag: `<svg viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg"><rect width="3" height="1" fill="#EF2B2D"/><rect width="3" height="1" y="1" fill="#009E49"/><polygon points="1.5,0.65 1.61,0.95 1.93,0.95 1.67,1.13 1.77,1.43 1.5,1.25 1.23,1.43 1.33,1.13 1.07,0.95 1.39,0.95" fill="#FCD116"/></svg>`
+    },
   ]
 
   const scene = document.getElementById('orbit-scene')
   const decorSvg = document.getElementById('orbit-decor-svg')
   const decorEllipse = scene.querySelector('ellipse')
   const N = PAYS.length
-  const CARD_HALF_WIDTH = 65   // ~ moitié de la largeur d'une card (min-width:110px + marge)
+  const CARD_HALF_WIDTH = 56   // ~ moitié de la largeur d'une card (min-width:92px + marge)
   const RATIO_RY = 70 / 220    // aspect de l'ellipse conservé à toutes les tailles
 
   // Rayon recalculé selon la largeur réelle du conteneur, pour que les cards ne
@@ -1541,23 +1545,23 @@
     const el = document.createElement('div')
     el.style.cssText = `
       position:absolute;
-      display:flex;flex-direction:column;align-items:center;gap:8px;
-      padding:14px 18px;
+      display:flex;flex-direction:column;align-items:center;gap:6px;
+      padding:11px 14px;
       background:var(--surface,#fff);
       border:1.5px solid var(--border,#e5e7eb);
-      border-radius:16px;
+      border-radius:14px;
       box-shadow:0 2px 12px rgba(0,0,0,.08);
-      min-width:110px;
+      min-width:92px;
       transform-origin:center center;
       transition:box-shadow .2s;
       cursor:default;
       pointer-events:auto;
     `
     el.innerHTML = `
-      <div style="width:48px;height:32px;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);">${p.flag}</div>
+      <div style="width:40px;height:27px;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);">${p.flag}</div>
       <div>
-        <div style="font-weight:700;font-size:13px;color:var(--text,#1a2e1a);white-space:nowrap;">${p.nom}</div>
-        <div style="font-size:11px;color:var(--text-muted,#888);margin-top:2px;">${p.devise}</div>
+        <div style="font-weight:700;font-size:12px;color:var(--text,#1a2e1a);white-space:nowrap;">${p.nom}</div>
+        <div style="font-size:10px;color:var(--text-muted,#888);margin-top:2px;">${p.devise}</div>
       </div>
     `
     el.addEventListener('mouseenter', () => { el.style.boxShadow = '0 8px 28px rgba(46,125,50,.18)'; el.style.borderColor = 'var(--primary,#2e7d32)' })
