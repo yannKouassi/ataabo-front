@@ -221,7 +221,7 @@
   <!-- Gauche décorative -->
   <div class="login-left">
     <a class="login-brand" href="/accueil.html" style="text-decoration:none;color:inherit;">
-      <div class="login-brand-icon">A</div>
+      <div class="login-brand-icon" id="login-brand-icon">A</div>
       <span class="login-brand-name"><span style="color:#ffffff">Unio</span><span style="color:rgba(255,255,255,0.6)">Nova</span></span>
     </a>
 
@@ -309,9 +309,11 @@
   fetch(`${API_BASE}/plateforme`).then(r => r.ok ? r.json() : null).then(p => {
     if (!p) return
     const iconEl = document.getElementById('nav-brand-icon')
+    const brandIconEl = document.getElementById('login-brand-icon')
     const nomEl = document.getElementById('nav-brand-nom')
-    if (p.urlLogoPlateforme && iconEl) {
-      iconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" onerror="this.parentElement.textContent='A'">`
+    if (p.urlLogoPlateforme) {
+      if (iconEl) iconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" onerror="this.parentElement.textContent='A'">`
+      if (brandIconEl) brandIconEl.innerHTML = `<img src="${p.urlLogoPlateforme}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" onerror="this.parentElement.textContent='A'">`
     }
     if (p.nomPlateforme && nomEl) {
       const nom = p.nomPlateforme
