@@ -98,6 +98,7 @@
           <td><span class="badge ${s.statut === 'SUCCESS' ? 'badge-success' : 'badge-danger'}">${s.statut||'—'}</span></td>
           <td>
             ${s.urlFichier ? `<a href="${s.urlFichier}" download class="btn btn-ghost btn-sm">Télécharger</a>` : '—'}
+            ${s.message ? `<div style="font-size:11.5px;color:#b91c1c;margin-top:4px;max-width:420px;white-space:normal;">${s.message}</div>` : ''}
           </td>
         </tr>
       `).join('')

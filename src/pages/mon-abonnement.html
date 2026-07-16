@@ -150,10 +150,11 @@
               <th>Début</th>
               <th>Prochaine échéance</th>
               <th>Statut</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-historique">
-            <tr><td colspan="7"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="8"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -249,6 +250,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
+  import { imprimerRecu } from '/src/js/recu.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -429,7 +431,7 @@
     })
     document.getElementById('hist-btn-reset').style.display = (filtreStatut || filtrePeriode) ? '' : 'none'
     if (!liste.length) {
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucun abonnement${filtreStatut || filtrePeriode ? ' pour cette sélection' : ' enregistré'}</p></div></td></tr>`
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Aucun abonnement${filtreStatut || filtrePeriode ? ' pour cette sélection' : ' enregistré'}</p></div></td></tr>`
       return
     }
     tbody.innerHTML = liste.map(a => `
@@ -441,7 +443,29 @@
         <td>${fmtDate(a.dateDebut)}</td>
         <td>${fmtDate(a.dateProchainEcheance)}</td>
         <td>${statutBadge(a.statut, a.referenceTransaction)}</td>
+        <td>${a.statut === 'ACTIF' ? `<button class="btn btn-sm btn-ghost" onclick="imprimerRecuAbonnementOrg('${a.id}')">Reçu</button>` : ''}</td>
       </tr>`).join('')
+  }
+
+  window.imprimerRecuAbonnementOrg = (id) => {
+    const a = historiqueData.find(x => x.id === id)
+    if (!a) return
+    imprimerRecu({
+      type: 'Abonnement',
+      reference: a.referenceTransaction,
+      payeur: ctx.nomOrganisation,
+      montant: a.montant,
+      devise: a.devise || 'XOF',
+      moyenPaye: null,
+      date: a.dateDebut,
+      dateLabel: 'Date de début de période',
+      details: [
+        { label: 'Période', value: periodeLabel(a.periode) },
+        { label: 'Prochaine échéance', value: fmtDate(a.dateProchainEcheance) },
+      ],
+      organisation: { nom: ctx.nomOrganisation, urlLogo: ctx.urlLogo, couleurPrimaire: ctx.couleurPrimaire },
+      plateforme: { nom: ctx.nomPlateforme, urlLogoPlateforme: ctx.urlLogoPlateforme },
+    })
   }
 
   async function afficherHistorique() {
@@ -451,7 +475,7 @@
       historiqueData = Array.isArray(data) ? data : []
       renderHistorique()
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="7" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${e.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="8" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${e.message}</td></tr>`
     }
   }
 

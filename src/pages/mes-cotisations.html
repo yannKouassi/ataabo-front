@@ -110,10 +110,11 @@
               <th>Moyen de paiement</th>
               <th>Statut</th>
               <th>Date déclaration</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-cotisations">
-            <tr><td colspan="5"><div class="page-loader"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="6"><div class="page-loader"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -186,6 +187,7 @@
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
   import { buildHistorique } from '/src/js/historique.js'
+  import { imprimerRecu } from '/src/js/recu.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -336,7 +338,7 @@
       tousLesCotisations = Array.isArray(data) ? data : (data.content || [])
       afficher()
     } catch(err) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b91c1c;padding:20px;text-align:center;">Erreur : ${err.message}</td></tr>`
     }
   }
 
@@ -358,7 +360,7 @@
     itemsFiltresCache = items
 
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune cotisation pour ces critères</p></div></td></tr>`
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Aucune cotisation pour ces critères</p></div></td></tr>`
       document.getElementById('pagination-info').textContent = ''
       return
     }
@@ -370,10 +372,30 @@
         <td style="font-size:13px;">${moyenConfig[c.moyenPaye?.libMoyPaye]?.label || c.moyenPaye?.libMoyPaye || '—'}</td>
         <td>${badgeStatut(c.statutPaiement)}</td>
         <td style="font-size:12.5px; color:var(--text-muted);">${formatDate(c.dateCotisation)}</td>
+        <td>${c.statutPaiement === 'VALIDE' ? `<button class="btn btn-sm btn-ghost" onclick="imprimerRecuCotisationMembre('${c.idCotisation}')">Reçu</button>` : ''}</td>
       </tr>
     `).join('')
 
     document.getElementById('pagination-info').textContent = `${items.length} cotisation(s) affichée(s)`
+  }
+
+  window.imprimerRecuCotisationMembre = (idCotisation) => {
+    const c = tousLesCotisations.find(x => x.idCotisation === idCotisation)
+    if (!c) return
+    const org = c.organisation || {}
+    const devise = orgInfos.devise || 'XOF'
+    imprimerRecu({
+      type: 'Cotisation',
+      reference: c.referenceTransaction,
+      payeur: `${c.personne?.prenPersonne || user?.prenom || ''} ${c.personne?.nomPersonne || user?.nom || ''}`.trim() || ctx.nomOrganisation,
+      montant: c.montantCotisation,
+      devise,
+      moyenPaye: moyenConfig[c.moyenPaye?.libMoyPaye]?.label || c.moyenPaye?.libMoyPaye || '—',
+      date: c.dateCotisation,
+      dateLabel: 'Date de la cotisation',
+      organisation: { nom: org.libAssociation || ctx.nomOrganisation, urlLogo: org.urlLogo || ctx.urlLogo, couleurPrimaire: org.couleurPrimaire || ctx.couleurPrimaire },
+      plateforme: { nom: ctx.nomPlateforme, urlLogoPlateforme: ctx.urlLogoPlateforme },
+    })
   }
 
   function toISO(val) {
