@@ -66,7 +66,7 @@
 
 <script type="module">
   import { requireContexte, getContexte, getUser, logout, applyOrgColor, getPermission } from '/src/js/auth.js'
-  import { buildHistorique } from '/src/js/historique.js'
+  import { buildHistorique, rafraichirHistorique } from '/src/js/historique.js'
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
@@ -108,15 +108,25 @@
 
   document.getElementById('btn-sauvegarder').addEventListener('click', async () => {
     if (!confirm('Lancer une sauvegarde maintenant ?')) return
+    const btn = document.getElementById('btn-sauvegarder')
+    btn.disabled = true
+    btn.textContent = 'Sauvegarde en cours…'
     try {
-      await api.post('/admin/sauvegardes', {})
-      toast.success('Sauvegarde lancée.')
-      setTimeout(charger, 2000)
-    } catch(err) { toast.error(err.message) }
+      const resultat = await api.post('/admin/sauvegardes', {})
+      if (resultat.statut === 'SUCCESS') toast.success('Sauvegarde terminée.')
+      else toast.error('Échec de la sauvegarde : ' + (resultat.message || 'erreur inconnue'))
+      await charger()
+      rafraichirHistorique('historique-container')
+    } catch(err) {
+      toast.error(err.message)
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Lancer une sauvegarde'
+    }
   })
 
   charger()
-  buildHistorique('historique-container', 50, 'sauvegarde')
+  buildHistorique('historique-container', 50, 'sauvegarde', { orgId: ctx.orgId })
 </script>
 </body>
 </html>

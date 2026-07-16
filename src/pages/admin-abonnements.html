@@ -130,7 +130,8 @@
             Activer
           </button>
         </div>
-        <div style="display:flex;justify-content:flex-end;" id="modal-btn-fermer-seul">
+        <div style="display:flex;justify-content:flex-end;gap:10px;" id="modal-btn-fermer-seul">
+          <button class="btn btn-ghost" id="modal-btn-recu" style="display:none;">Voir le reçu</button>
           <button class="btn btn-ghost" onclick="document.getElementById('modal-detail').style.display='none'">Fermer</button>
         </div>
         <!-- Bouton renouveler (visible si ACTIF / EN_RETARD / RESILIE) -->
@@ -299,6 +300,7 @@
   import { buildSidebar } from '/src/js/sidebar.js'
   import { api } from '/src/js/api.js'
   import { toast } from '/src/js/toast.js'
+  import { imprimerRecu } from '/src/js/recu.js'
 
   if (!requireContexte()) throw new Error()
   const ctx = getContexte()
@@ -573,9 +575,39 @@
   }
 
   let orgIdCourant = null
+  let abnCourant = null
+
+  function plateformeRecu() {
+    return { nom: ctx.nomPlateforme, urlLogoPlateforme: ctx.urlLogoPlateforme }
+  }
+
+  function imprimerRecuAbonnement(abn) {
+    if (!abn) return
+    imprimerRecu({
+      type: 'Abonnement',
+      reference: abn.referenceTransaction,
+      payeur: abn.organisation?.libAssociation || '—',
+      montant: abn.montant,
+      devise: abn.devise || 'XOF',
+      moyenPaye: null,
+      date: abn.dateDebut,
+      dateLabel: 'Date de début de période',
+      details: [
+        { label: 'Période', value: abn.periode === 'ANNUEL' ? 'Annuel' : 'Mensuel' },
+        { label: 'Prochaine échéance', value: fmtDate(abn.dateProchainEcheance) },
+      ],
+      organisation: {
+        nom: abn.organisation?.libAssociation,
+        urlLogo: abn.organisation?.urlLogo,
+        couleurPrimaire: abn.organisation?.couleurPrimaire,
+      },
+      plateforme: plateformeRecu(),
+    })
+  }
 
   async function ouvrirDetail(abn, orgId) {
     orgIdCourant = orgId
+    abnCourant = abn
     const modal = document.getElementById('modal-detail')
     const s = abn.statut || ''
     const orgNom = abn.organisation?.libAssociation || orgId
@@ -659,6 +691,9 @@
     document.getElementById('modal-commentaire').value = ''
     document.getElementById('modal-actions').style.display = peutAgir ? 'flex' : 'none'
     document.getElementById('modal-btn-fermer-seul').style.display = (!peutAgir && !peutRenouveler && !estBloqueeSys && !enRetard) ? 'flex' : 'none'
+    const btnRecu = document.getElementById('modal-btn-recu')
+    btnRecu.style.display = (s === 'ACTIF') ? 'inline-flex' : 'none'
+    btnRecu.onclick = () => imprimerRecuAbonnement(abnCourant)
     document.getElementById('modal-renouveler-section').style.display = (peutRenouveler && !estBloqueeSys) ? 'flex' : 'none'
     // Message informatif si EN_RETARD
     let msgRetard = document.getElementById('modal-msg-retard')
@@ -700,6 +735,7 @@
     try {
       await api.post(`/abonnements/activer/${orgIdCourant}`, { commentaire })
       toast.success('Abonnement activé.')
+      imprimerRecuAbonnement(abnCourant)
       document.getElementById('modal-detail').style.display = 'none'
       await charger()
     } catch(err) {
