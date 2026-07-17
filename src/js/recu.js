@@ -42,7 +42,7 @@ function assurerStyles() {
       border: none; color: #fff; font-size: 20px; width: 32px; height: 32px; border-radius: 50%;
       cursor: pointer; line-height: 1;
     }
-    #${OVERLAY_ID} .recu-entete { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 52px 24px 28px; color: #fff; }
+    #${OVERLAY_ID} .recu-entete { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 68px 24px 28px; color: #fff; }
     #${OVERLAY_ID} .recu-entete-org { display: flex; align-items: center; gap: 12px; }
     #${OVERLAY_ID} .recu-entete-org img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px; }
     #${OVERLAY_ID} .recu-entete-org-nom { font-size: 16px; font-weight: 700; max-width: 260px; }
